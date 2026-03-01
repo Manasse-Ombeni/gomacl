@@ -1,0 +1,114 @@
+{% load static %}
+
+<footer class="footer bg-dark text-white py-5 mt-5">
+    <div class="container">
+        <div class="row">
+
+            <!-- À propos -->
+            <div class="col-md-4 mb-4">
+                <h5 class="text-uppercase mb-3 text-white">
+                    <i class="fas fa-trophy me-2 text-warning"></i>
+                    Goma Champions League
+                </h5>
+                <p class="text-white-50">
+                    Compétition officielle de eFootball 2026 organisée à Goma, RDC.
+                    Format inspiré de la UEFA Champions League.
+                </p>
+
+                <!-- ✅ BOUTON GROUPE WHATSAPP -->
+                <div class="mt-3">
+                    <a href="https://chat.whatsapp.com/ENuuVnYkm2pAwsniuGXoto"
+                       target="_blank"
+                       class="btn whatsapp-group-btn">
+                        <i class="fab fa-whatsapp me-2"></i>
+                        Rejoindre le groupe WhatsApp
+                    </a>
+                </div>
+            </div>
+
+            <!-- Liens rapides -->
+            <div class="col-md-4 mb-4">
+                <h5 class="text-uppercase mb-3 text-white">
+                    <i class="fas fa-link me-2 text-warning"></i>
+                    Liens rapides
+                </h5>
+                <ul class="list-unstyled">
+                    <li><a href="{% url 'home' %}" class="footer-link">Accueil</a></li>
+                    <li><a href="{% url 'standings' %}" class="footer-link">Classement</a></li>
+                    <li><a href="{% url 'fixtures' %}" class="footer-link">Calendrier</a></li>
+                    <li><a href="{% url 'results' %}" class="footer-link">Résultats</a></li>
+                    <li><a href="{% url 'teams_list' %}" class="footer-link">Équipes</a></li>
+                    <li><a href="{% url 'rules' %}" class="footer-link">Règlement</a></li>
+                </ul>
+            </div>
+
+            <!-- Organisateurs -->
+            <div class="col-md-4 mb-4">
+                <h5 class="text-uppercase mb-3 text-white">
+                    <i class="fas fa-users me-2 text-warning"></i>
+                    Organisateurs
+                </h5>
+                <ul class="list-unstyled text-white-50">
+                    <li>Manassé Ombeni</li>
+                    <li>Job Badesire</li>
+                    <li>Héritier DJO</li>
+                    <li>Joachim</li>
+                    <li>Ildephonse</li>
+                </ul>
+            </div>
+        </div>
+
+        <hr class="border-secondary my-4">
+
+        <div class="row">
+            <div class="col-md-6 text-center text-md-start">
+                <p class="mb-0 text-white-50">
+                    &copy; 2026 Goma Champions League. Tous droits réservés.
+                </p>
+            </div>
+            <div class="col-md-6 text-center text-md-end">
+                <p class="mb-0 text-white-50">
+                    <i class="fas fa-gamepad me-1 text-warning"></i>
+                    Powered by eFootball 2026
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<style>
+.footer {
+    background: linear-gradient(135deg, #0a1628 0%, #003d82 100%);
+}
+
+/* Lien simple */
+.footer-link {
+    color: #d0d0d0;
+    text-decoration: none;
+    display: block;
+    margin-bottom: 8px;
+    transition: 0.3s;
+}
+
+.footer-link:hover {
+    color: #ffd700;
+    transform: translateX(5px);
+}
+
+/* ✅ Bouton WhatsApp Groupe */
+.whatsapp-group-btn {
+    background: #25d366;
+    color: white;
+    border-radius: 30px;
+    padding: 8px 18px;
+    font-size: 0.9rem;
+    transition: 0.3s;
+}
+
+.whatsapp-group-btn:hover {
+    background: #1ebe5d;
+    color: white;
+    transform: scale(1.05);
+    box-shadow: 0 6px 15px rgba(37, 211, 102, 0.4);
+}
+</style>

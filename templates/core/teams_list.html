@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Équipes - Goma Champions League 2026{% endblock %}
+
+{% block content %}
+<section class="py-5 team-list-section">
+    <div class="container">
+        <h1 class="section-title text-center mb-5">
+            <i class="fas fa-users me-2"></i>
+            TOUTES LES ÉQUIPES
+        </h1>
+        
+        {% if teams %}
+        <div class="row g-4">
+            {% for team in teams %}
+            <div class="col-md-6 col-lg-4 col-xl-3">
+                <div class="team-card">
+
+                    <!-- Logo -->
+                    <div class="team-logo-wrapper">
+                        {% if team.logo %}
+                            <img src="{{ team.logo.url }}" class="team-logo-img">
+                        {% else %}
+                            <div class="team-letter-logo">
+                                {{ team.team_name|first|upper }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Team Info -->
+                    <div class="team-info text-center">
+                        <h5 class="team-name">
+                            {{ team.team_name }}
+                        </h5>
+
+                        <span class="team-badge">
+                            {{ team.abbreviation }}
+                        </span>
+
+                        <p class="player-name mt-2">
+                            {{ team.player_name }}
+                        </p>
+
+                        <a href="https://wa.me/{{ team.whatsapp|cut:'+' }}" 
+                           target="_blank" 
+                           class="whatsapp-btn">
+                            <i class="fab fa-whatsapp me-2"></i>
+                            {{ team.whatsapp }}
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-center text-muted">
+            Aucune équipe inscrite.
+        </p>
+        {% endif %}
+    </div>
+</section>
+
+<style>
+.team-list-section {
+    background: linear-gradient(135deg, #f5f7fa, #eef2f7);
+}
+
+/* Card */
+.team-card {
+    background: white;
+    border-radius: 18px;
+    padding: 2rem 1.5rem;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    text-align: center;
+    height: 100%;
+}
+
+.team-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.15);
+}
+
+/* Logo */
+.team-logo-wrapper {
+    margin-bottom: 1rem;
+}
+
+.team-logo-img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+}
+
+.team-letter-logo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #003d82, #00a7e1);
+    color: white;
+    font-size: 2rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: auto;
+}
+
+/* Info */
+.team-name {
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.team-badge {
+    display: inline-block;
+    background: var(--gold-color);
+    color: #000;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-top: 5px;
+}
+
+.player-name {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* WhatsApp */
+.whatsapp-btn {
+    display: inline-block;
+    margin-top: 10px;
+    background: #25d366;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: 0.3s;
+}
+
+.whatsapp-btn:hover {
+    background: #1ebe5d;
+    color: white;
+    transform: scale(1.05);
+}
+</style>
+
+{% endblock %}

@@ -1,0 +1,497 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Goma Champions League 2026{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="dashboard-title">
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    DASHBOARD ADMIN
+                </h1>
+                <p class="text-muted">Bienvenue, <strong>{{ user.username }}</strong> ! 👋</p>
+            </div>
+            <div class="col-auto">
+                <a href="/admin/" class="btn btn-outline-primary" target="_blank">
+                    <i class="fas fa-cog me-2"></i>Panel Admin Django
+                </a>
+                <a href="{% url 'logout' %}" class="btn btn-outline-danger ms-2">
+                    <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                </a>
+            </div>
+        </div>
+        
+        <!-- Statistiques -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="stat-card stat-teams">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 class="counter" data-target="{{ total_teams }}">{{ total_teams }}</h3>
+                        <p>Équipes validées</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stat-card stat-pending">
+                    <div class="stat-icon">
+                        <i class="fas fa-hourglass-half"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 class="counter" data-target="{{ pending_teams }}">{{ pending_teams }}</h3>
+                        <p>Paiements en attente</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stat-card stat-matches">
+                    <div class="stat-icon">
+                        <i class="fas fa-futbol"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 class="counter" data-target="{{ total_matches }}">{{ total_matches }}</h3>
+                        <p>Matchs programmés</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="stat-card stat-played">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 class="counter" data-target="{{ played_matches }}">{{ played_matches }}</h3>
+                        <p>Matchs joués</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Alerte paiements en attente -->
+        {% if pending_teams > 0 %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>{{ pending_teams }}</strong> inscription(s) en attente de validation !
+            <a href="{% url 'pending_payments' %}" class="btn btn-warning btn-sm ms-3">
+                <i class="fas fa-eye me-1"></i>Voir maintenant
+            </a>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endif %}
+        
+        <!-- Informations de la compétition -->
+        {% if competition %}
+        <div class="row g-4 mb-4">
+            <div class="col-md-12">
+                <div class="card border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">
+                            <i class="fas fa-trophy me-2"></i>
+                            {{ competition.name }}
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <p class="mb-2"><strong>Format :</strong> {{ competition.get_format_type_display }}</p>
+                                <p class="mb-2"><strong>Équipes max :</strong> {{ competition.max_teams }}</p>
+                            </div>
+                            <div class="col-md-3">
+                                <p class="mb-2"><strong>Équipes validées :</strong> {{ total_teams }} / {{ competition.max_teams }}</p>
+                                <p class="mb-2"><strong>En attente :</strong> {{ pending_teams }}</p>
+                            </div>
+                            <div class="col-md-3">
+                                <p class="mb-2"><strong>Frais d'inscription :</strong> {{ competition.registration_fee }} CDF</p>
+                                <p class="mb-2"><strong>Total collecté :</strong> {{ competition.total_collected }} CDF</p>
+                            </div>
+                            <div class="col-md-3">
+                                <p class="mb-2"><strong>Date de début :</strong> {{ competition.start_date|date:"d/m/Y" }}</p>
+                                <p class="mb-2">
+                                    <strong>Inscriptions :</strong> 
+                                    {% if competition.registration_open %}
+                                    <span class="badge bg-success">Ouvertes</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Fermées</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Actions rapides -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="action-card">
+                    <h4>
+                        <i class="fas fa-plus-circle me-2"></i>
+                        Actions rapides
+                    </h4>
+                    <div class="action-buttons">
+                        <a href="{% url 'pending_payments' %}" class="btn btn-warning">
+                            <i class="fas fa-hourglass-half me-2"></i>Valider les paiements ({{ pending_teams }})
+                        </a>
+                        <a href="/admin/core/team/add/" class="btn btn-primary" target="_blank">
+                            <i class="fas fa-user-plus me-2"></i>Ajouter une équipe
+                        </a>
+                        <a href="/admin/core/match/add/" class="btn btn-success" target="_blank">
+                            <i class="fas fa-calendar-plus me-2"></i>Créer un match
+                        </a>
+                        <a href="/admin/core/news/add/" class="btn btn-info" target="_blank">
+                            <i class="fas fa-newspaper me-2"></i>Publier une actualité
+                        </a>
+                        <a href="/admin/core/phase/add/" class="btn btn-dark" target="_blank">
+                            <i class="fas fa-layer-group me-2"></i>Gérer les phases
+                        </a>
+                        <a href="/admin/auth/user/add/" class="btn btn-secondary" target="_blank">
+                            <i class="fas fa-user-shield me-2"></i>Créer un admin
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Commandes automatiques -->
+            <div class="col-md-6">
+                <div class="action-card">
+                    <h4>
+                        <i class="fas fa-magic me-2"></i>
+                        Commandes automatiques
+                    </h4>
+                    <div class="action-buttons">
+                        <a href="{% url 'generate_calendar' %}" class="btn btn-primary" 
+                           onclick="return confirm('⚠️ Générer le calendrier de la phase de ligue ?\n\nCela créera automatiquement tous les matchs (8 matchs par équipe).')">
+                            <i class="fas fa-calendar-plus me-2"></i>Générer le calendrier
+                        </a>
+                        <a href="{% url 'reported_matches' %}" class="btn btn-warning">
+                            <i class="fas fa-flag me-2"></i>Matchs signalés
+                        </a>
+                        <a href="{% url 'check_forfeits_view' %}" class="btn btn-info">
+                            <i class="fas fa-search me-2"></i>Vérifier les forfaits
+                        </a>
+                        <a href="{% url 'generate_playoffs_view' %}" class="btn btn-success" 
+                           onclick="return confirm('⚠️ Générer les playoffs (barrages) ?\n\nAssurez-vous que la phase de ligue est terminée.')">
+                            <i class="fas fa-trophy me-2"></i>Générer les playoffs
+                        </a>
+                        <a href="{% url 'reset_competition_view' %}" class="btn btn-danger" 
+                           onclick="return confirm('🚨 ATTENTION : Cette action est IRRÉVERSIBLE !\n\n❌ Tous les matchs seront supprimés\n❌ Toutes les statistiques seront réinitialisées\n❌ Toutes les phases seront supprimées\n\nÊtes-vous ABSOLUMENT SÛR de vouloir continuer ?')">
+                            <i class="fas fa-redo me-2"></i>Réinitialiser tout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Liens utiles -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-12">
+                <div class="action-card">
+                    <h4>
+                        <i class="fas fa-link me-2"></i>
+                        Liens utiles
+                    </h4>
+                    <div class="action-buttons">
+                        <a href="{% url 'home' %}" class="btn btn-outline-primary" target="_blank">
+                            <i class="fas fa-home me-2"></i>Page d'accueil
+                        </a>
+                        <a href="{% url 'standings' %}" class="btn btn-outline-success" target="_blank">
+                            <i class="fas fa-trophy me-2"></i>Voir le classement
+                        </a>
+                        <a href="{% url 'fixtures' %}" class="btn btn-outline-info" target="_blank">
+                            <i class="fas fa-calendar me-2"></i>Voir le calendrier
+                        </a>
+                        <a href="{% url 'teams_list' %}" class="btn btn-outline-warning" target="_blank">
+                            <i class="fas fa-users me-2"></i>Toutes les équipes
+                        </a>
+                        <a href="{% url 'bracket' %}" class="btn btn-outline-dark" target="_blank">
+                            <i class="fas fa-sitemap me-2"></i>Tableau éliminatoire
+                        </a>
+                        <a href="{% url 'results' %}" class="btn btn-outline-secondary" target="_blank">
+                            <i class="fas fa-list me-2"></i>Résultats
+                        </a>
+                        <a href="/admin/core/team/" class="btn btn-outline-primary" target="_blank">
+                            <i class="fas fa-edit me-2"></i>Gérer les équipes
+                        </a>
+                        <a href="/admin/core/match/" class="btn btn-outline-success" target="_blank">
+                            <i class="fas fa-futbol me-2"></i>Gérer les matchs
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Prochains matchs à encoder -->
+        <div class="row">
+            <div class="col">
+                <div class="action-card">
+                    <h4>
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        Prochains matchs à encoder
+                    </h4>
+                    
+                    {% if next_matches %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th><i class="far fa-calendar me-2"></i>Date</th>
+                                    <th><i class="fas fa-futbol me-2"></i>Match</th>
+                                    <th><i class="fas fa-layer-group me-2"></i>Phase</th>
+                                    <th class="text-center"><i class="fas fa-cog me-2"></i>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for match in next_matches %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-primary">
+                                            <i class="far fa-calendar me-1"></i>
+                                            {{ match.scheduled_date|date:"d/m/Y" }}
+                                        </span>
+                                        <span class="badge bg-secondary ms-1">
+                                            <i class="far fa-clock me-1"></i>
+                                            {{ match.scheduled_date|date:"H:i" }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="match-display">
+                                            <span class="team-badge home">
+                                                <strong>{{ match.home_team.abbreviation }}</strong>
+                                                <small class="d-block text-muted">{{ match.home_team.team_name }}</small>
+                                            </span>
+                                            <span class="vs-badge">VS</span>
+                                            <span class="team-badge away">
+                                                <strong>{{ match.away_team.abbreviation }}</strong>
+                                                <small class="d-block text-muted">{{ match.away_team.team_name }}</small>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ match.phase.get_name_display }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if match.is_played %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check-circle me-1"></i>Joué ({{ match.home_score }}-{{ match.away_score }})
+                                        </span>
+                                        <a href="{% url 'encode_result' match.id %}" class="btn btn-sm btn-outline-warning ms-2">
+                                            <i class="fas fa-edit me-1"></i>Modifier
+                                        </a>
+                                        {% else %}
+                                        <a href="{% url 'encode_result' match.id %}" class="btn btn-sm btn-success">
+                                            <i class="fas fa-edit me-1"></i>Encoder le résultat
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-3 text-center">
+                        <a href="{% url 'fixtures' %}" class="btn btn-outline-primary">
+                            Voir tous les matchs
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Aucun match à encoder pour le moment.</p>
+                        <a href="{% url 'generate_calendar' %}" class="btn btn-primary mt-3">
+                            <i class="fas fa-calendar-plus me-2"></i>Générer le calendrier
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.dashboard-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.stat-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.stat-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: white;
+}
+
+.stat-teams .stat-icon { 
+    background: linear-gradient(135deg, #667eea, #764ba2); 
+}
+.stat-pending .stat-icon { 
+    background: linear-gradient(135deg, #f093fb, #f5576c); 
+}
+.stat-matches .stat-icon { 
+    background: linear-gradient(135deg, #4facfe, #00f2fe); 
+}
+.stat-played .stat-icon { 
+    background: linear-gradient(135deg, #43e97b, #38f9d7); 
+}
+
+.stat-info h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 0;
+}
+
+.stat-info p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.action-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    height: 100%;
+}
+
+.action-card h4 {
+    color: var(--primary-color);
+    font-weight: 700;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--gold-color);
+}
+
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.action-buttons .btn {
+    flex: 1 1 calc(50% - 0.25rem);
+    min-width: 180px;
+    transition: all 0.3s;
+}
+
+.action-buttons .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.match-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.team-badge {
+    flex: 1;
+}
+
+.team-badge strong {
+    color: var(--primary-color);
+}
+
+.vs-badge {
+    font-weight: 700;
+    color: var(--primary-color);
+    padding: 0 0.5rem;
+}
+
+.table-striped tbody tr:hover {
+    background-color: rgba(0, 61, 130, 0.05);
+}
+
+/* Animation du compteur */
+@keyframes countUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.counter {
+    animation: countUp 0.5s ease-out;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .action-buttons .btn {
+        flex: 1 1 100%;
+    }
+    
+    .match-display {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .vs-badge {
+        padding: 0.5rem 0;
+    }
+}
+</style>
+
+<script>
+// Animation du compteur
+document.addEventListener('DOMContentLoaded', function() {
+    const counters = document.querySelectorAll('.counter');
+    
+    counters.forEach(counter => {
+        const target = +counter.getAttribute('data-target');
+        const increment = target / 100;
+        let current = 0;
+        
+        const updateCounter = () => {
+            if (current < target) {
+                current += increment;
+                counter.textContent = Math.ceil(current);
+                setTimeout(updateCounter, 10);
+            } else {
+                counter.textContent = target;
+            }
+        };
+        
+        updateCounter();
+    });
+});
+</script>
+{% endblock %}

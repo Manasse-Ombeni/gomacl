@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Tableau éliminatoire - Goma Champions League 2026{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <h1 class="section-title text-center mb-5">
+            <i class="fas fa-sitemap me-2"></i>
+            TABLEAU ÉLIMINATOIRE
+        </h1>
+        
+        {% if competition %}
+        <div class="bracket-container">
+            <!-- 1/8 de finale -->
+            {% if round_16 %}
+            <div class="bracket-round">
+                <h4 class="round-title">1/8 DE FINALE</h4>
+                <div class="matches">
+                    {% for match in round_16 %}
+                    <div class="bracket-match">
+                        <div class="bracket-team {% if match.is_played and match.home_score > match.away_score %}winner{% endif %}">
+                            <span class="team-name">{{ match.home_team.abbreviation }}</span>
+                            <span class="team-score">{{ match.home_score|default:"-" }}</span>
+                        </div>
+                        <div class="bracket-team {% if match.is_played and match.away_score > match.home_score %}winner{% endif %}">
+                            <span class="team-name">{{ match.away_team.abbreviation }}</span>
+                            <span class="team-score">{{ match.away_score|default:"-" }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Quarts de finale -->
+            {% if quarters %}
+            <div class="bracket-round">
+                <h4 class="round-title">QUARTS</h4>
+                <div class="matches">
+                    {% for match in quarters %}
+                    <div class="bracket-match">
+                        <div class="bracket-team {% if match.is_played and match.home_score > match.away_score %}winner{% endif %}">
+                            <span class="team-name">{{ match.home_team.abbreviation }}</span>
+                            <span class="team-score">{{ match.home_score|default:"-" }}</span>
+                        </div>
+                        <div class="bracket-team {% if match.is_played and match.away_score > match.home_score %}winner{% endif %}">
+                            <span class="team-name">{{ match.away_team.abbreviation }}</span>
+                            <span class="team-score">{{ match.away_score|default:"-" }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Demi-finales -->
+            {% if semis %}
+            <div class="bracket-round">
+                <h4 class="round-title">DEMI-FINALES</h4>
+                <div class="matches">
+                    {% for match in semis %}
+                    <div class="bracket-match">
+                        <div class="bracket-team {% if match.is_played and match.home_score > match.away_score %}winner{% endif %}">
+                            <span class="team-name">{{ match.home_team.abbreviation }}</span>
+                            <span class="team-score">{{ match.home_score|default:"-" }}</span>
+                        </div>
+                        <div class="bracket-team {% if match.is_played and match.away_score > match.home_score %}winner{% endif %}">
+                            <span class="team-name">{{ match.away_team.abbreviation }}</span>
+                            <span class="team-score">{{ match.away_score|default:"-" }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Finale -->
+            {% if final %}
+            <div class="bracket-round final-round">
+                <h4 class="round-title">🏆 FINALE</h4>
+                <div class="matches">
+                    <div class="bracket-match final-match">
+                        <div class="bracket-team {% if final.is_played and final.home_score > final.away_score %}champion{% endif %}">
+                            <span class="team-name">{{ final.home_team.abbreviation }}</span>
+                            <span class="team-score">{{ final.home_score|default:"-" }}</span>
+                        </div>
+                        <div class="bracket-team {% if final.is_played and final.away_score > final.home_score %}champion{% endif %}">
+                            <span class="team-name">{{ final.away_team.abbreviation }}</span>
+                            <span class="team-score">{{ final.away_score|default:"-" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <p class="text-center text-muted">
+            <i class="fas fa-info-circle me-2"></i>
+            Le tableau éliminatoire sera disponible après la phase de ligue.
+        </p>
+        {% endif %}
+    </div>
+</section>
+
+<style>
+.bracket-container {
+    display: flex;
+    gap: 2rem;
+    overflow-x: auto;
+    padding: 2rem 0;
+}
+
+.bracket-round {
+    min-width: 250px;
+    flex-shrink: 0;
+}
+
+.round-title {
+    text-align: center;
+    color: var(--primary-color);
+    font-weight: 700;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background: linear-gradient(135deg, rgba(0, 61, 130, 0.1), rgba(0, 167, 225, 0.1));
+    border-radius: 10px;
+}
+
+.matches {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.bracket-match {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.bracket-team {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #eee;
+    transition: all 0.3s;
+}
+
+.bracket-team:last-child {
+    border-bottom: none;
+}
+
+.bracket-team.winner {
+    background: rgba(40, 167, 69, 0.1);
+    font-weight: 700;
+    border-left: 4px solid #28a745;
+}
+
+.bracket-team.champion {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 215, 0, 0.1));
+    font-weight: 700;
+    border-left: 4px solid var(--gold-color);
+}
+
+.team-name {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.team-score {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: var(--primary-color);
+}
+
+.final-round {
+    border: 3px solid var(--gold-color);
+    border-radius: 15px;
+    padding: 1rem;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.05), transparent);
+}
+
+.final-match {
+    border: 2px solid var(--gold-color);
+}
+
+@media (max-width: 768px) {
+    .bracket-container {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}

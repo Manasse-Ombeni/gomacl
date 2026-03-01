@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Résultats - Goma Champions League 2026{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <h1 class="section-title text-center mb-5">
+            <i class="fas fa-list-alt me-2"></i>
+            RÉSULTATS DES MATCHS
+        </h1>
+        
+        {% if matches %}
+        <div class="results-list">
+            {% for match in matches %}
+            <div class="result-card mb-3">
+                <div class="result-header">
+                    <span class="phase-badge">{{ match.phase.get_name_display }}</span>
+                    <span class="date-badge">
+                        <i class="far fa-calendar me-1"></i>
+                        {{ match.played_date|date:"d/m/Y H:i" }}
+                    </span>
+                </div>
+                <div class="result-body">
+                    <div class="team-result home">
+                        <img src="{% if match.home_team.logo %}{{ match.home_team.logo.url }}{% else %}{% static 'images/default-logo.png' %}{% endif %}" alt="{{ match.home_team.team_name }}">
+                        <div class="team-info">
+                            <strong>{{ match.home_team.abbreviation }}</strong>
+                            <small>{{ match.home_team.team_name }}</small>
+                        </div>
+                    </div>
+                    <div class="score-result">
+                        {% if match.is_forfeit %}
+                        <div class="forfeit-badge">FORFAIT</div>
+                        {% endif %}
+                        <div class="final-score">
+                            <span class="{% if match.home_score > match.away_score %}winner{% endif %}">{{ match.home_score }}</span>
+                            <span class="separator">-</span>
+                            <span class="{% if match.away_score > match.home_score %}winner{% endif %}">{{ match.away_score }}</span>
+                        </div>
+                    </div>
+                    <div class="team-result away">
+                        <img src="{% if match.away_team.logo %}{{ match.away_team.logo.url }}{% else %}{% static 'images/default-logo.png' %}{% endif %}" alt="{{ match.away_team.team_name }}">
+                        <div class="team-info">
+                            <strong>{{ match.away_team.abbreviation }}</strong>
+                            <small>{{ match.away_team.team_name }}</small>
+                        </div>
+                    </div>
+                </div>
+                {% if match.notes %}
+                <div class="result-footer">
+                    <i class="fas fa-comment me-2"></i>
+                    {{ match.notes }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-center text-muted">
+            <i class="fas fa-info-circle me-2"></i>
+            Aucun résultat disponible pour le moment.
+        </p>
+        {% endif %}
+    </div>
+</section>
+
+<style>
+.result-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.3s;
+}
+
+.result-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.result-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    padding: 0.5rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+}
+
+.phase-badge {
+    font-weight: 600;
+}
+
+.result-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    gap: 1rem;
+}
+
+.team-result {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.team-result.away {
+    flex-direction: row-reverse;
+    text-align: right;
+}
+
+.team-result img {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+}
+
+.team-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.team-info strong {
+    font-size: 1.1rem;
+    color: var(--primary-color);
+}
+
+.team-info small {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.score-result {
+    text-align: center;
+}
+
+.final-score {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.final-score .winner {
+    color: #28a745;
+}
+
+.forfeit-badge {
+    background: #dc3545;
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 5px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.result-footer {
+    background: #f8f9fa;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    border-top: 1px solid #dee2e6;
+}
+
+@media (max-width: 768px) {
+    .result-body {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .team-result.away {
+        flex-direction: row;
+        text-align: left;
+    }
+}
+</style>
+{% endblock %}

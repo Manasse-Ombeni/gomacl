@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Accueil" %} - Goma Champions League 2026{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-overlay"></div>
+    <div class="container hero-content">
+        <div class="row align-items-center">
+            <div class="col-lg-8 mx-auto text-center">
+                <div class="hero-logo mb-4">
+                    <img src="{% static 'images/logo.png' %}" alt="Goma CL" class="img-fluid" style="max-width: 200px;">
+                </div>
+                <h1 class="display-3 fw-bold text-white mb-3">
+                    GOMA CHAMPIONS LEAGUE
+                </h1>
+                <p class="lead text-white-50 mb-4">
+                    <i class="fas fa-gamepad me-2"></i>
+                    {% trans "Compétition eFootball 2026 - Format UEFA Champions League" %}
+                </p>
+                
+                {% if competition and competition.registration_open and not competition.is_registration_full %}
+                <a href="{% url 'register_team' %}" class="btn btn-primary btn-lg px-5 py-3">
+                    <i class="fas fa-user-plus me-2"></i>
+                    {% trans "S'INSCRIRE MAINTENANT" %}
+                </a>
+                {% else %}
+                <button class="btn btn-secondary btn-lg px-5 py-3" disabled>
+                    <i class="fas fa-lock me-2"></i>
+                    {% trans "INSCRIPTIONS FERMÉES" %}
+                </button>
+                {% endif %}
+                
+                <div class="mt-4">
+                    <span class="badge bg-danger fs-5 px-4 py-2">
+                        <i class="fas fa-users me-2"></i>
+                        {% if competition %}
+                            {{ competition.registered_teams_count }} / {{ competition.max_teams }} {% trans "équipes inscrites" %}
+                        {% else %}
+                            0 / 36 {% trans "équipes inscrites" %}
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Prochains matchs -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="section-title text-center mb-5">
+            <i class="fas fa-calendar-alt me-2"></i>
+            {% trans "PROCHAINS MATCHS" %}
+        </h2>
+        
+        {% if upcoming_matches %}
+        <div class="row g-4">
+            {% for match in upcoming_matches %}
+            <div class="col-md-4">
+                <div class="match-card">
+                    <div class="match-date">
+                        <i class="far fa-calendar me-2"></i>
+                        {{ match.scheduled_date|date:"d/m/Y H:i" }}
+                    </div>
+                    <div class="match-teams">
+                        <div class="team">
+                            <img src="{% if match.home_team.logo %}{{ match.home_team.logo.url }}{% else %}{% static 'images/default-logo.png' %}{% endif %}" alt="{{ match.home_team.team_name }}">
+                            <span>{{ match.home_team.abbreviation }}</span>
+                        </div>
+                        <div class="vs">VS</div>
+                        <div class="team">
+                            <img src="{% if match.away_team.logo %}{{ match.away_team.logo.url }}{% else %}{% static 'images/default-logo.png' %}{% endif %}" alt="{{ match.away_team.team_name }}">
+                            <span>{{ match.away_team.abbreviation }}</span>
+                        </div>
+                    </div>
+                    <div class="match-phase">
+                        {{ match.phase.get_name_display }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-center text-muted">{% trans "Aucun match prévu pour le moment." %}</p>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Classement Top 8 -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="section-title text-center mb-5">
+            <i class="fas fa-trophy me-2"></i>
+            {% trans "CLASSEMENT - TOP 8" %}
+        </h2>
+        
+        {% if top_teams %}
+        <div class="table-responsive">
+            <table class="table table-standings">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>{% trans "Équipe" %}</th>
+                        <th class="text-center">{% trans "Pts" %}</th>
+                        <th class="text-center d-none d-md-table-cell">{% trans "J" %}</th>
+                        <th class="text-center d-none d-md-table-cell">{% trans "G" %}</th>
+                        <th class="text-center d-none d-md-table-cell">{% trans "N" %}</th>
+                        <th class="text-center d-none d-md-table-cell">{% trans "P" %}</th>
+                        <th class="text-center">{% trans "+/-" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for team in top_teams %}
+                    <tr>
+                        <td class="position position-{{ forloop.counter }}">{{ forloop.counter }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="{% if team.logo %}{{ team.logo.url }}{% else %}{% static 'images/default-logo.png' %}{% endif %}" alt="{{ team.team_name }}" class="team-logo-small me-2">
+                                <div>
+                                    <strong>{{ team.abbreviation }}</strong>
+                                    <small class="d-block text-muted d-none d-lg-block">{{ team.team_name }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-center fw-bold">{{ team.points }}</td>
+                        <td class="text-center d-none d-md-table-cell">{{ team.played }}</td>
+                        <td class="text-center d-none d-md-table-cell">{{ team.wins }}</td>
+                        <td class="text-center d-none d-md-table-cell">{{ team.draws }}</td>
+                        <td class="text-center d-none d-md-table-cell">{{ team.losses }}</td>
+                        <td class="text-center">
+                            <span class="badge {% if team.goal_difference > 0 %}bg-success{% elif team.goal_difference < 0 %}bg-danger{% else %}bg-secondary{% endif %}">
+                                {{ team.goal_difference|stringformat:"+d" }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="text-center mt-4">
+            <a href="{% url 'standings' %}" class="btn btn-outline-primary">
+                {% trans "Voir le classement complet" %} <i class="fas fa-arrow-right ms-2"></i>
+            </a>
+        </div>
+        {% else %}
+        <p class="text-center text-muted">{% trans "Aucune équipe inscrite pour le moment." %}</p>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Actualités -->
+{% if latest_news %}
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="section-title text-center mb-5">
+            <i class="fas fa-newspaper me-2"></i>
+            {% trans "DERNIÈRES ACTUALITÉS" %}
+        </h2>
+        
+        <div class="row g-4">
+            {% for news in latest_news %}
+            <div class="col-md-4">
+                <div class="news-card">
+                    {% if news.image %}
+                    <img src="{{ news.image.url }}" alt="{{ news.title }}">
+                    {% endif %}
+                    <div class="news-content">
+                        <h5>{{ news.title }}</h5>
+                        <p class="text-muted">{{ news.content|truncatewords:20 }}</p>
+                        <a href="{% url 'news_detail' news.pk %}" class="btn btn-sm btn-outline-primary">
+                            {% trans "Lire plus" %} <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

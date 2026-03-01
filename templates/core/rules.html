@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Règlement - Goma Champions League 2026{% endblock %}
+
+{% block content %}
+<section class="py-5 dark-rules">
+<div class="container">
+
+<h1 class="section-title text-center mb-5 text-light">
+    <i class="fas fa-book me-2 text-warning"></i>
+    RÈGLEMENT OFFICIEL
+</h1>
+
+<!-- INTRO -->
+<div class="card dark-card mb-5">
+    <div class="card-body">
+        <h4 class="text-warning">
+            <i class="fas fa-trophy me-2"></i>
+            Goma Champions League 2026
+        </h4>
+        <p>
+            Compétition eFootball 2026 (Mobile) organisée à Goma,
+            inspirée du nouveau format UEFA Champions League.
+        </p>
+    </div>
+</div>
+
+<!-- TIMELINE -->
+<h3 class="mb-4 text-center text-light">🏆 Déroulement de la compétition</h3>
+
+<div class="competition-timeline mb-5">
+
+    <div class="timeline-step">
+        <div class="timeline-icon bg-primary">
+            <i class="fas fa-list"></i>
+        </div>
+        <div class="timeline-content">
+            <h5>Phase de Ligue</h5>
+            <p>36 équipes – 8 matchs chacune</p>
+        </div>
+    </div>
+
+    <div class="timeline-step">
+        <div class="timeline-icon bg-warning">
+            <i class="fas fa-random"></i>
+        </div>
+        <div class="timeline-content">
+            <h5>Barrages</h5>
+            <p>Places 9–24 – Aller / Retour</p>
+        </div>
+    </div>
+
+    <div class="timeline-step">
+        <div class="timeline-icon bg-info">
+            <i class="fas fa-futbol"></i>
+        </div>
+        <div class="timeline-content">
+            <h5>Phases Finales</h5>
+            <p>1/8 – Quarts – Demis</p>
+        </div>
+    </div>
+
+    <div class="timeline-step">
+        <div class="timeline-icon bg-danger">
+            <i class="fas fa-crown"></i>
+        </div>
+        <div class="timeline-content">
+            <h5>Finale</h5>
+            <p>Match unique – 15 minutes</p>
+        </div>
+    </div>
+
+</div>
+
+<!-- PHASE LIGUE -->
+<div class="card dark-card mb-4">
+    <div class="card-body">
+        <h4 class="text-info">
+            <i class="fas fa-calendar-day me-2"></i>
+            Programmation
+        </h4>
+        <ul>
+            <li>Matchs programmés <strong>chaque jour successivement</strong>.</li>
+            <li>Début à <strong>00h00</strong>.</li>
+            <li>Maximum <strong>2 matchs par jour par équipe</strong>.</li>
+            <li>Durée : 10 minutes (Finale : 15 minutes).</li>
+        </ul>
+
+        <div class="alert alert-dark border-info">
+            ✅ Victoire = 3 pts<br>
+            ➖ Nul = 1 pt<br>
+            ❌ Défaite = 0 pt
+        </div>
+    </div>
+</div>
+
+<!-- FORFAIT -->
+<div class="card dark-card mb-4 border-danger">
+    <div class="card-body">
+        <h4 class="text-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            Règle des 48 heures
+        </h4>
+        <p>
+            Si un match n’est pas joué dans les 48 heures :
+        </p>
+        <ul>
+            <li>Signalement via le site</li>
+            <li>Décision admin</li>
+            <li>Score forfait 0‑3</li>
+        </ul>
+    </div>
+</div>
+
+<!-- FINALE -->
+<div class="card dark-card mb-4 border-warning">
+    <div class="card-body">
+        <h4 class="text-warning">
+            <i class="fas fa-crown me-2"></i>
+            Finale
+        </h4>
+        <ul>
+            <li>Match unique</li>
+            <li>Durée 15 minutes</li>
+            <li>Prolongation + TAB si égalité</li>
+        </ul>
+    </div>
+</div>
+
+<!-- FAIR PLAY -->
+<div class="card dark-card border-success">
+    <div class="card-body">
+        <h4 class="text-success">
+            <i class="fas fa-handshake me-2"></i>
+            Fair‑Play
+        </h4>
+        <p>
+            Respect, discipline et esprit sportif sont obligatoires.
+        </p>
+        <div class="alert alert-danger mb-0">
+            Toute triche entraîne exclusion immédiate.
+        </div>
+    </div>
+</div>
+
+</div>
+</section>
+
+<style>
+.dark-rules {
+    background: linear-gradient(135deg, #0a1628, #00142d);
+    color: #e0e0e0;
+}
+
+.dark-card {
+    background: #111c2f;
+    border: 1px solid #1f2e4a;
+    box-shadow: 0 0 20px rgba(0, 61, 130, 0.2);
+}
+
+.dark-card h4,
+.dark-card h5 {
+    color: #ffffff;
+}
+
+.competition-timeline {
+    margin-left: 20px;
+}
+
+.timeline-step {
+    display: flex;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.timeline-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    font-size: 18px;
+}
+
+.section-title::after {
+    content: '';
+    display: block;
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, #003d82, #ffd700);
+    margin: 10px auto 0;
+    border-radius: 2px;
+}
+
+/* 🔥 Correction texte dark mode */
+
+.dark-rules {
+    color: #e0e6f0;
+}
+
+.dark-rules p,
+.dark-rules li,
+.dark-rules span,
+.dark-rules small {
+    color: #d0d8e6 !important;
+}
+
+.dark-rules h1,
+.dark-rules h2,
+.dark-rules h3,
+.dark-rules h4,
+.dark-rules h5,
+.dark-rules h6 {
+    color: #ffffff !important;
+}
+
+/* Cards */
+.dark-card {
+    background: #111c2f;
+    border: 1px solid #1f2e4a;
+    box-shadow: 0 0 20px rgba(0, 61, 130, 0.25);
+    color: #d0d8e6;
+}
+
+/* Alerts dark fix */
+.dark-rules .alert {
+    background-color: #16243b !important;
+    color: #ffffff !important;
+    border: 1px solid #2a3f66 !important;
+}
+
+/* Specific alert colors */
+.dark-rules .alert-danger {
+    background-color: #3a1c1c !important;
+    border-color: #7a2d2d !important;
+}
+
+.dark-rules .alert-warning {
+    background-color: #3a3316 !important;
+    border-color: #8a6d1f !important;
+}
+
+.dark-rules .alert-info {
+    background-color: #1a2d3f !important;
+    border-color: #2a5a8a !important;
+}
+
+.dark-rules .alert-success {
+    background-color: #1c3a28 !important;
+    border-color: #2d7a4d !important;
+}
+
+/* Timeline text fix */
+.timeline-content p {
+    color: #c8d4ea !important;
+}
+
+/* Badge fix */
+.dark-rules .badge {
+    color: #ffffff !important;
+}
+</style>
+
+{% endblock %}

@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mes matchs - Goma Champions League 2026{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <h1 class="section-title text-center mb-5">
+            <i class="fas fa-futbol me-2"></i>
+            MES MATCHS
+        </h1>
+        
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>{{ team.team_name }} ({{ team.abbreviation }})</strong> - {{ team.player_name }}
+        </div>
+        
+        <!-- Prochains matchs -->
+        <h3 class="mb-3">
+            <i class="fas fa-calendar-alt me-2"></i>
+            Matchs à venir
+        </h3>
+        
+        {% if upcoming_matches %}
+        <div class="row g-3 mb-5">
+            {% for match in upcoming_matches %}
+            <div class="col-md-6">
+                <div class="match-card {% if match.is_late %}late-match{% endif %}">
+                    <div class="match-date">
+                        <i class="far fa-calendar me-2"></i>
+                        {{ match.scheduled_date|date:"d/m/Y H:i" }}
+                        {% if match.is_late %}
+                        <span class="badge bg-danger ms-2">En retard !</span>
+                        {% endif %}
+                    </div>
+                    <div class="match-teams">
+                        <div class="team">
+                            <span {% if match.home_team == team %}class="my-team"{% endif %}>
+                                {{ match.home_team.abbreviation }}
+                            </span>
+                        </div>
+                        <div class="vs">VS</div>
+                        <div class="team">
+                            <span {% if match.away_team == team %}class="my-team"{% endif %}>
+                                {{ match.away_team.abbreviation }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="match-actions">
+                        {% if not match.reported %}
+                        <a href="{% url 'report_match' match.id %}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-flag me-1"></i>
+                            Signaler un problème
+                        </a>
+                        {% else %}
+                        <span class="badge bg-warning">
+                            <i class="fas fa-clock me-1"></i>
+                            Signalé - En attente de traitement
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted">Aucun match à venir.</p>
+        {% endif %}
+        
+        <!-- Matchs joués -->
+        <h3 class="mb-3">
+            <i class="fas fa-history me-2"></i>
+            Derniers matchs joués
+        </h3>
+        
+        {% if played_matches %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Match</th>
+                        <th>Score</th>
+                        <th>Résultat</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for match in played_matches %}
+                    <tr>
+                        <td>{{ match.played_date|date:"d/m/Y" }}</td>
+                        <td>{{ match.home_team.abbreviation }} vs {{ match.away_team.abbreviation }}</td>
+                        <td><strong>{{ match.home_score }} - {{ match.away_score }}</strong></td>
+                        <td>
+                            {% if match.is_forfeit %}
+                            <span class="badge bg-danger">Forfait</span>
+                            {% else %}
+                            {% if match.home_team == team %}
+                                {% if match.home_score > match.away_score %}
+                                <span class="badge bg-success">Victoire</span>
+                                {% elif match.home_score < match.away_score %}
+                                <span class="badge bg-danger">Défaite</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Nul</span>
+                                {% endif %}
+                            {% else %}
+                                {% if match.away_score > match.home_score %}
+                                <span class="badge bg-success">Victoire</span>
+                                {% elif match.away_score < match.home_score %}
+                                <span class="badge bg-danger">Défaite</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Nul</span>
+                                {% endif %}
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">Aucun match joué.</p>
+        {% endif %}
+    </div>
+</section>
+
+<style>
+.my-team {
+    font-weight: 700;
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+
+.late-match {
+    border-left: 5px solid #dc3545;
+}
+
+.match-actions {
+    text-align: center;
+    margin-top: 1rem;
+}
+</style>
+{% endblock %}

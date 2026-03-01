@@ -1,0 +1,204 @@
+{% load static %}
+{% load i18n %}
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+    <div class="container">
+        <!-- Logo -->
+        <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
+            <span class="brand-text">🏆 GOMA CHAMPIONS LEAGUE</span>
+        </a>
+        
+        <!-- Toggle button mobile -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <!-- Menu -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <!-- Menu principal -->
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">
+                        <i class="fas fa-home me-1"></i> Accueil
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'standings' %}active{% endif %}" href="{% url 'standings' %}">
+                        <i class="fas fa-trophy me-1"></i> Classement
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'fixtures' %}active{% endif %}" href="{% url 'fixtures' %}">
+                        <i class="fas fa-calendar me-1"></i> Calendrier
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'results' %}active{% endif %}" href="{% url 'results' %}">
+                        <i class="fas fa-list me-1"></i> Résultats
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'bracket' %}active{% endif %}" href="{% url 'bracket' %}">
+                        <i class="fas fa-sitemap me-1"></i> Tableau
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'teams_list' %}active{% endif %}" href="{% url 'teams_list' %}">
+                        <i class="fas fa-users me-1"></i> Équipes
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'rules' %}active{% endif %}" href="{% url 'rules' %}">
+                        <i class="fas fa-book me-1"></i> Règlement
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}" href="{% url 'about' %}">
+                        <i class="fas fa-info-circle me-1"></i> À propos
+                    </a>
+                </li>
+                
+                <!-- Menu utilisateur connecté -->
+                {% if user.is_authenticated %}
+                    {% if user.is_staff %}
+                    <!-- Admin -->
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-primary text-white ms-2 px-3" href="{% url 'dashboard' %}">
+                            <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    {% else %}
+                    <!-- Joueur -->
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-info text-white ms-2 px-3" href="{% url 'my_matches' %}">
+                            <i class="fas fa-futbol me-1"></i> Mes matchs
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Déconnexion -->
+                    <li class="nav-item">
+                        <a class="nav-link text-warning" href="{% url 'logout' %}">
+                            <i class="fas fa-sign-out-alt me-1"></i> Déconnexion
+                        </a>
+                    </li>
+                {% else %}
+                    <!-- Non connecté -->
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-outline-light ms-2 px-3" href="{% url 'register_team' %}">
+                            <i class="fas fa-user-plus me-1"></i> S'inscrire
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-outline-warning ms-2 px-3" href="{% url 'login' %}">
+                            <i class="fas fa-sign-in-alt me-1"></i> Connexion
+                        </a>
+                    </li>
+
+                    <li class="nav-item ms-3">
+                        <button id="themeToggle" class="btn btn-sm btn-outline-light">
+                            🌙
+                        </button>
+                    </li>
+                {% endif %}
+                
+                <!-- Changement de langue -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-globe me-1"></i>
+                        {% get_current_language as LANGUAGE_CODE %}
+                        {% if LANGUAGE_CODE == 'fr' %}🇫🇷 FR{% else %}🇬🇧 EN{% endif %}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <form action="{% url 'set_language' %}" method="post" class="px-3">
+                                {% csrf_token %}
+                                <input name="next" type="hidden" value="{{ request.path }}">
+                                <button type="submit" name="language" value="fr" class="dropdown-item">
+                                    🇫🇷 Français
+                                </button>
+                                <button type="submit" name="language" value="en" class="dropdown-item">
+                                    🇬🇧 English
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<style>
+/* Style de la navbar */
+.navbar {
+    background: linear-gradient(135deg, #0a1628 0%, #003d82 100%) !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 1rem 0;
+}
+
+.navbar-brand {
+    font-size: 1.2rem;
+    font-weight: 600;
+    transition: transform 0.3s;
+}
+
+.navbar-brand:hover {
+    transform: scale(1.05);
+}
+
+.brand-text {
+    font-size: 1rem;
+    letter-spacing: 1px;
+}
+
+.nav-link {
+    font-weight: 500;
+    transition: all 0.3s;
+    position: relative;
+}
+
+.nav-link:hover {
+    color: var(--gold-color) !important;
+    transform: translateY(-2px);
+}
+
+.nav-link.active {
+    color: var(--gold-color) !important;
+}
+
+.nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 3px;
+    background: var(--gold-color);
+    border-radius: 2px;
+}
+
+/* Boutons de la navbar */
+.nav-item .btn {
+    border-radius: 20px;
+    transition: all 0.3s;
+}
+
+.nav-item .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 991px) {
+    .nav-item .btn {
+        margin: 0.5rem 0 !important;
+        width: 100%;
+    }
+    
+    .navbar-nav {
+        padding: 1rem 0;
+    }
+}
+</style>

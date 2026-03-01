@@ -1,0 +1,344 @@
+from django.db import models
+from django.contrib.auth.models import User
+from django.core.validators import RegexValidator
+from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
+from datetime import timedelta
+
+# ==========================================
+# MODÈLE : COMPÉTITION
+# ==========================================
+class Competition(models.Model):
+    """
+    Représente une compétition (ex: Goma Champions League 2026)
+    """
+    FORMAT_CHOICES = [
+        ('ucl', _('Format UEFA Champions League')),
+        ('group', _('Groupes + Élimination directe')),
+    ]
+    
+    name = models.CharField(max_length=200, verbose_name=_("Nom de la compétition"))
+    format_type = models.CharField(max_length=10, choices=FORMAT_CHOICES, default='ucl', verbose_name=_("Format"))
+    max_teams = models.IntegerField(default=36, verbose_name=_("Nombre max d'équipes"))
+    is_active = models.BooleanField(default=True, verbose_name=_("Active"))
+    registration_open = models.BooleanField(default=True, verbose_name=_("Inscriptions ouvertes"))
+    registration_fee = models.IntegerField(default=1000, verbose_name=_("Frais d'inscription (CDF)"))
+    
+    # Dates
+    start_date = models.DateField(verbose_name=_("Date de début"))
+    end_date = models.DateField(null=True, blank=True, verbose_name=_("Date de fin"))
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = _("Compétition")
+        verbose_name_plural = _("Compétitions")
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return self.name
+    
+    @property
+    def registered_teams_count(self):
+        return self.teams.filter(payment_validated=True).count()
+    
+    @property
+    def pending_teams_count(self):
+        return self.teams.filter(payment_validated=False).count()
+    
+    @property
+    def is_registration_full(self):
+        return self.registered_teams_count >= self.max_teams
+    
+    @property
+    def total_collected(self):
+        return self.registered_teams_count * self.registration_fee
+
+
+# ==========================================
+# MODÈLE : ÉQUIPE/JOUEUR
+# ==========================================
+class Team(models.Model):
+    """
+    Représente un joueur inscrit (= une équipe)
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True, verbose_name=_("Utilisateur"))
+    
+    # Relation avec la compétition
+    competition = models.ForeignKey(Competition, on_delete=models.SET_NULL, null=True, blank=True, related_name='teams', verbose_name=_("Compétition"))
+    
+    # Informations du joueur
+    player_name = models.CharField(max_length=100, verbose_name=_("Nom du joueur"))
+    team_name = models.CharField(max_length=100, verbose_name=_("Nom de votre équipe"))
+    abbreviation = models.CharField(max_length=3, unique=True, verbose_name=_("Abréviation"))
+    
+    # Numéro WhatsApp
+    phone_regex = RegexValidator(regex=r'^\+?1?\d{9,15}$', message=_("Format: '+243999999999'"))
+    whatsapp = models.CharField(validators=[phone_regex], max_length=17, verbose_name=_("WhatsApp"))
+    
+    # Logo/Photo (optionnel)
+    logo = models.ImageField(upload_to='team_logos/', null=True, blank=True, verbose_name=_("Logo"))
+    
+    # Paiement
+    payment_proof = models.ImageField(upload_to='payment_proofs/', null=True, blank=True, verbose_name=_("Preuve de paiement"))
+    payment_validated = models.BooleanField(default=False, verbose_name=_("Paiement validé"))
+    payment_validated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='validated_payments', verbose_name=_("Validé par"))
+    payment_validated_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Date de validation"))
+    
+    # Statistiques
+    played = models.IntegerField(default=0, verbose_name=_("Matchs joués"))
+    wins = models.IntegerField(default=0, verbose_name=_("Victoires"))
+    draws = models.IntegerField(default=0, verbose_name=_("Nuls"))
+    losses = models.IntegerField(default=0, verbose_name=_("Défaites"))
+    goals_for = models.IntegerField(default=0, verbose_name=_("Buts marqués"))
+    goals_against = models.IntegerField(default=0, verbose_name=_("Buts encaissés"))
+    points = models.IntegerField(default=0, verbose_name=_("Points"))
+    
+    # Dates
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = _("Équipe")
+        verbose_name_plural = _("Équipes")
+        ordering = ['-points', '-goals_for']
+    
+    def __str__(self):
+        return f"{self.team_name} ({self.abbreviation})"
+    
+    @property
+    def goal_difference(self):
+        return self.goals_for - self.goals_against
+
+
+# ==========================================
+# MODÈLE : PHASE
+# ==========================================
+class Phase(models.Model):
+    """
+    Représente une phase de la compétition
+    """
+    PHASE_CHOICES = [
+        ('league', _('Phase de ligue')),
+        ('playoff', _('Barrages')),
+        ('round_16', _('8e de finale')),
+        ('quarter', _('Quart de finale')),
+        ('semi', _('Demi-finale')),
+        ('final', _('Finale')),
+    ]
+    
+    competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name='phases', verbose_name=_("Compétition"))
+    name = models.CharField(max_length=50, choices=PHASE_CHOICES, verbose_name=_("Phase"))
+    order = models.IntegerField(default=0, verbose_name=_("Ordre"))
+    is_active = models.BooleanField(default=False, verbose_name=_("Phase active"))
+    
+    class Meta:
+        verbose_name = _("Phase")
+        verbose_name_plural = _("Phases")
+        ordering = ['order']
+    
+    def __str__(self):
+        return f"{self.competition.name} - {self.get_name_display()}"
+
+
+# ==========================================
+# MODÈLE : MATCH
+# ==========================================
+class Match(models.Model):
+    """
+    Représente un match entre deux équipes
+    """
+    LEG_CHOICES = [
+        ('unique', _('Match unique')),
+        ('aller', _('Match aller')),
+        ('retour', _('Match retour')),
+    ]
+    
+    phase = models.ForeignKey(Phase, on_delete=models.CASCADE, related_name='matches', verbose_name=_("Phase"))
+    home_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='home_matches', verbose_name=_("Équipe domicile"))
+    away_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='away_matches', verbose_name=_("Équipe extérieur"))
+    
+    # Type de match (aller/retour/unique)
+    match_leg = models.CharField(max_length=10, choices=LEG_CHOICES, default='unique', verbose_name=_("Type de match"))
+    
+    # Lien vers le match aller (pour le match retour)
+    first_leg = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='second_leg_match', verbose_name=_("Match aller"))
+    
+    # Scores temps réglementaire
+    home_score = models.IntegerField(null=True, blank=True, verbose_name=_("Score domicile"))
+    away_score = models.IntegerField(null=True, blank=True, verbose_name=_("Score extérieur"))
+    
+    # Scores prolongation (si applicable)
+    home_extra_time = models.IntegerField(null=True, blank=True, verbose_name=_("Buts domicile (prolongation)"))
+    away_extra_time = models.IntegerField(null=True, blank=True, verbose_name=_("Buts extérieur (prolongation)"))
+    
+    # Tirs au but (si applicable)
+    home_penalties = models.IntegerField(null=True, blank=True, verbose_name=_("Tirs au but domicile"))
+    away_penalties = models.IntegerField(null=True, blank=True, verbose_name=_("Tirs au but extérieur"))
+    
+    # Statut
+    is_played = models.BooleanField(default=False, verbose_name=_("Match joué"))
+    is_forfeit = models.BooleanField(default=False, verbose_name=_("Forfait"))
+    forfeit_team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, blank=True, related_name='forfeits', verbose_name=_("Équipe forfait"))
+    
+    # Date/heure
+    scheduled_date = models.DateTimeField(verbose_name=_("Date prévue"))
+    played_date = models.DateTimeField(null=True, blank=True, verbose_name=_("Date jouée"))
+    
+    # Screenshot (preuve)
+    screenshot = models.ImageField(upload_to='match_screenshots/', null=True, blank=True, verbose_name=_("Capture d'écran"))
+    
+    # Notes
+    notes = models.TextField(blank=True, verbose_name=_("Notes"))
+    
+    # Système de signalement
+    reported = models.BooleanField(default=False, verbose_name=_("Signalé"))
+    reported_by = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, blank=True, related_name='reports', verbose_name=_("Signalé par"))
+    report_reason = models.CharField(max_length=200, blank=True, verbose_name=_("Raison"))
+    report_details = models.TextField(blank=True, verbose_name=_("Détails du signalement"))
+    report_date = models.DateTimeField(null=True, blank=True, verbose_name=_("Date du signalement"))
+    
+    class Meta:
+        verbose_name = _("Match")
+        verbose_name_plural = _("Matchs")
+        ordering = ['scheduled_date']
+    
+    def __str__(self):
+        leg_display = f" ({self.get_match_leg_display()})" if self.match_leg != 'unique' else ""
+        return f"{self.home_team.abbreviation} vs {self.away_team.abbreviation}{leg_display}"
+    
+    @property
+    def result(self):
+        if not self.is_played:
+            return "-"
+        if self.is_forfeit:
+            return _("Forfait")
+        
+        result = f"{self.home_score} - {self.away_score}"
+        
+        # Ajouter prolongation si applicable
+        if self.home_extra_time is not None or self.away_extra_time is not None:
+            result += f" (ap: {self.home_extra_time or 0} - {self.away_extra_time or 0})"
+        
+        # Ajouter tirs au but si applicable
+        if self.home_penalties is not None or self.away_penalties is not None:
+            result += f" (tab: {self.home_penalties} - {self.away_penalties})"
+        
+        return result
+    
+    @property
+    def is_late(self):
+        """Vérifie si le match est en retard (plus de 48h)"""
+        if self.is_played:
+            return False
+        
+        deadline = timezone.now() - timedelta(hours=48)
+        return self.scheduled_date < deadline
+    
+    @property
+    def aggregate_score(self):
+        """Score cumulé pour les matchs aller-retour"""
+        if self.match_leg != 'retour' or not self.first_leg:
+            return None
+        
+        if not self.is_played or not self.first_leg.is_played:
+            return None
+        
+        # Calculer le score cumulé
+        home_total = (self.first_leg.home_score or 0) + (self.home_score or 0)
+        away_total = (self.first_leg.away_score or 0) + (self.away_score or 0)
+        
+        # Ajouter prolongation du match retour si applicable
+        if self.home_extra_time is not None:
+            home_total += self.home_extra_time
+        if self.away_extra_time is not None:
+            away_total += self.away_extra_time
+        
+        return {'home': home_total, 'away': away_total}
+    
+    @property
+    def winner(self):
+        """Détermine le vainqueur du match ou de la confrontation"""
+        if not self.is_played:
+            return None
+        
+        if self.is_forfeit:
+            return self.away_team if self.forfeit_team == self.home_team else self.home_team
+        
+        # Pour les matchs aller-retour
+        if self.match_leg == 'retour' and self.first_leg:
+            agg = self.aggregate_score
+            if not agg:
+                return None
+            
+            # Vérifier le score cumulé
+            if agg['home'] > agg['away']:
+                return self.home_team
+            elif agg['away'] > agg['home']:
+                return self.away_team
+            else:
+                # Égalité, vérifier les tirs au but
+                if self.home_penalties is not None and self.away_penalties is not None:
+                    if self.home_penalties > self.away_penalties:
+                        return self.home_team
+                    elif self.away_penalties > self.home_penalties:
+                        return self.away_team
+                return None
+        
+        # Pour les matchs uniques
+        home_total = (self.home_score or 0) + (self.home_extra_time or 0)
+        away_total = (self.away_score or 0) + (self.away_extra_time or 0)
+        
+        if home_total > away_total:
+            return self.home_team
+        elif away_total > home_total:
+            return self.away_team
+        else:
+            # Vérifier tirs au but
+            if self.home_penalties is not None and self.away_penalties is not None:
+                if self.home_penalties > self.away_penalties:
+                    return self.home_team
+                elif self.away_penalties > self.home_penalties:
+                    return self.away_team
+            return None
+
+
+# ==========================================
+# MODÈLE : GROUPE (pour format groupes)
+# ==========================================
+class Group(models.Model):
+    """
+    Représente un groupe dans le format "Groupes + Élimination"
+    """
+    competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name='groups', verbose_name=_("Compétition"))
+    name = models.CharField(max_length=50, verbose_name=_("Nom du groupe"))
+    teams = models.ManyToManyField(Team, related_name='groups', verbose_name=_("Équipes"))
+    
+    class Meta:
+        verbose_name = _("Groupe")
+        verbose_name_plural = _("Groupes")
+        ordering = ['name']
+    
+    def __str__(self):
+        return f"{self.competition.name} - {self.name}"
+
+
+# ==========================================
+# MODÈLE : ACTUALITÉ
+# ==========================================
+class News(models.Model):
+    """
+    Actualités/Annonces de la compétition
+    """
+    title = models.CharField(max_length=200, verbose_name=_("Titre"))
+    content = models.TextField(verbose_name=_("Contenu"))
+    image = models.ImageField(upload_to='news/', null=True, blank=True, verbose_name=_("Image"))
+    is_published = models.BooleanField(default=True, verbose_name=_("Publié"))
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = _("Actualité")
+        verbose_name_plural = _("Actualités")
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return self.title

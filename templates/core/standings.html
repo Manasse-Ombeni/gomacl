@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Classement - Goma Champions League 2026{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <h1 class="section-title text-center mb-5">
+            <i class="fas fa-trophy me-2"></i>
+            CLASSEMENT GÉNÉRAL
+        </h1>
+        
+        {% if teams %}
+        <div class="table-responsive">
+            <table class="table table-standings">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Équipe</th>
+                        <th class="text-center">Pts</th>
+                        <th class="text-center">J</th>
+                        <th class="text-center">G</th>
+                        <th class="text-center">N</th>
+                        <th class="text-center">P</th>
+                        <th class="text-center">BP</th>
+                        <th class="text-center">BC</th>
+                        <th class="text-center">+/-</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for team in teams %}
+                    <tr>
+                        <td class="position">{{ forloop.counter }}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                
+                                {% if team.logo %}
+                                    <img src="{{ team.logo.url }}" class="team-logo-small">
+                                {% else %}
+                                    <div class="team-letter-logo">
+                                        {{ team.team_name|first|upper }}
+                                    </div>
+                                {% endif %}
+                                
+                                <div>
+                                    <strong>{{ team.team_name }}</strong>
+                                    <small class="d-block text-muted">({{ team.abbreviation }})</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-center fw-bold">{{ team.points }}</td>
+                        <td class="text-center">{{ team.played }}</td>
+                        <td class="text-center">{{ team.wins }}</td>
+                        <td class="text-center">{{ team.draws }}</td>
+                        <td class="text-center">{{ team.losses }}</td>
+                        <td class="text-center">{{ team.goals_for }}</td>
+                        <td class="text-center">{{ team.goals_against }}</td>
+                        <td class="text-center">
+                            <span class="badge {% if team.goal_difference > 0 %}bg-success{% elif team.goal_difference < 0 %}bg-danger{% else %}bg-secondary{% endif %}">
+                                {{ team.goal_difference|stringformat:"+d" }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-center text-muted">Aucune équipe inscrite.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
