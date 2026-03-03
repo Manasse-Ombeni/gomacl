@@ -1,147 +1,196 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Règlement - Goma Champions League 2026{% endblock %}
+{% block title %}Règlement Officiel - Goma Champions League 2026{% endblock %}
 
 {% block content %}
 <section class="py-5 dark-rules">
 <div class="container">
 
-<h1 class="section-title text-center mb-5 text-light">
+<h1 class="section-title text-center mb-4 text-light">
     <i class="fas fa-book me-2 text-warning"></i>
-    RÈGLEMENT OFFICIEL
+    RÈGLEMENT OFFICIEL – GOMA CHAMPIONS LEAGUE 2026
 </h1>
 
-<!-- INTRO -->
-<div class="card dark-card mb-5">
-    <div class="card-body">
-        <h4 class="text-warning">
-            <i class="fas fa-trophy me-2"></i>
-            Goma Champions League 2026
-        </h4>
-        <p>
-            Compétition eFootball 2026 (Mobile) organisée à Goma,
-            inspirée du nouveau format UEFA Champions League.
-        </p>
-    </div>
+<div class="text-center mb-5">
+    <a href="{% url 'download_rules_pdf' %}" class="btn btn-danger me-3">
+        <i class="fas fa-file-pdf me-2"></i>Télécharger le règlement (PDF)
+    </a>
+    {% if competition and competition.registration_open %}
+    <a href="{% url 'register_team' %}" class="btn btn-success">
+        <i class="fas fa-user-plus me-2"></i>S'inscrire maintenant
+    </a>
+    {% endif %}
 </div>
 
-<!-- TIMELINE -->
-<h3 class="mb-4 text-center text-light">🏆 Déroulement de la compétition</h3>
-
-<div class="competition-timeline mb-5">
-
-    <div class="timeline-step">
-        <div class="timeline-icon bg-primary">
-            <i class="fas fa-list"></i>
-        </div>
-        <div class="timeline-content">
-            <h5>Phase de Ligue</h5>
-            <p>36 équipes – 8 matchs chacune</p>
-        </div>
-    </div>
-
-    <div class="timeline-step">
-        <div class="timeline-icon bg-warning">
-            <i class="fas fa-random"></i>
-        </div>
-        <div class="timeline-content">
-            <h5>Barrages</h5>
-            <p>Places 9–24 – Aller / Retour</p>
-        </div>
-    </div>
-
-    <div class="timeline-step">
-        <div class="timeline-icon bg-info">
-            <i class="fas fa-futbol"></i>
-        </div>
-        <div class="timeline-content">
-            <h5>Phases Finales</h5>
-            <p>1/8 – Quarts – Demis</p>
-        </div>
-    </div>
-
-    <div class="timeline-step">
-        <div class="timeline-icon bg-danger">
-            <i class="fas fa-crown"></i>
-        </div>
-        <div class="timeline-content">
-            <h5>Finale</h5>
-            <p>Match unique – 15 minutes</p>
-        </div>
-    </div>
-
-</div>
-
-<!-- PHASE LIGUE -->
+<!-- 1. INFORMATIONS GÉNÉRALES -->
 <div class="card dark-card mb-4">
-    <div class="card-body">
-        <h4 class="text-info">
-            <i class="fas fa-calendar-day me-2"></i>
-            Programmation
-        </h4>
-        <ul>
-            <li>Matchs programmés <strong>chaque jour successivement</strong>.</li>
-            <li>Début à <strong>00h00</strong>.</li>
-            <li>Maximum <strong>2 matchs par jour par équipe</strong>.</li>
-            <li>Durée : 10 minutes (Finale : 15 minutes).</li>
-        </ul>
-
-        <div class="alert alert-dark border-info">
-            ✅ Victoire = 3 pts<br>
-            ➖ Nul = 1 pt<br>
-            ❌ Défaite = 0 pt
-        </div>
-    </div>
+<div class="card-body">
+<h4 class="text-warning">1. Informations générales</h4>
+<ul>
+<li>Compétition : <strong>Goma Champions League 2026</strong></li>
+<li>Jeu utilisé : <strong>eFootball 2026 – Version Mobile</strong></li>
+<li>Nombre d’équipes : <strong>36 maximum</strong></li>
+<li>Frais d’inscription : <strong>1 000 CDF</strong></li>
+</ul>
+</div>
 </div>
 
-<!-- FORFAIT -->
+<!-- 2. INSCRIPTION -->
+<div class="card dark-card mb-4 border-success">
+<div class="card-body">
+<h4 class="text-success">2. Comment s'inscrire ?</h4>
+
+<h6 class="mt-3">Étapes :</h6>
+<ol>
+<li>Aller sur la page <strong>Inscription</strong>.</li>
+<li>Remplir les informations personnelles et équipe.</li>
+<li>Envoyer 1 000 CDF via Airtel Money au : <strong>+243992848365 (Manassé Ombeni)</strong>.</li>
+<li>Prendre une capture d’écran de la transaction.</li>
+<li>Uploader la preuve sur le site.</li>
+<li>Attendre validation par l’administrateur.</li>
+</ol>
+
+<div class="alert alert-warning mt-3">
+⚠️ L'inscription n'est validée qu'après confirmation du paiement.
+</div>
+</div>
+</div>
+
+<!-- 3. RÉGLAGES DU JEU -->
+<div class="card dark-card mb-4">
+<div class="card-body">
+<h4 class="text-info">3. Réglages obligatoires du match</h4>
+
+<ul>
+<li>Durée du match : <strong>10 minutes</strong> (Finale : 15 minutes)</li>
+<li>Commande manette : <strong>Activée</strong></li>
+<li>Forme à domicile : <strong>Excellente</strong></li>
+<li>Forme à l’extérieur : <strong>Excellente</strong></li>
+<li>Mode : Match d’Amis</li>
+<li>Salle privée obligatoire</li>
+</ul>
+
+<div class="alert alert-info">
+✅ Les deux joueurs doivent vérifier les paramètres avant de lancer le match.
+</div>
+</div>
+</div>
+
+<!-- 4. FORMAT DE LA COMPÉTITION -->
+<div class="card dark-card mb-4">
+<div class="card-body">
+<h4 class="text-warning">4. Format de la compétition</h4>
+
+<h6>Phase de Ligue</h6>
+<ul>
+<li>8 matchs par équipe</li>
+<li>Maximum 2 matchs par jour</li>
+<li>Début des matchs : 00h00</li>
+<li>3 pts victoire – 1 pt nul – 0 pt défaite</li>
+<li>1–8 : qualifiés directs</li>
+<li>9–24 : barrages</li>
+<li>25–36 : éliminés</li>
+</ul>
+
+<h6 class="mt-3">Phases éliminatoires</h6>
+<ul>
+<li>Aller-retour (sauf finale)</li>
+<li>Pas de règle du but à l’extérieur</li>
+<li>Prolongation uniquement au match retour</li>
+<li>Tirs au but si égalité</li>
+<li>Finale : match unique (15 minutes)</li>
+</ul>
+</div>
+</div>
+
+<!-- 5. RÈGLE DES 48 HEURES -->
 <div class="card dark-card mb-4 border-danger">
-    <div class="card-body">
-        <h4 class="text-danger">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            Règle des 48 heures
-        </h4>
-        <p>
-            Si un match n’est pas joué dans les 48 heures :
-        </p>
-        <ul>
-            <li>Signalement via le site</li>
-            <li>Décision admin</li>
-            <li>Score forfait 0‑3</li>
-        </ul>
-    </div>
+<div class="card-body">
+<h4 class="text-danger">5. Règle des 48 heures (Forfait)</h4>
+
+<p>
+Chaque match doit être joué dans les <strong>48 heures</strong> suivant la date prévue.
+</p>
+
+<h6>Si le match n’est pas joué :</h6>
+<ol>
+<li>Le joueur disponible doit aller dans <strong>Mes matchs</strong>.</li>
+<li>Cliquer sur <strong>Signaler un problème</strong>.</li>
+<li>Choisir la raison (adversaire absent / injoignable).</li>
+<li>Ajouter détails si nécessaire.</li>
+<li>Envoyer le signalement.</li>
+</ol>
+
+<p>
+L’administrateur examine le signalement et décide :
+</p>
+
+<ul>
+<li>Si un joueur est fautif → <strong>Forfait 0-3</strong></li>
+<li>Si les deux sont responsables → décision administrative</li>
+</ul>
+
+<div class="alert alert-danger mt-3">
+⚠️ Ne pas signaler dans les 48 heures = match perdu automatiquement.
+</div>
+</div>
 </div>
 
-<!-- FINALE -->
+<!-- 6. RÉPARTITION -->
 <div class="card dark-card mb-4 border-warning">
-    <div class="card-body">
-        <h4 class="text-warning">
-            <i class="fas fa-crown me-2"></i>
-            Finale
-        </h4>
-        <ul>
-            <li>Match unique</li>
-            <li>Durée 15 minutes</li>
-            <li>Prolongation + TAB si égalité</li>
-        </ul>
-    </div>
+<div class="card-body">
+<h4 class="text-warning">6. Répartition des récompenses</h4>
+
+<div class="table-responsive">
+<table class="table table-dark table-bordered text-center reward-table">
+<thead>
+<tr>
+<th>Position</th>
+<th>Montant (CDF)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="gold-row">
+<td>🥇 Champion</td>
+<td><strong>12 000</strong></td>
+</tr>
+<tr class="silver-row">
+<td>🥈 Vice-champion</td>
+<td><strong>8 000</strong></td>
+</tr>
+<tr class="bronze-row">
+<td>🥉 3e place</td>
+<td><strong>5 000</strong></td>
+</tr>
+<tr>
+<td>🏅 4e place</td>
+<td><strong>5 000</strong></td>
+</tr>
+<tr>
+<td>🎖️ 5e – 8e</td>
+<td><strong>1 500 chacun</strong></td>
+</tr>
+</tbody>
+</table>
 </div>
 
-<!-- FAIR PLAY -->
+<div class="alert alert-success mt-3">
+✅ 100% des frais collectés sont redistribués.
+</div>
+</div>
+</div>
+
+<!-- 7. DISCIPLINE -->
 <div class="card dark-card border-success">
-    <div class="card-body">
-        <h4 class="text-success">
-            <i class="fas fa-handshake me-2"></i>
-            Fair‑Play
-        </h4>
-        <p>
-            Respect, discipline et esprit sportif sont obligatoires.
-        </p>
-        <div class="alert alert-danger mb-0">
-            Toute triche entraîne exclusion immédiate.
-        </div>
-    </div>
+<div class="card-body">
+<h4 class="text-success">7. Discipline & Fair‑Play</h4>
+<ul>
+<li>Respect obligatoire entre joueurs.</li>
+<li>Respect des décisions administratives.</li>
+<li>Triche ou insultes = exclusion sans remboursement.</li>
+</ul>
+</div>
 </div>
 
 </div>
@@ -149,119 +198,110 @@
 
 <style>
 .dark-rules {
-    background: linear-gradient(135deg, #0a1628, #00142d);
-    color: #e0e0e0;
+    background: linear-gradient(135deg,#0b1423,#00142d);
+    color:#e6edf7;
+    min-height: 100vh;
 }
 
-.dark-card {
-    background: #111c2f;
-    border: 1px solid #1f2e4a;
-    box-shadow: 0 0 20px rgba(0, 61, 130, 0.2);
-}
-
-.dark-card h4,
-.dark-card h5 {
-    color: #ffffff;
-}
-
-.competition-timeline {
-    margin-left: 20px;
-}
-
-.timeline-step {
-    display: flex;
-    align-items: center;
-    margin-bottom: 25px;
-}
-
-.timeline-icon {
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 15px;
-    font-size: 18px;
-}
-
-.section-title::after {
-    content: '';
-    display: block;
-    width: 80px;
-    height: 4px;
-    background: linear-gradient(90deg, #003d82, #ffd700);
-    margin: 10px auto 0;
-    border-radius: 2px;
-}
-
-/* 🔥 Correction texte dark mode */
-
-.dark-rules {
-    color: #e0e6f0;
-}
-
+/* ✅ Texte principal */
 .dark-rules p,
 .dark-rules li,
 .dark-rules span,
 .dark-rules small {
-    color: #d0d8e6 !important;
+    color:#d8e3f5 !important;
 }
 
+/* ✅ Titres */
 .dark-rules h1,
 .dark-rules h2,
 .dark-rules h3,
 .dark-rules h4,
 .dark-rules h5,
 .dark-rules h6 {
-    color: #ffffff !important;
+    color:#ffffff !important;
 }
 
-/* Cards */
+/* ✅ Cards */
 .dark-card {
-    background: #111c2f;
-    border: 1px solid #1f2e4a;
-    box-shadow: 0 0 20px rgba(0, 61, 130, 0.25);
-    color: #d0d8e6;
+    background:#111c2f;
+    border:1px solid #243552;
+    border-radius:18px;
+    box-shadow:0 0 25px rgba(0,61,130,0.25);
+    padding: 1rem;
 }
 
-/* Alerts dark fix */
+/* ✅ Alerts */
 .dark-rules .alert {
-    background-color: #16243b !important;
-    color: #ffffff !important;
-    border: 1px solid #2a3f66 !important;
-}
-
-/* Specific alert colors */
-.dark-rules .alert-danger {
-    background-color: #3a1c1c !important;
-    border-color: #7a2d2d !important;
+    background-color:#1a2d44 !important;
+    border:1px solid #2f4a73 !important;
+    color:#ffffff !important;
 }
 
 .dark-rules .alert-warning {
-    background-color: #3a3316 !important;
-    border-color: #8a6d1f !important;
+    background-color:#3b3316 !important;
 }
 
-.dark-rules .alert-info {
-    background-color: #1a2d3f !important;
-    border-color: #2a5a8a !important;
+.dark-rules .alert-danger {
+    background-color:#3b1a1a !important;
 }
 
 .dark-rules .alert-success {
-    background-color: #1c3a28 !important;
-    border-color: #2d7a4d !important;
+    background-color:#1c3b2a !important;
 }
 
-/* Timeline text fix */
-.timeline-content p {
-    color: #c8d4ea !important;
+/* ✅ Tableau */
+.reward-table {
+    border-radius:12px;
+    overflow:hidden;
 }
 
-/* Badge fix */
-.dark-rules .badge {
-    color: #ffffff !important;
+.reward-table th {
+    background:#1f2e4a !important;
+    color:#ffd700 !important;
+    font-weight:600;
+}
+
+.reward-table td {
+    background:#0f1a2c !important;
+    color:#e6edf7 !important;
+    border-color:#243552 !important;
+}
+
+/* ✅ Podium rows */
+.gold-row {
+    background:rgba(255,215,0,0.18) !important;
+}
+
+.silver-row {
+    background:rgba(192,192,192,0.18) !important;
+}
+
+.bronze-row {
+    background:rgba(205,127,50,0.18) !important;
+}
+
+/* ✅ Boutons */
+.btn-danger {
+    border-radius:30px;
+    padding:8px 20px;
+    font-weight:600;
+    transition:0.3s;
+}
+
+.btn-danger:hover {
+    transform:scale(1.05);
+    box-shadow:0 0 20px rgba(220,53,69,0.6);
+}
+
+/* ✅ Ligne décorative titre */
+.section-title::after {
+    content:'';
+    display:block;
+    width:100px;
+    height:4px;
+    margin:15px auto 0;
+    background:linear-gradient(90deg,#003d82,#ffd700);
+    border-radius:2px;
 }
 </style>
 

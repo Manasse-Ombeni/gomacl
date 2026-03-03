@@ -38,6 +38,7 @@ urlpatterns = [
     path('dashboard/reported-matches/', views.reported_matches, name='reported_matches'),
     path('dashboard/apply-forfeit/<int:match_id>/', views.apply_forfeit_manual, name='apply_forfeit_manual'),
     path('dashboard/backup/', views.backup_database, name='backup_database'),
+    path('rules/pdf/', views.download_rules_pdf, name='download_rules_pdf'),
 ]
 
 

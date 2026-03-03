@@ -851,3 +851,59 @@ def backup_database(request):
     response.write(output.getvalue())
 
     return response
+
+
+def download_rules_pdf(request):
+    response = HttpResponse(content_type='application/pdf')
+    filename = f"Reglement_GomaCL_{datetime.now().strftime('%Y%m%d')}.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    p = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+
+    y = height - 40
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(50, y, "GOMA CHAMPIONS LEAGUE 2026")
+    y -= 25
+    p.setFont("Helvetica-Bold", 14)
+    p.drawString(50, y, "REGLEMENT OFFICIEL")
+    y -= 40
+
+    p.setFont("Helvetica", 11)
+
+    lines = [
+        "1. Conditions d'inscription :",
+        "- Une seule equipe par joueur.",
+        "- Paiement obligatoire via Airtel Money.",
+        "",
+        "2. Format de competition :",
+        "- 36 equipes.",
+        "- Phase de ligue : 8 matchs.",
+        "- Maximum 2 matchs par jour.",
+        "",
+        "3. Phases finales :",
+        "- Barrages, 1/8, Quarts, Demis en aller-retour.",
+        "- Finale : match unique (15 minutes).",
+        "",
+        "4. Regle des 48 heures :",
+        "- Match non joue = forfait 0-3.",
+        "",
+        "5. Repartition des recompenses :",
+        "- Champion : 12 000 CDF",
+        "- Vice-champion : 8 000 CDF",
+        "- 3e place : 5 000 CDF",
+        "- 4e place : 5 000 CDF",
+        "- 5e-8e : 1 500 CDF chacun",
+    ]
+
+    for line in lines:
+        p.drawString(50, y, line)
+        y -= 18
+
+        if y < 50:
+            p.showPage()
+            p.setFont("Helvetica", 11)
+            y = height - 40
+
+    p.save()
+    return response
