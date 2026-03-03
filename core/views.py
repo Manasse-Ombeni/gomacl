@@ -13,6 +13,9 @@ from django.http import HttpResponse
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from django.http import HttpResponse
+from django.core.management import call_command
+from io import StringIO
+from datetime import datetime
 
 
 # ==========================================
@@ -831,4 +834,20 @@ def download_calendar_pdf(request):
         y -= 10
 
     p.save()
+    return response
+
+
+@login_required
+def backup_database(request):
+    if not request.user.is_staff:
+        return redirect('home')
+
+    response = HttpResponse(content_type='application/json')
+    filename = f"backup_gomacl_{datetime.now().strftime('%Y%m%d_%H%M')}.json"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    output = StringIO()
+    call_command('dumpdata', stdout=output)
+    response.write(output.getvalue())
+
     return response

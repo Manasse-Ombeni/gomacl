@@ -37,6 +37,7 @@ urlpatterns = [
     path('dashboard/reset-competition/', views.reset_competition_view, name='reset_competition_view'),
     path('dashboard/reported-matches/', views.reported_matches, name='reported_matches'),
     path('dashboard/apply-forfeit/<int:match_id>/', views.apply_forfeit_manual, name='apply_forfeit_manual'),
+    path('dashboard/backup/', views.backup_database, name='backup_database'),
 ]
 
 
