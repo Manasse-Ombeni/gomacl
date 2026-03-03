@@ -63,6 +63,7 @@
                 </li>
 
                 {% if user.is_authenticated %}
+
                     {% if user.is_staff %}
                         <li class="nav-item ms-3">
                             <a href="{% url 'dashboard' %}" class="btn btn-warning btn-sm">
@@ -76,12 +77,21 @@
                             <i class="fas fa-sign-out-alt me-1"></i> Déconnexion
                         </a>
                     </li>
+
                 {% else %}
+
                     <li class="nav-item ms-3">
                         <a href="{% url 'register_team' %}" class="btn btn-success btn-sm">
                             <i class="fas fa-user-plus me-1"></i> S'inscrire
                         </a>
                     </li>
+
+                    <li class="nav-item ms-2">
+                        <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-sign-in-alt me-1"></i> Connexion
+                        </a>
+                    </li>
+
                 {% endif %}
 
             </ul>
@@ -91,13 +101,13 @@
 
 <style>
 
-/* ✅ NAVBAR BACKGROUND */
+/* NAVBAR BACKGROUND */
 .custom-navbar {
     background: linear-gradient(135deg, #081020, #001a33);
     box-shadow: 0 4px 15px rgba(0,0,0,0.5);
 }
 
-/* ✅ LOGO */
+/* LOGO */
 .logo-wrapper {
     position: relative;
     display: inline-block;
@@ -130,7 +140,7 @@
     100% { opacity: 0.6; }
 }
 
-/* ✅ BRAND TEXT */
+/* BRAND TEXT */
 .brand-text-wrapper {
     display: flex;
     flex-direction: column;
@@ -152,7 +162,7 @@
     margin-top: 2px;
 }
 
-/* ✅ NAV LINKS */
+/* NAV LINKS */
 .nav-link {
     font-weight: 500;
     color: #ffffff !important;
@@ -168,7 +178,7 @@
     color: #ffd700;
 }
 
-/* ✅ MOBILE */
+/* MOBILE */
 @media (max-width: 991px) {
     .navbar-logo {
         height: 35px;
