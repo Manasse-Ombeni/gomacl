@@ -16,6 +16,11 @@ from django.http import HttpResponse
 from django.core.management import call_command
 from io import StringIO
 from datetime import datetime
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib import colors
+from reportlab.lib.units import inch
+from io import BytesIO
 
 
 # ==========================================
@@ -853,57 +858,32 @@ def backup_database(request):
     return response
 
 
+
 def download_rules_pdf(request):
-    response = HttpResponse(content_type='application/pdf')
-    filename = f"Reglement_GomaCL_{datetime.now().strftime('%Y%m%d')}.pdf"
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer)
 
-    p = canvas.Canvas(response, pagesize=A4)
-    width, height = A4
+    styles = getSampleStyleSheet()
+    elements = []
 
-    y = height - 40
-    p.setFont("Helvetica-Bold", 16)
-    p.drawString(50, y, "GOMA CHAMPIONS LEAGUE 2026")
-    y -= 25
-    p.setFont("Helvetica-Bold", 14)
-    p.drawString(50, y, "REGLEMENT OFFICIEL")
-    y -= 40
+    title_style = styles["Heading1"]
+    normal_style = styles["Normal"]
 
-    p.setFont("Helvetica", 11)
+    elements.append(Paragraph("GOMA CHAMPIONS LEAGUE 2026", title_style))
+    elements.append(Spacer(1, 0.3 * inch))
+    elements.append(Paragraph("REGLEMENT OFFICIEL", styles["Heading2"]))
+    elements.append(Spacer(1, 0.5 * inch))
 
-    lines = [
-        "1. Conditions d'inscription :",
-        "- Une seule equipe par joueur.",
-        "- Paiement obligatoire via Airtel Money.",
-        "",
-        "2. Format de competition :",
-        "- 36 equipes.",
-        "- Phase de ligue : 8 matchs.",
-        "- Maximum 2 matchs par jour.",
-        "",
-        "3. Phases finales :",
-        "- Barrages, 1/8, Quarts, Demis en aller-retour.",
-        "- Finale : match unique (15 minutes).",
-        "",
-        "4. Regle des 48 heures :",
-        "- Match non joue = forfait 0-3.",
-        "",
-        "5. Repartition des recompenses :",
-        "- Champion : 12 000 CDF",
-        "- Vice-champion : 8 000 CDF",
-        "- 3e place : 5 000 CDF",
-        "- 4e place : 5 000 CDF",
-        "- 5e-8e : 1 500 CDF chacun",
-    ]
+    content = render_to_string("core/rules_pdf_content.html")
 
-    for line in lines:
-        p.drawString(50, y, line)
-        y -= 18
+    for line in content.split("\n"):
+        elements.append(Paragraph(line, normal_style))
+        elements.append(Spacer(1, 0.2 * inch))
 
-        if y < 50:
-            p.showPage()
-            p.setFont("Helvetica", 11)
-            y = height - 40
+    doc.build(elements)
 
-    p.save()
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="Reglement_GomaCL_{datetime.now().strftime("%Y%m%d")}.pdf"'
+
     return response
