@@ -37,6 +37,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # ✅ Cloudinary
+    'cloudinary',
+    'cloudinary_storage',
+
     'core',
 ]
 
@@ -74,13 +79,12 @@ TEMPLATES = [
 WSGI_APPLICATION = 'goma_cl.wsgi.application'
 
 # ======================================================
-# DATABASE CONFIGURATION (SAFE VERSION)
+# DATABASE
 # ======================================================
 
 DATABASE_URL = config('DATABASE_URL', default=None)
 
 if DATABASE_URL:
-    # ✅ Production (PostgreSQL)
     DATABASES = {
         'default': dj_database_url.parse(
             DATABASE_URL,
@@ -88,7 +92,6 @@ if DATABASE_URL:
         )
     }
 else:
-    # ✅ Local development (SQLite)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -101,18 +104,10 @@ else:
 # ======================================================
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
 # ======================================================
@@ -136,7 +131,7 @@ USE_I18N = True
 USE_TZ = True
 
 # ======================================================
-# STATIC & MEDIA FILES
+# STATIC FILES
 # ======================================================
 
 STATIC_URL = '/static/'
@@ -145,8 +140,23 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# ======================================================
+# MEDIA FILES (✅ Cloudinary)
+# ======================================================
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': config('CLOUDINARY_API_KEY'),
+    'API_SECRET': config('CLOUDINARY_API_SECRET'),
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+MEDIA_URL = '/media/'  # Pas utilisé réellement en production
+
+# ======================================================
+# DEFAULT PRIMARY KEY
+# ======================================================
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -159,7 +169,7 @@ LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'home'
 
 # ======================================================
-# SECURITY SETTINGS FOR PRODUCTION
+# SECURITY FOR PRODUCTION
 # ======================================================
 
 if not DEBUG:
