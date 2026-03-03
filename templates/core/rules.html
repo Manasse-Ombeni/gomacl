@@ -41,7 +41,6 @@
 <div class="card-body">
 <h4 class="text-success">2. Comment s'inscrire ?</h4>
 
-<h6 class="mt-3">Étapes :</h6>
 <ol>
 <li>Aller sur la page <strong>Inscription</strong>.</li>
 <li>Remplir les informations personnelles et équipe.</li>
@@ -109,26 +108,18 @@
 <div class="card-body">
 <h4 class="text-danger">5. Règle des 48 heures (Forfait)</h4>
 
-<p>
-Chaque match doit être joué dans les <strong>48 heures</strong> suivant la date prévue.
-</p>
+<p>Chaque match doit être joué dans les <strong>48 heures</strong> suivant la date prévue.</p>
 
-<h6>Si le match n’est pas joué :</h6>
 <ol>
-<li>Le joueur disponible doit aller dans <strong>Mes matchs</strong>.</li>
+<li>Aller dans <strong>Mes matchs</strong>.</li>
 <li>Cliquer sur <strong>Signaler un problème</strong>.</li>
 <li>Choisir la raison (adversaire absent / injoignable).</li>
-<li>Ajouter détails si nécessaire.</li>
 <li>Envoyer le signalement.</li>
 </ol>
 
-<p>
-L’administrateur examine le signalement et décide :
-</p>
-
 <ul>
 <li>Si un joueur est fautif → <strong>Forfait 0-3</strong></li>
-<li>Si les deux sont responsables → décision administrative</li>
+<li>Décision finale de l’administrateur.</li>
 </ul>
 
 <div class="alert alert-danger mt-3">
@@ -137,7 +128,7 @@ L’administrateur examine le signalement et décide :
 </div>
 </div>
 
-<!-- 6. RÉPARTITION -->
+<!-- 6. RÉPARTITION MISE À JOUR -->
 <div class="card dark-card mb-4 border-warning">
 <div class="card-body">
 <h4 class="text-warning">6. Répartition des récompenses</h4>
@@ -153,30 +144,26 @@ L’administrateur examine le signalement et décide :
 <tbody>
 <tr class="gold-row">
 <td>🥇 Champion</td>
-<td><strong>12 000</strong></td>
+<td><strong>18 000</strong></td>
 </tr>
 <tr class="silver-row">
-<td>🥈 Vice-champion</td>
-<td><strong>8 000</strong></td>
-</tr>
-<tr class="bronze-row">
-<td>🥉 3e place</td>
-<td><strong>5 000</strong></td>
+<td>🥈 Vice-Champion</td>
+<td><strong>10 000</strong></td>
 </tr>
 <tr>
-<td>🏅 4e place</td>
-<td><strong>5 000</strong></td>
+<td>🏅 Demi-finaliste 1</td>
+<td><strong>4 000</strong></td>
 </tr>
 <tr>
-<td>🎖️ 5e – 8e</td>
-<td><strong>1 500 chacun</strong></td>
+<td>🏅 Demi-finaliste 2</td>
+<td><strong>4 000</strong></td>
 </tr>
 </tbody>
 </table>
 </div>
 
 <div class="alert alert-success mt-3">
-✅ 100% des frais collectés sont redistribués.
+✅ Total redistribué : 36 000 CDF (100% des frais collectés).
 </div>
 </div>
 </div>
@@ -198,110 +185,49 @@ L’administrateur examine le signalement et décide :
 
 <style>
 .dark-rules {
-    background: linear-gradient(135deg,#0b1423,#00142d);
-    color:#e6edf7;
-    min-height: 100vh;
+background: linear-gradient(135deg,#0b1423,#00142d);
+color:#e6edf7;
+min-height: 100vh;
 }
 
-/* ✅ Texte principal */
 .dark-rules p,
-.dark-rules li,
-.dark-rules span,
-.dark-rules small {
-    color:#d8e3f5 !important;
+.dark-rules li {
+color:#d8e3f5 !important;
 }
 
-/* ✅ Titres */
-.dark-rules h1,
-.dark-rules h2,
-.dark-rules h3,
-.dark-rules h4,
-.dark-rules h5,
-.dark-rules h6 {
-    color:#ffffff !important;
+.dark-rules h4 {
+color:#ffffff !important;
 }
 
-/* ✅ Cards */
 .dark-card {
-    background:#111c2f;
-    border:1px solid #243552;
-    border-radius:18px;
-    box-shadow:0 0 25px rgba(0,61,130,0.25);
-    padding: 1rem;
-}
-
-/* ✅ Alerts */
-.dark-rules .alert {
-    background-color:#1a2d44 !important;
-    border:1px solid #2f4a73 !important;
-    color:#ffffff !important;
-}
-
-.dark-rules .alert-warning {
-    background-color:#3b3316 !important;
-}
-
-.dark-rules .alert-danger {
-    background-color:#3b1a1a !important;
-}
-
-.dark-rules .alert-success {
-    background-color:#1c3b2a !important;
-}
-
-/* ✅ Tableau */
-.reward-table {
-    border-radius:12px;
-    overflow:hidden;
+background:#111c2f;
+border:1px solid #243552;
+border-radius:18px;
+box-shadow:0 0 25px rgba(0,61,130,0.25);
 }
 
 .reward-table th {
-    background:#1f2e4a !important;
-    color:#ffd700 !important;
-    font-weight:600;
+background:#1f2e4a !important;
+color:#ffd700 !important;
 }
 
 .reward-table td {
-    background:#0f1a2c !important;
-    color:#e6edf7 !important;
-    border-color:#243552 !important;
+background:#0f1a2c !important;
+color:#e6edf7 !important;
+border-color:#243552 !important;
 }
 
-/* ✅ Podium rows */
-.gold-row {
-    background:rgba(255,215,0,0.18) !important;
-}
+.gold-row {background:rgba(255,215,0,0.18);}
+.silver-row {background:rgba(192,192,192,0.18);}
 
-.silver-row {
-    background:rgba(192,192,192,0.18) !important;
-}
-
-.bronze-row {
-    background:rgba(205,127,50,0.18) !important;
-}
-
-/* ✅ Boutons */
-.btn-danger {
-    border-radius:30px;
-    padding:8px 20px;
-    font-weight:600;
-    transition:0.3s;
-}
-
-.btn-danger:hover {
-    transform:scale(1.05);
-    box-shadow:0 0 20px rgba(220,53,69,0.6);
-}
-
-/* ✅ Ligne décorative titre */
 .section-title::after {
-    content:'';
-    display:block;
-    width:100px;
-    height:4px;
-    margin:15px auto 0;
-    background:linear-gradient(90deg,#003d82,#ffd700);
-    border-radius:2px;
+content:'';
+display:block;
+width:100px;
+height:4px;
+margin:15px auto 0;
+background:linear-gradient(90deg,#003d82,#ffd700);
+border-radius:2px;
 }
 </style>
 
