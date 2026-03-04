@@ -1,21 +1,21 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Dashboard - Goma Champions League 2026{% endblock %}
+{% block title %}Dashboard Admin - Goma Champions League{% endblock %}
 
 {% block content %}
-<section class="py-5 dashboard-bg">
+<section class="dashboard-section py-5">
 <div class="container-fluid">
 
 <!-- HEADER -->
 <div class="row mb-4 align-items-center">
     <div class="col">
         <h1 class="dashboard-title">
-            <i class="fas fa-tachometer-alt me-2"></i>
-            Dashboard Administrateur
+            <i class="fas fa-shield-alt me-2 text-warning"></i>
+            Panneau d’Administration
         </h1>
         <p class="dashboard-subtitle">
-            Bienvenue, <strong>{{ user.username }}</strong>
+            Connecté en tant que <strong>{{ user.username }}</strong>
         </p>
     </div>
     <div class="col-auto">
@@ -25,7 +25,7 @@
     </div>
 </div>
 
-<!-- STATISTIQUES -->
+<!-- STAT CARDS -->
 <div class="row g-4 mb-5">
 
     <div class="col-md-3">
@@ -70,138 +70,227 @@
 
 </div>
 
-<!-- ACTIONS PRINCIPALES -->
+<!-- ADMIN MODULES -->
 <div class="row g-4">
 
-    <!-- VALIDATION PAIEMENTS -->
-    <div class="col-md-6">
-        <div class="action-card highlight-card">
-            <h4><i class="fas fa-money-check-alt me-2"></i>Gestion des paiements</h4>
+<!-- GESTION COMPÉTITION -->
+<div class="col-md-4">
+    <div class="admin-card">
+        <h5><i class="fas fa-trophy me-2"></i>Compétition</h5>
 
-            {% if pending_teams > 0 %}
-            <p class="text-warning fw-bold">
-                {{ pending_teams }} paiement(s) en attente de validation.
-            </p>
-            <a href="{% url 'pending_payments' %}" class="btn btn-warning btn-lg w-100">
-                <i class="fas fa-check-circle me-2"></i>
-                Valider les paiements
-            </a>
-            {% else %}
-            <p class="text-success">
-                Aucun paiement en attente.
-            </p>
-            {% endif %}
-        </div>
+        <a href="{% url 'competition_list' %}" class="btn btn-outline-warning w-100 mb-2">
+            Gérer compétitions
+        </a>
+
+        <a href="{% url 'competition_create' %}" class="btn btn-outline-success w-100">
+            Créer compétition
+        </a>
     </div>
+</div>
 
-    <!-- COMMANDES AUTOMATIQUES -->
-    <div class="col-md-6">
-        <div class="action-card">
-            <h4><i class="fas fa-cogs me-2"></i>Commandes automatiques</h4>
+<!-- GESTION ÉQUIPES -->
+<div class="col-md-4">
+    <div class="admin-card">
+        <h5><i class="fas fa-users me-2"></i>Équipes</h5>
 
-            <div class="action-buttons">
+        <a href="{% url 'team_list' %}" class="btn btn-outline-primary w-100 mb-2">
+            Gérer équipes
+        </a>
 
-                <a href="{% url 'generate_calendar' %}" class="btn btn-primary">
-                    <i class="fas fa-calendar-plus me-2"></i>Générer calendrier
-                </a>
-
-                <a href="{% url 'generate_playoffs_view' %}" class="btn btn-success">
-                    <i class="fas fa-trophy me-2"></i>Générer playoffs
-                </a>
-
-                <a href="{% url 'check_forfeits_view' %}" class="btn btn-info">
-                    <i class="fas fa-search me-2"></i>Vérifier forfaits
-                </a>
-
-                <a href="{% url 'backup_database' %}" class="btn btn-dark">
-                    <i class="fas fa-database me-2"></i>Télécharger backup
-                </a>
-
-                <a href="{% url 'reset_competition_view' %}" class="btn btn-danger">
-                    <i class="fas fa-redo me-2"></i>Réinitialiser
-                </a>
-
-            </div>
-        </div>
+        {% if pending_teams > 0 %}
+        <a href="{% url 'pending_payments' %}" class="btn btn-warning w-100">
+            Valider paiements ({{ pending_teams }})
+        </a>
+        {% endif %}
     </div>
+</div>
+
+<!-- GESTION MATCHS -->
+<div class="col-md-4">
+    <div class="admin-card">
+        <h5><i class="fas fa-futbol me-2"></i>Matchs</h5>
+
+        <a href="{% url 'manage_matches' %}" class="btn btn-outline-info w-100 mb-2">
+            Gérer matchs
+        </a>
+
+        <a href="{% url 'generate_calendar' %}" class="btn btn-outline-success w-100">
+            Générer calendrier
+        </a>
+    </div>
+</div>
 
 </div>
 
+<!-- OUTILS -->
+<div class="row g-4 mt-4">
+
+<div class="col-md-6">
+    <div class="admin-card">
+        <h5><i class="fas fa-cogs me-2"></i>Outils automatiques</h5>
+
+        <a href="{% url 'generate_playoffs_view' %}" class="btn btn-outline-success w-100 mb-2">
+            Générer playoffs
+        </a>
+
+        <a href="{% url 'check_forfeits_view' %}" class="btn btn-outline-primary w-100 mb-2">
+            Vérifier forfaits
+        </a>
+
+        <a href="{% url 'backup_database' %}" class="btn btn-outline-dark w-100">
+            Télécharger backup
+        </a>
+    </div>
+</div>
+
+<div class="col-md-6">
+    <div class="admin-card danger-card">
+        <h5><i class="fas fa-exclamation-triangle me-2"></i>Danger Zone</h5>
+
+        <a href="{% url 'reset_competition_view' %}" class="btn btn-danger w-100">
+            Réinitialiser compétition
+        </a>
+    </div>
+</div>
+
+</div>
+
+</div>
+
+<div class="admin-card mt-4">
+    <h5><i class="fas fa-user-shield me-2"></i>Mon rôle</h5>
+
+    <p><strong>Rôle actuel :</strong> {{ request.user.userprofile.get_role_display }}</p>
+
+    <table class="table table-dark table-bordered text-center mt-3">
+        <tr>
+            <th>Module</th>
+            <th>Accès</th>
+        </tr>
+        <tr>
+            <td>Gestion Compétition</td>
+            <td>
+                {% if request.user.userprofile.role in 'superadmin organisateur' %}
+                ✅
+                {% else %}
+                ❌
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td>Validation Paiements</td>
+            <td>
+                {% if request.user.userprofile.role in 'superadmin paiement' %}
+                ✅
+                {% else %}
+                ❌
+                {% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td>Gestion Matchs</td>
+            <td>
+                {% if request.user.userprofile.role in 'superadmin match' %}
+                ✅
+                {% else %}
+                ❌
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- GESTION UTILISATEURS -->
+<div class="col-md-4">
+    <div class="admin-card">
+        <h5><i class="fas fa-user-shield me-2"></i>Utilisateurs & Rôles</h5>
+
+        {% if request.user.userprofile.role == 'superadmin' %}
+        <a href="{% url 'manage_users' %}" class="btn btn-outline-light w-100 mb-2">
+            <i class="fas fa-users-cog me-2"></i>
+            Gérer les utilisateurs
+        </a>
+        {% else %}
+        <div class="alert alert-warning text-center mb-0">
+            Accès réservé au Super Admin
+        </div>
+        {% endif %}
+    </div>
 </div>
 </section>
 
 <style>
 
 /* BACKGROUND */
-.dashboard-bg {
-    background: linear-gradient(135deg, #0b1423, #00142d);
-    color: #e6edf7;
+.dashboard-section {
+    background: linear-gradient(135deg,#0b1423,#00142d);
+    color:#e6edf7;
 }
 
-/* TITRE */
+/* HEADER */
 .dashboard-title {
-    font-weight: 700;
-    color: #ffd700;
+    font-weight:700;
+    color:#ffd700;
 }
 
 .dashboard-subtitle {
-    color: #d0d8e6;
+    color:#d0d8e6;
 }
 
 /* STAT CARDS */
 .stat-card {
-    background: #111c2f;
-    border-radius: 15px;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    box-shadow: 0 0 20px rgba(0,61,130,0.2);
-    transition: 0.3s;
+    background:#111c2f;
+    padding:20px;
+    border-radius:15px;
+    display:flex;
+    gap:15px;
+    align-items:center;
+    box-shadow:0 0 20px rgba(0,61,130,0.25);
+    transition:0.3s;
 }
 
 .stat-card:hover {
-    transform: translateY(-5px);
-}
-
-.warning-card {
-    border: 1px solid #ffc107;
+    transform:translateY(-5px);
 }
 
 .stat-icon {
-    font-size: 2rem;
-    color: #00a7e1;
+    font-size:2rem;
+    color:#00a7e1;
 }
 
-/* ACTION CARDS */
-.action-card {
-    background: #111c2f;
-    padding: 25px;
-    border-radius: 15px;
-    box-shadow: 0 0 20px rgba(0,61,130,0.2);
+.warning-card {
+    border:2px solid #ffc107;
 }
 
-.highlight-card {
-    border: 2px solid #ffc107;
+/* ADMIN CARDS */
+.admin-card {
+    background:#111c2f;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 0 20px rgba(0,61,130,0.25);
+    transition:0.3s;
 }
 
-.action-card h4 {
-    margin-bottom: 15px;
-    color: #ffffff;
+.admin-card:hover {
+    transform:translateY(-5px);
 }
 
-.action-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+.admin-card h5 {
+    margin-bottom:15px;
+    color:#ffffff;
 }
 
-.action-buttons .btn {
-    flex: 1 1 calc(50% - 5px);
+.danger-card {
+    border:2px solid #dc3545;
 }
 
-.btn-warning {
-    font-weight: 600;
+.btn-outline-warning,
+.btn-outline-primary,
+.btn-outline-success,
+.btn-outline-info,
+.btn-outline-dark {
+    border-radius:25px;
+    font-weight:500;
 }
 
 </style>

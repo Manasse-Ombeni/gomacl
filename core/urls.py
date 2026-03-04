@@ -39,6 +39,26 @@ urlpatterns = [
     path('dashboard/apply-forfeit/<int:match_id>/', views.apply_forfeit_manual, name='apply_forfeit_manual'),
     path('dashboard/backup/', views.backup_database, name='backup_database'),
     path('rules/pdf/', views.download_rules_pdf, name='download_rules_pdf'),
+    path('dashboard/manage-competition/', views.manage_competition, name='manage_competition'),
+    path('dashboard/manage-teams/', views.manage_teams, name='manage_teams'),
+    path('dashboard/manage-matches/', views.manage_matches, name='manage_matches'),
+
+
+    path('dashboard/competitions/', views.competition_list, name='competition_list'),
+    path('dashboard/competitions/create/', views.competition_create, name='competition_create'),
+    path('dashboard/competitions/<int:pk>/edit/', views.competition_edit, name='competition_edit'),
+    path('dashboard/competitions/<int:pk>/delete/', views.competition_delete, name='competition_delete'),
+    path('dashboard/teams/', views.team_list, name='team_list'),
+    path('dashboard/teams/<int:pk>/delete/', views.team_delete, name='team_delete'),
+    path('my-team/edit/', views.edit_my_team, name='edit_my_team'),
+    path('dashboard/teams/<int:pk>/edit/', views.edit_team, name='edit_team'),
+
+    path('dashboard/users/', views.manage_users, name='manage_users'),
+    path('dashboard/users/create/', views.create_user, name='create_user'),
+    path('dashboard/users/<int:pk>/edit/', views.edit_user, name='edit_user'),
+    path('dashboard/users/<int:pk>/delete/', views.delete_user, name='delete_user'),
+    path('dashboard/logs/', views.admin_logs, name='admin_logs'),
+    path('dashboard/users/<int:user_id>/role/', views.edit_user_role, name='edit_user_role'),
 ]
 
 

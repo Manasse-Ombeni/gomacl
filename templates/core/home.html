@@ -1,232 +1,340 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load i18n %}
 
-{% block title %}Accueil - Goma Champions League 2026{% endblock %}
+{% block title %}Goma Champions League 2026{% endblock %}
 
 {% block content %}
 
-<!-- HERO -->
-<section class="hero-section-premium">
-    <div class="container text-center hero-container">
+<!-- HERO – SOBRE, ÉLÉGANT, PROFESSIONNEL -->
+<section class="hero-pro">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    
+    <div class="container position-relative">
+        <div class="row justify-content-center text-center min-vh-100 d-flex align-items-center">
+            <div class="col-lg-10 col-xl-8">
 
-        <div class="hero-logo-wrapper mb-4">
-            <img src="{% static 'images/logo.png' %}" class="hero-logo">
-            <div class="logo-glow"></div>
+                <!-- LOGO PRINCIPAL – PARFAITEMENT DIMENSIONNÉ -->
+                <div class="text-center mb-5">
+                    <img src="{% static 'images/logo.png' %}" 
+                         class="main-logo img-fluid" 
+                         alt="Goma Champions League 2026"
+                         style="max-height: 180px;">
+                </div>
+
+                <!-- TITRE PRINCIPAL – ÉLÉGANT ET LISIBILE -->
+                <h1 class="display-3 fw-bold text-white mb-3" style="letter-spacing: 3px; text-shadow: 0 3px 10px rgba(0,0,0,0.6);">
+                    GOMA CHAMPIONS LEAGUE
+                </h1>
+                
+                <h2 class="display-6 text-gold fw-normal mb-5" style="letter-spacing: 6px;">
+                    PREMIÈRE ÉDITION • 2026
+                </h2>
+
+                <p class="lead fs-4 text-light mb-5" style="max-width: 700px; margin: 0 auto; opacity: 0.95;">
+                    Compétition officielle eFootball 2026 sur mobile<br>
+                    <span class="text-gold fw-semibold">Format UEFA Champions League – 36 équipes</span>
+                </p>
+
+                <!-- COMPTEUR + BOUTON INSCRIPTION -->
+                <div class="registration-section mb-5">
+                    {% if competition and competition.registration_open and not competition.is_registration_full %}
+                        <div class="counter-display mb-4">
+                            <span class="counter-number">{{ competition.registered_teams_count }}</span>
+                            <span class="counter-text"> / {{ competition.max_teams }} équipes inscrites</span>
+                        </div>
+                        <a href="{% url 'register_team' %}" class="btn-register">
+                            S'INSCRIRE MAINTENANT
+                        </a>
+                    {% else %}
+                        <div class="counter-closed">
+                            <i class="fas fa-lock me-2"></i>
+                            INSCRIPTIONS TERMINÉES
+                        </div>
+                    {% endif %}
+                </div>
+
+            </div>
         </div>
-
-        <h1 class="hero-title">
-            GOMA CHAMPIONS LEAGUE 2026
-        </h1>
-
-        <p class="hero-subtitle">
-            <i class="fas fa-gamepad me-2"></i>
-            Compétition officielle eFootball 2026 – Format UEFA
-        </p>
-
-        {% if competition and competition.registration_open and not competition.is_registration_full %}
-        <a href="{% url 'register_team' %}" class="btn hero-btn">
-            <i class="fas fa-user-plus me-2"></i>
-            S’INSCRIRE MAINTENANT
-        </a>
-        {% else %}
-        <button class="btn hero-btn-disabled" disabled>
-            <i class="fas fa-lock me-2"></i>
-            INSCRIPTIONS FERMÉES
-        </button>
-        {% endif %}
-
-        <div class="teams-counter mt-4">
-            {{ competition.registered_teams_count|default:"0" }} / {{ competition.max_teams|default:"36" }} équipes inscrites
-        </div>
-
     </div>
 </section>
 
-<!-- MATCHES -->
-<section class="section-dark py-5">
+<!-- PROCHAINS MATCHS -->
+<section class="py-6" style="background: #0f1623;">
     <div class="container">
-        <h2 class="section-title text-center mb-5 text-light">
-            <i class="fas fa-calendar-alt me-2"></i>
+        <h2 class="text-center text-gold mb-5 fw-semibold fs-1" style="letter-spacing: 2px;">
             PROCHAINS MATCHS
         </h2>
 
-        <div class="row g-4">
+        <div class="row g-4 justify-content-center">
             {% for match in upcoming_matches %}
-            <div class="col-md-4">
-                <div class="premium-card match-card-premium">
-                    <div class="match-date">
-                        {{ match.scheduled_date|date:"d/m/Y H:i" }}
-                    </div>
-                    <div class="match-teams-premium">
-                        <div>{{ match.home_team.abbreviation }}</div>
-                        <div class="vs">VS</div>
-                        <div>{{ match.away_team.abbreviation }}</div>
-                    </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="match-card-pro">
                     <div class="match-phase">
                         {{ match.phase.get_name_display }}
+                        {% if match.match_leg != 'unique' %} • {{ match.get_match_leg_display }}{% endif %}
+                    </div>
+                    <div class="match-date">
+                        {{ match.scheduled_date|date:"d F Y" }} à {{ match.scheduled_date|time:"H\\hi" }}
+                    </div>
+                    <div class="match-versus">
+                        <div class="team">
+                            <div class="abbr">{{ match.home_team.abbreviation }}</div>
+                            <div class="name">{{ match.home_team.team_name }}</div>
+                        </div>
+                        <div class="vs">VS</div>
+                        <div class="team">
+                            <div class="abbr">{{ match.away_team.abbreviation }}</div>
+                            <div class="name">{{ match.away_team.team_name }}</div>
+                        </div>
                     </div>
                 </div>
             </div>
             {% empty %}
-            <div class="text-center text-light">
-                Aucun match prévu.
+            <div class="text-center py-6">
+                <p class="text-light fs-3">La compétition débutera bientôt...</p>
             </div>
             {% endfor %}
         </div>
     </div>
 </section>
 
-<!-- TOP 8 -->
-<section class="py-5 section-light">
+<!-- CLASSEMENT TOP 8 -->
+<section class="py-6" style="background: #0b121e;">
     <div class="container">
-        <h2 class="section-title text-center mb-5">
-            <i class="fas fa-trophy me-2"></i>
-            TOP 8
+        <h2 class="text-center text-gold mb-5 fw-semibold fs-1" style="letter-spacing: 2px;">
+            CLASSEMENT ACTUEL
         </h2>
 
         <div class="table-responsive">
-            <table class="table table-hover table-dark table-premium text-center">
+            <table class="table standings-table">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>Équipe</th>
-                        <th>Pts</th>
-                        <th>+/-</th>
+                        <th class="text-gold">POS</th>
+                        <th class="text-start">ÉQUIPE</th>
+                        <th>PTS</th>
+                        <th>DIFF</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for team in top_teams %}
-                    <tr>
-                        <td>{{ forloop.counter }}</td>
-                        <td>{{ team.team_name }} ({{ team.abbreviation }})</td>
-                        <td><strong>{{ team.points }}</strong></td>
-                        <td>{{ team.goal_difference|stringformat:"+d" }}</td>
+                    <tr class="{% if forloop.counter == 1 %}leader{% elif forloop.counter <= 16 %}qualified{% endif %}">
+                        <td class="position">{{ forloop.counter }}</td>
+                        <td class="team-name">
+                            <span class="abbr me-3">[{{ team.abbreviation }}]</span>
+                            {{ team.team_name }}
+                        </td>
+                        <td class="points">{{ team.points }}</td>
+                        <td class="diff {% if team.goal_difference > 0 %}positive{% elif team.goal_difference < 0 %}negative{% endif %}">
+                            {{ team.goal_difference|stringformat:"+d" }}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
 
-        <div class="text-center mt-4">
-            <a href="{% url 'standings' %}" class="btn btn-outline-primary">
-                Voir classement complet
+        <div class="text-center mt-5">
+            <a href="{% url 'standings' %}" class="btn-view-more">
+                Voir le classement complet →
             </a>
         </div>
     </div>
 </section>
 
 <style>
-
-/* HERO */
-.hero-section-premium {
-    background: linear-gradient(135deg,#0b1423,#001a33);
-    color:white;
-    padding:100px 0;
-    position:relative;
-    overflow:hidden;
+/* FOND DOUX ET PROFESSIONNEL */
+.hero-pro {
+    position: relative;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0a0e17 0%, #0f1a2d 50%, #0b1425 100%);
+    overflow: hidden;
 }
 
-.hero-title {
-    font-size:2.8rem;
-    font-weight:700;
-    letter-spacing:1px;
+.hero-bg {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?ixlib=rb-4.0.3&auto=format&fit=crop&q=80') center/cover no-repeat;
+    opacity: 0.15;
+    filter: blur(1px);
 }
 
-.hero-subtitle {
-    font-size:1.1rem;
-    opacity:0.9;
+.hero-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to bottom, rgba(10,14,23,0.9), rgba(11,20,30,0.95));
 }
 
-.hero-logo {
-    width:160px;
+/* POLICES PARFAITEMENT ÉQUILIBRÉES */
+.display-3 { font-size: 4.2rem; }
+.display-6 { font-size: 1.8rem; }
+.lead.fs-4 { font-size: 1.25rem !important; }
+
+/* COULEURS DOUCES ET PROFESSIONNELLES */
+.text-gold { color: #e6c200 !important; } /* Or plus doux, moins piquant */
+.counter-number { color: #e6c200; font-size: 4rem; font-weight: 700; }
+.counter-text { color: #aaa; font-size: 1.4rem; }
+
+/* BOUTON INSCRIPTION – LUXE SOBRE */
+.btn-register {
+    background: linear-gradient(135deg, #003d82, #0055a5);
+    color: white;
+    padding: 18px 60px;
+    font-size: 1.35rem;
+    font-weight: 600;
+    border-radius: 50px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0,61,130,0.4);
+    transition: all 0.4s;
 }
 
-.logo-glow {
-    position:absolute;
-    width:220px;
-    height:220px;
-    background:radial-gradient(circle,rgba(255,215,0,0.4),transparent 70%);
-    top:20%;
-    left:50%;
-    transform:translateX(-50%);
-    animation:glow 3s infinite;
+.btn-register:hover {
+    background: linear-gradient(135deg, #0055a5, #0066cc);
+    transform: translateY(-4px);
+    box-shadow: 0 15px 40px rgba(0,102,204,0.5);
+    color: white;
 }
 
-@keyframes glow {
-    0%{opacity:0.6;}
-    50%{opacity:1;}
-    100%{opacity:0.6;}
+.counter-closed {
+    background: rgba(220,53,69,0.15);
+    color: #ff6b6b;
+    padding: 25px 50px;
+    border-radius: 50px;
+    border: 2px solid #dc3545;
+    font-size: 1.5rem;
+    font-weight: 600;
 }
 
-.hero-btn {
-    background:linear-gradient(90deg,#003d82,#00a7e1);
-    border:none;
-    padding:12px 30px;
-    font-weight:600;
-    border-radius:30px;
-    color:white;
-    transition:0.3s;
+/* CARTES MATCHS – PROPRES ET ÉLÉGANTES */
+.match-card-pro {
+    background: rgba(17,28,47,0.7);
+    border: 1px solid rgba(255,215,0,0.15);
+    border-radius: 16px;
+    padding: 28px 20px;
+    text-align: center;
+    transition: all 0.4s;
+    backdrop-filter: blur(10px);
 }
 
-.hero-btn:hover {
-    transform:scale(1.05);
-    box-shadow:0 0 20px rgba(0,167,225,0.6);
+.match-card-pro:hover {
+    border-color: #e6c200;
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
 }
 
-.hero-btn-disabled {
-    background:#555;
-    border-radius:30px;
-    padding:12px 30px;
-    color:white;
+.match-phase {
+    background: linear-gradient(135deg, #003d82, #0055a5);
+    color: white;
+    padding: 8px 20px;
+    border-radius: 30px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: inline-block;
+    margin-bottom: 16px;
 }
 
-.teams-counter {
-    font-weight:600;
-    margin-top:15px;
-    color:#ffd700;
+.match-date {
+    color: #00a7e1;
+    font-size: 1rem;
+    margin-bottom: 20px;
+    font-weight: 500;
 }
 
-/* SECTION DARK */
-.section-dark {
-    background:#0f1a2c;
+.match-versus {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px 0;
 }
 
-/* PREMIUM CARD */
-.premium-card {
-    background:#111c2f;
-    border-radius:18px;
-    padding:25px;
-    box-shadow:0 0 20px rgba(0,61,130,0.3);
-    transition:0.3s;
-    color:white;
+.match-versus .team .abbr {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #e6c200;
 }
 
-.premium-card:hover {
-    transform:translateY(-5px);
+.match-versus .team .name {
+    font-size: 0.95rem;
+    color: #ccc;
+    margin-top: 4px;
 }
 
-.match-teams-premium {
-    display:flex;
-    justify-content:space-between;
-    font-size:1.3rem;
-    font-weight:700;
+.match-versus .vs {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: #e6c200;
 }
 
-.vs {
-    color:#ffd700;
+/* TABLEAU CLASSEMENT – SOBRE ET PRO */
+.standings-table {
+    background: transparent;
+    color: #ddd;
 }
 
-/* TABLE */
-.table-premium th {
-    background:#1f2e4a;
-    color:#ffd700;
+.standings-table thead th {
+    background: rgba(0,61,130,0.6);
+    color: #e6c200;
+    border: none;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
 }
 
-.section-light {
-    background:#f4f6f9;
+.standings-table tbody tr {
+    background: rgba(17,28,47,0.5);
+    border-bottom: 1px solid rgba(255,215,0,0.1);
 }
 
+.standings-table tbody tr:hover {
+    background: rgba(230,194,0,0.1);
+}
+
+.leader {
+    background: rgba(230,194,0,0.15) !important;
+    border-left: 4px solid #e6c200 !important;
+}
+
+.qualified {
+    border-left: 3px solid #00a7e1;
+}
+
+.position {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #e6c200;
+}
+
+.points {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #e6c200;
+}
+
+.positive { color: #28a745; }
+.negative { color: #dc3545; }
+
+.btn-view-more {
+    background: transparent;
+    border: 2px solid #e6c200;
+    color: #e6c200;
+    padding: 14px 40px;
+    border-radius: 50px;
+    font-weight: 600;
+    transition: all 0.4s;
+}
+
+.btn-view-more:hover {
+    background: #e6c200;
+    color: #000;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .display-3 { font-size: 3rem; }
+    .main-logo { max-height: 140px; }
+    .btn-register { padding: 16px 40px; font-size: 1.2rem; }
+    .match-versus .abbr { font-size: 1.8rem; }
+}
 </style>
-
 {% endblock %}

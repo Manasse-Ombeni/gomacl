@@ -5,124 +5,111 @@
 
 {% block content %}
 <section class="py-5">
-    <div class="container">
-        <h1 class="section-title text-center mb-5">
-            <i class="fas fa-futbol me-2"></i>
-            MES MATCHS
-        </h1>
-        
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle me-2"></i>
-            <strong>{{ team.team_name }} ({{ team.abbreviation }})</strong> - {{ team.player_name }}
-        </div>
-        
-        <!-- Prochains matchs -->
-        <h3 class="mb-3">
-            <i class="fas fa-calendar-alt me-2"></i>
-            Matchs à venir
-        </h3>
-        
-        {% if upcoming_matches %}
-        <div class="row g-3 mb-5">
-            {% for match in upcoming_matches %}
-            <div class="col-md-6">
-                <div class="match-card {% if match.is_late %}late-match{% endif %}">
-                    <div class="match-date">
-                        <i class="far fa-calendar me-2"></i>
-                        {{ match.scheduled_date|date:"d/m/Y H:i" }}
-                        {% if match.is_late %}
-                        <span class="badge bg-danger ms-2">En retard !</span>
-                        {% endif %}
-                    </div>
-                    <div class="match-teams">
-                        <div class="team">
-                            <span {% if match.home_team == team %}class="my-team"{% endif %}>
-                                {{ match.home_team.abbreviation }}
-                            </span>
-                        </div>
-                        <div class="vs">VS</div>
-                        <div class="team">
-                            <span {% if match.away_team == team %}class="my-team"{% endif %}>
-                                {{ match.away_team.abbreviation }}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="match-actions">
-                        {% if not match.reported %}
-                        <a href="{% url 'report_match' match.id %}" class="btn btn-sm btn-warning">
-                            <i class="fas fa-flag me-1"></i>
-                            Signaler un problème
-                        </a>
-                        {% else %}
-                        <span class="badge bg-warning">
-                            <i class="fas fa-clock me-1"></i>
-                            Signalé - En attente de traitement
-                        </span>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <p class="text-muted">Aucun match à venir.</p>
-        {% endif %}
-        
-        <!-- Matchs joués -->
-        <h3 class="mb-3">
-            <i class="fas fa-history me-2"></i>
-            Derniers matchs joués
-        </h3>
-        
-        {% if played_matches %}
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Match</th>
-                        <th>Score</th>
-                        <th>Résultat</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for match in played_matches %}
-                    <tr>
-                        <td>{{ match.played_date|date:"d/m/Y" }}</td>
-                        <td>{{ match.home_team.abbreviation }} vs {{ match.away_team.abbreviation }}</td>
-                        <td><strong>{{ match.home_score }} - {{ match.away_score }}</strong></td>
-                        <td>
-                            {% if match.is_forfeit %}
-                            <span class="badge bg-danger">Forfait</span>
-                            {% else %}
-                            {% if match.home_team == team %}
-                                {% if match.home_score > match.away_score %}
-                                <span class="badge bg-success">Victoire</span>
-                                {% elif match.home_score < match.away_score %}
-                                <span class="badge bg-danger">Défaite</span>
-                                {% else %}
-                                <span class="badge bg-secondary">Nul</span>
-                                {% endif %}
-                            {% else %}
-                                {% if match.away_score > match.home_score %}
-                                <span class="badge bg-success">Victoire</span>
-                                {% elif match.away_score < match.home_score %}
-                                <span class="badge bg-danger">Défaite</span>
-                                {% else %}
-                                <span class="badge bg-secondary">Nul</span>
-                                {% endif %}
-                            {% endif %}
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <p class="text-muted">Aucun match joué.</p>
-        {% endif %}
+<div class="container">
+
+<h1 class="section-title text-center mb-4">
+    <i class="fas fa-futbol me-2"></i>
+    MES MATCHS
+</h1>
+
+<!-- ✅ STATUT PAIEMENT -->
+{% if not team.payment_validated %}
+<div class="alert alert-warning text-center mb-4">
+    <i class="fas fa-hourglass-half me-2"></i>
+    <strong>Votre inscription est en attente de validation.</strong><br>
+    Envoyez la preuve de paiement dans le groupe WhatsApp officiel.
+</div>
+{% else %}
+<div class="alert alert-success text-center mb-4">
+    <i class="fas fa-check-circle me-2"></i>
+    <strong>Paiement validé ✅ Vous pouvez jouer vos matchs.</strong>
+</div>
+{% endif %}
+
+<!-- ✅ INFOS ÉQUIPE -->
+<div class="card mb-4 text-center">
+    <div class="card-body">
+        <h4>{{ team.team_name }}</h4>
+        <p class="text-muted">({{ team.abbreviation }})</p>
+        <p>{{ team.player_name }}</p>
     </div>
+</div>
+
+{% if team.payment_validated %}
+
+<h4 class="mb-3">Matchs à venir</h4>
+
+{% if upcoming_matches %}
+<div class="row g-4 mb-5">
+    {% for match in upcoming_matches %}
+    <div class="col-md-6">
+        <div class="card p-3">
+            <div class="text-center mb-2">
+                <strong>{{ match.scheduled_date|date:"d/m/Y H:i" }}</strong>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center">
+                <span>{{ match.home_team.abbreviation }}</span>
+                <span class="fw-bold text-primary">VS</span>
+                <span>{{ match.away_team.abbreviation }}</span>
+            </div>
+
+            {% if not match.is_played %}
+            <div class="text-center mt-3">
+                {% if not match.reported %}
+                <a href="{% url 'report_match' match.id %}" class="btn btn-warning btn-sm">
+                    <i class="fas fa-flag me-1"></i> Signaler problème
+                </a>
+                {% else %}
+                <span class="badge bg-info">Signalé</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p class="text-muted">Aucun match à venir.</p>
+{% endif %}
+
+<h4 class="mb-3">Matchs joués</h4>
+
+{% if played_matches %}
+<table class="table table-striped text-center">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Match</th>
+            <th>Score</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for match in played_matches %}
+        <tr>
+            <td>{{ match.played_date|date:"d/m/Y" }}</td>
+            <td>{{ match.home_team.abbreviation }} vs {{ match.away_team.abbreviation }}</td>
+            <td><strong>{{ match.home_score }} - {{ match.away_score }}</strong></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="text-muted">Aucun match joué.</p>
+{% endif %}
+
+{% else %}
+
+<div class="text-center py-5">
+    <i class="fas fa-lock fa-4x text-danger mb-3"></i>
+    <p class="text-danger">
+        Vous ne pouvez pas accéder aux matchs tant que votre paiement n’est pas validé.
+    </p>
+</div>
+
+{% endif %}
+
+</div>
 </section>
 
 <style>
@@ -141,4 +128,5 @@
     margin-top: 1rem;
 }
 </style>
+
 {% endblock %}

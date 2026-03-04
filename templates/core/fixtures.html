@@ -1,139 +1,139 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Calendrier - Goma Champions League 2026{% endblock %}
+{% block title %}Calendrier Officiel - Goma Champions League 2026{% endblock %}
 
 {% block content %}
-<section class="py-5">
+<section class="calendar-pro py-6">
     <div class="container">
 
-        <h1 class="section-title text-center mb-5">
-            <i class="fas fa-calendar-alt me-2"></i>
-            CALENDRIER DES MATCHS
-        </h1>
+        <!-- TITRE PRINCIPAL -->
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold text-white mb-3" style="letter-spacing: 2px;">
+                CALENDRIER OFFICIEL
+            </h1>
+            <p class="lead text-gold">Goma Champions League • Première édition 2026</p>
+        </div>
 
-        <!-- ✅ Bouton PDF Admin -->
+        <!-- BOUTON PDF ADMIN -->
         {% if user.is_authenticated and user.is_staff %}
-        <div class="text-end mb-4">
-            <a href="{% url 'download_calendar_pdf' %}" class="btn btn-danger">
-                <i class="fas fa-file-pdf me-2"></i>
-                Télécharger le calendrier (PDF)
+        <div class="text-end mb-5">
+            <a href="{% url 'download_calendar_pdf' %}" class="btn btn-pdf-pro">
+                <i class="fas fa-file-pdf fa-lg me-2"></i>
+                Télécharger le calendrier complet (PDF)
             </a>
         </div>
         {% endif %}
 
         {% if phases %}
             {% for phase in phases %}
-            <div class="phase-section mb-5">
+            <div class="phase-block mb-6">
 
-                <h3 class="phase-title">
-                    <i class="fas fa-layer-group me-2"></i>
-                    {{ phase.get_name_display }}
-                </h3>
+                <!-- NOM DE LA PHASE -->
+                <div class="phase-header">
+                    <h2 class="phase-name">
+                        <i class="fas fa-layer-group me-3"></i>
+                        {{ phase.get_name_display }}
+                    </h2>
+                </div>
 
                 {% if phase.matches.all %}
                 <div class="row g-4">
                     {% for match in phase.matches.all %}
                     <div class="col-md-6 col-lg-4">
+                        <div class="match-card-pro {% if match.is_played %}played{% elif match.is_late and not match.is_played %}late{% endif %}">
 
-                        <div class="match-card 
-                            {% if match.is_played %}match-played{% endif %}
-                            {% if match.is_late and not match.is_played %}match-late{% endif %}">
-
-                            <!-- Date -->
-                            <div class="match-date">
-                                <i class="far fa-calendar me-2"></i>
-                                {{ match.scheduled_date|date:"d/m/Y H:i" }}
+                            <!-- DATE & HEURE -->
+                            <div class="match-date-pro">
+                                <div class="date-icon">
+                                    <i class="far fa-calendar-alt"></i>
+                                </div>
+                                <div>
+                                    <div class="day">{{ match.scheduled_date|date:"d" }}</div>
+                                    <div class="month">{{ match.scheduled_date|date:"M" }}</div>
+                                    <div class="time">{{ match.scheduled_date|time:"H\\hi" }}</div>
+                                </div>
                             </div>
 
-                            <!-- Teams -->
-                            <div class="match-teams">
+                            <!-- MATCH -->
+                            <div class="match-details">
 
-                                <div class="team text-start">
-                                    <strong>{{ match.home_team.team_name }}</strong>
-                                    <small class="d-block text-muted">
-                                        ({{ match.home_team.abbreviation }})
-                                    </small>
+                                <div class="team-home">
+                                    <div class="team-abbr">{{ match.home_team.abbreviation }}</div>
+                                    <div class="team-name">{{ match.home_team.team_name }}</div>
                                 </div>
 
-                                <div class="vs text-center">
+                                <div class="match-score">
                                     {% if match.is_played %}
-                                        <span class="score">
-                                            {{ match.home_score }} - {{ match.away_score }}
-                                        </span>
+                                        <span class="score-final">{{ match.home_score }} - {{ match.away_score }}</span>
+                                        {% if match.home_extra_time or match.away_extra_time %}
+                                            <small class="extra-time">
+                                                ({{ match.home_extra_time|default:0 }} - {{ match.away_extra_time|default:0 }} ap)
+                                            </small>
+                                        {% endif %}
+                                        {% if match.home_penalties is not None %}
+                                            <small class="penalties">
+                                                ({{ match.home_penalties }} - {{ match.away_penalties }} tab)
+                                            </small>
+                                        {% endif %}
                                     {% else %}
-                                        VS
+                                        <span class="vs-pro">VS</span>
                                     {% endif %}
                                 </div>
 
-                                <div class="team text-end">
-                                    <strong>{{ match.away_team.team_name }}</strong>
-                                    <small class="d-block text-muted">
-                                        ({{ match.away_team.abbreviation }})
-                                    </small>
+                                <div class="team-away text-end">
+                                    <div class="team-abbr">{{ match.away_team.abbreviation }}</div>
+                                    <div class="team-name">{{ match.away_team.team_name }}</div>
                                 </div>
-
                             </div>
 
-                            <!-- Phase & Type -->
-                            <div class="text-center mt-2">
-                                <span class="badge bg-info">
-                                    {{ match.phase.get_name_display }}
-                                </span>
-
+                            <!-- TYPE DE MATCH -->
+                            {% if match.match_leg != 'unique' or match.is_forfeit %}
+                            <div class="match-info-badges">
                                 {% if match.match_leg != 'unique' %}
-                                <span class="badge bg-secondary">
-                                    {{ match.get_match_leg_display }}
-                                </span>
+                                    <span class="badge-leg">{{ match.get_match_leg_display }}</span>
+                                {% endif %}
+                                {% if match.is_forfeit %}
+                                    <span class="badge-forfeit">FORFAIT</span>
                                 {% endif %}
                             </div>
+                            {% endif %}
 
-                            <!-- STATUS / ACTION -->
-                            <div class="match-footer mt-3 text-center">
-
+                            <!-- STATUT / ACTION -->
+                            <div class="match-status">
                                 {% if match.is_forfeit %}
-                                    <span class="badge bg-danger">
-                                        ❌ FORFAIT
-                                    </span>
+                                    <span class="status forfeit">Match annulé (forfait)</span>
 
                                 {% elif match.is_played %}
-                                    
+                                    <span class="status played">
+                                        <i class="fas fa-check-circle me-1"></i> Terminé
+                                    </span>
                                     {% if user.is_staff %}
-                                        <a href="{% url 'encode_result' match.id %}" 
-                                           class="btn btn-sm btn-warning">
-                                            <i class="fas fa-edit me-1"></i>
-                                            Modifier
+                                        <a href="{% url 'encode_result' match.id %}" class="btn-edit-sm">
+                                            Modifier résultat
                                         </a>
-                                    {% else %}
-                                        <span class="badge bg-success">
-                                            ✅ TERMINÉ
-                                        </span>
+                                    {% endif %}
+
+                                {% elif match.is_late %}
+                                    <span class="status late">
+                                        <i class="fas fa-exclamation-triangle me-1"></i> En retard
+                                    </span>
+                                    {% if user.is_staff %}
+                                        <a href="{% url 'encode_result' match.id %}" class="btn-edit-sm">
+                                            Encoder maintenant
+                                        </a>
                                     {% endif %}
 
                                 {% else %}
-                                    
+                                    <span class="status upcoming">
+                                        <i class="far fa-clock me-1"></i> À venir
+                                    </span>
                                     {% if user.is_staff %}
-                                        <a href="{% url 'encode_result' match.id %}" 
-                                           class="btn btn-sm btn-success">
-                                            <i class="fas fa-pen me-1"></i>
-                                            Encoder
+                                        <a href="{% url 'encode_result' match.id %}" class="btn-edit-sm">
+                                            Encoder résultat
                                         </a>
-                                    {% else %}
-                                        <span class="badge bg-primary">
-                                            ⏳ À VENIR
-                                        </span>
                                     {% endif %}
-
                                 {% endif %}
-
-                                {% if match.is_late and not match.is_played %}
-                                    <div class="mt-2">
-                                        <span class="badge bg-danger">
-                                            ⚠️ EN RETARD
-                                        </span>
-                                    </div>
-                                {% endif %}
-
                             </div>
 
                         </div>
@@ -141,82 +141,259 @@
                     {% endfor %}
                 </div>
                 {% else %}
-                <p class="text-muted">Aucun match prévu pour cette phase.</p>
+                <div class="text-center py-5">
+                    <p class="text-light fs-4 opacity-75">Aucun match programmé pour cette phase.</p>
+                </div>
                 {% endif %}
 
             </div>
             {% endfor %}
         {% else %}
-        <p class="text-center text-muted">
-            Le calendrier sera bientôt disponible.
-        </p>
+        <div class="text-center py-6">
+            <h3 class="text-light">Le calendrier sera publié très prochainement</h3>
+            <p class="text-gold fs-5">Préparez vos équipes champions...</p>
+        </div>
         {% endif %}
+
     </div>
 </section>
 
 <style>
-.phase-section {
-    background: white;
-    padding: 2rem;
-    border-radius: 15px;
-    box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+.calendar-pro {
+    background: linear-gradient(135deg, #0a0e17 0%, #0f1a2d 100%);
+    min-height: 100vh;
+    color: #eee;
 }
 
-.phase-title {
+.phase-block {
+    background: rgba(17, 28, 47, 0.6);
+    border-radius: 20px;
+    padding: 35px;
+    margin-bottom: 50px;
+    border: 1px solid rgba(230, 194, 0, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.phase-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.phase-name {
+    font-size: 2.2rem;
     font-weight: 700;
-    border-bottom: 3px solid var(--gold-color);
-    padding-bottom: 8px;
+    color: #e6c200;
+    letter-spacing: 2px;
+    position: relative;
+    display: inline-block;
 }
 
-.match-card {
-    background: white;
-    border-radius: 15px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    transition: 0.3s ease;
+.phase-name::after {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, #e6c200, transparent);
+    border-radius: 2px;
 }
 
-.match-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 18px rgba(0,0,0,0.2);
+/* CARTE MATCH PRO */
+.match-card-pro {
+    background: rgba(20, 30, 50, 0.95);
+    border-radius: 18px;
+    padding: 28px 24px;
+    transition: all 0.4s ease;
+    border: 1px solid rgba(230, 194, 0, 0.15);
+    position: relative;
+    overflow: hidden;
 }
 
-.match-played {
+.match-card-pro::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #003d82, #e6c200, #003d82);
+    border-radius: 18px 18px 0 0;
+}
+
+.match-card-pro:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    border-color: #e6c200;
+}
+
+.match-card-pro.played {
     border-left: 5px solid #28a745;
 }
 
-.match-late {
+.match-card-pro.late {
     border-left: 5px solid #dc3545;
+    animation: pulse-late 2s infinite;
 }
 
-.match-date {
-    font-size: 0.85rem;
-    color: #6c757d;
-    text-align: center;
-    margin-bottom: 1rem;
+@keyframes pulse-late {
+    0%, 100% { box-shadow: 0 0 0 rgba(220,53,69,0.4); }
+    50% { box-shadow: 0 0 20px rgba(220,53,69,0.8); }
 }
 
-.match-teams {
+/* DATE PRO */
+.match-date-pro {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    color: #00a7e1;
+    font-weight: 600;
+}
+
+.date-icon {
+    font-size: 2.2rem;
+    margin-right: 15px;
+}
+
+.day { font-size: 2.5rem; font-weight: 800; line-height: 1; }
+.month { font-size: 1rem; text-transform: uppercase; letter-spacing: 2px; }
+.time { font-size: 1.1rem; margin-top: 4px; }
+
+/* MATCH DETAILS */
+.match-details {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin: 25px 0;
 }
 
-.vs {
+.team-home, .team-away {
+    flex: 1;
+}
+
+.team-abbr {
+    font-size: 2.4rem;
+    font-weight: 900;
+    color: #e6c200;
+    line-height: 1;
+}
+
+.team-name {
+    font-size: 0.95rem;
+    color: #ccc;
+    margin-top: 6px;
+    opacity: 0.9;
+}
+
+.match-score {
+    text-align: center;
+    min-width: 100px;
+}
+
+.vs-pro {
+    font-size: 2rem;
+    font-weight: 900;
+    color: #e6c200;
+}
+
+.score-final {
+    font-size: 2.4rem;
+    font-weight: 900;
+    color: #e6c200;
+}
+
+.extra-time, .penalties {
+    display: block;
+    font-size: 0.8rem;
+    color: #aaa;
+    margin-top: 4px;
+}
+
+/* BADGES */
+.match-info-badges {
+    text-align: center;
+    margin: 15px 0;
+}
+
+.badge-leg {
+    background: #003d82;
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.badge-forfeit {
+    background: #dc3545;
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
     font-weight: 700;
-    font-size: 1.2rem;
-    color: var(--primary-color);
 }
 
-.score {
-    font-size: 1.4rem;
-    font-weight: 700;
+/* STATUT */
+.match-status {
+    text-align: center;
+    padding-top: 15px;
+    border-top: 1px solid rgba(230,194,0,0.2);
 }
 
-.match-footer {
-    border-top: 1px solid #eee;
-    padding-top: 10px;
+.status {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.status.played { color: #28a745; }
+.status.upcoming { color: #00a7e1; }
+.status.late { color: #dc3545; font-weight: 700; }
+.status.forfeit { color: #dc3545; }
+
+.btn-edit-sm {
+    background: transparent;
+    border: 1.5px solid #e6c200;
+    color: #e6c200;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    transition: all 0.3s;
+}
+
+.btn-edit-sm:hover {
+    background: #e6c200;
+    color: #000;
+}
+
+/* BOUTON PDF */
+.btn-pdf-pro {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+    padding: 14px 30px;
+    border-radius: 50px;
+    font-weight: 600;
+    box-shadow: 0 8px 25px rgba(220,53,69,0.4);
+}
+
+.btn-pdf-pro:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 35px rgba(220,53,69,0.6);
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .match-details {
+        flex-direction: column;
+        gap: 15px;
+    }
+    .match-score {
+        order: -1;
+        margin-bottom: 10px;
+    }
+    .team-home, .team-away {
+        text-align: center;
+    }
 }
 </style>
-
 {% endblock %}

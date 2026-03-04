@@ -1,0 +1,47 @@
+{% extends 'core/admin/base_admin.html' %}
+
+{% block admin_content %}
+
+<div class="admin-card">
+
+<h4>Modifier rôle : {{ user_obj.username }}</h4>
+
+<form method="post">
+{% csrf_token %}
+
+<div class="mb-3">
+    <label class="form-label">Rôle :</label>
+    <select name="role" class="form-select">
+
+        <option value="superadmin" {% if profile.role == "superadmin" %}selected{% endif %}>
+            Super Admin
+        </option>
+
+        <option value="organisateur" {% if profile.role == "organisateur" %}selected{% endif %}>
+            Organisateur
+        </option>
+
+        <option value="paiement" {% if profile.role == "paiement" %}selected{% endif %}>
+            Modérateur Paiements
+        </option>
+
+        <option value="match" {% if profile.role == "match" %}selected{% endif %}>
+            Gestionnaire Matchs
+        </option>
+
+    </select>
+</div>
+
+<button type="submit" class="btn btn-success">
+    Enregistrer
+</button>
+
+<a href="{% url 'team_list' %}" class="btn btn-secondary ms-2">
+    Retour
+</a>
+
+</form>
+
+</div>
+
+{% endblock %}

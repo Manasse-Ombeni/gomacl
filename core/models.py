@@ -5,6 +5,10 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from datetime import timedelta
 
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+
 # ==========================================
 # MODÈLE : COMPÉTITION
 # ==========================================
@@ -75,14 +79,21 @@ class Team(models.Model):
     phone_regex = RegexValidator(regex=r'^\+?1?\d{9,15}$', message=_("Format: '+243999999999'"))
     whatsapp = models.CharField(validators=[phone_regex], max_length=17, verbose_name=_("WhatsApp"))
     
-    # Logo/Photo (optionnel)
-    logo = models.ImageField(upload_to='team_logos/', null=True, blank=True, verbose_name=_("Logo"))
-    
-    # Paiement
-    payment_proof = models.ImageField(upload_to='payment_proofs/', null=True, blank=True, verbose_name=_("Preuve de paiement"))
+        # ✅ Paiement (validation manuelle via WhatsApp)
     payment_validated = models.BooleanField(default=False, verbose_name=_("Paiement validé"))
-    payment_validated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='validated_payments', verbose_name=_("Validé par"))
-    payment_validated_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Date de validation"))
+    payment_validated_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='validated_payments',
+        verbose_name=_("Validé par")
+    )
+    payment_validated_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("Date de validation")
+    )
     
     # Statistiques
     played = models.IntegerField(default=0, verbose_name=_("Matchs joués"))
@@ -342,3 +353,34 @@ class News(models.Model):
     
     def __str__(self):
         return self.title
+
+
+class UserProfile(models.Model):
+
+    ROLE_CHOICES = [
+        ('superadmin', 'Super Admin'),
+        ('organisateur', 'Organisateur'),
+        ('paiement', 'Modérateur Paiements'),
+        ('match', 'Gestionnaire Matchs'),
+    ]
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='organisateur')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.role}"
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.create(user=instance)
+
+
+class AdminLog(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    action = models.CharField(max_length=255)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.action}"

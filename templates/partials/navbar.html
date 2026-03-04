@@ -1,98 +1,125 @@
 {% load static %}
-{% load i18n %}
 
-<nav class="navbar navbar-expand-lg navbar-dark custom-navbar sticky-top">
+<nav class="navbar navbar-expand-lg navbar-dark shadow-lg fixed-top" 
+     style="background: linear-gradient(135deg, #0a0e17 0%, #001233 50%, #001f40 100%);
+            backdrop-filter: blur(10px);
+            border-bottom: 3px solid #e6c200;">
     <div class="container">
 
-        <!-- ✅ LOGO + NOM -->
+        <!-- LOGO -->
         <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
-            <div class="logo-wrapper me-2">
-                <img src="{% static 'images/logo.png' %}" 
-                     alt="Goma CL Logo" 
-                     class="navbar-logo">
-                <span class="logo-glow"></span>
-            </div>
-
-            <div class="brand-text-wrapper">
-                <span class="brand-text">
+            <img src="{% static 'images/logo.png' %}" alt="Goma CL 2026" 
+                 class="me-3 rounded-3 shadow" style="height: 52px; border: 2px solid #e6c200;">
+            <div>
+                <div class="fw-bold text-gold" style="font-size: 1.35rem; letter-spacing: 1.5px;">
                     GOMA CHAMPIONS LEAGUE
-                </span>
-                <span class="edition-badge">
-                    2026 Edition
-                </span>
+                </div>
+                <div class="text-light" style="font-size: 0.75rem; letter-spacing: 3px; margin-top: -4px;">
+                    PREMIÈRE ÉDITION | 2026
+                </div>
             </div>
         </a>
 
-        <!-- Toggle -->
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <!-- TOGGLE -->
+        <button class="navbar-toggler border-gold" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <!-- Menu -->
+        <!-- MENU COMPLET -->
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto align-items-center">
+            <ul class="navbar-nav ms-auto align-items-center gap-1">
 
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'home' %}">
-                        <i class="fas fa-home me-1"></i> Accueil
+                    <a class="nav-link px-4 py-2 rounded-pill {% if request.resolver_match.url_name == 'home' %}active{% endif %}" 
+                       href="{% url 'home' %}">
+                        <i class="fas fa-home me-2"></i>Accueil
                     </a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'standings' %}">
-                        <i class="fas fa-trophy me-1"></i> Classement
+                    <a class="nav-link px-4 py-2 rounded-pill {% if request.resolver_match.url_name == 'standings' %}active{% endif %}" 
+                       href="{% url 'standings' %}">
+                        <i class="fas fa-trophy me-2"></i>Classement
                     </a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'fixtures' %}">
-                        <i class="fas fa-calendar-alt me-1"></i> Calendrier
+                    <a class="nav-link px-4 py-2 rounded-pill {% if request.resolver_match.url_name == 'fixtures' %}active{% endif %}" 
+                       href="{% url 'fixtures' %}">
+                        <i class="fas fa-calendar-alt me-2"></i>Calendrier
+                    </a>
+                </li>
+
+                <!-- 🔥 RÉSULTATS AJOUTÉ ICI (position parfaite) 🔥 -->
+                <li class="nav-item">
+                    <a class="nav-link px-4 py-2 rounded-pill {% if request.resolver_match.url_name == 'results' %}active{% endif %}" 
+                       href="{% url 'results' %}">
+                        <i class="fas fa-poll me-2"></i>Résultats
                     </a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'results' %}">
-                        <i class="fas fa-list me-1"></i> Résultats
+                    <a class="nav-link px-4 py-2 rounded-pill {% if request.resolver_match.url_name == 'bracket' %}active{% endif %}" 
+                       href="{% url 'bracket' %}">
+                        <i class="fas fa-sitemap me-2"></i>Bracket
                     </a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'rules' %}">
-                        <i class="fas fa-book me-1"></i> Règlement
+                    <a class="nav-link px-4 py-2 rounded-pill" href="{% url 'rules' %}">
+                        <i class="fas fa-book me-2"></i>Règlement
                     </a>
                 </li>
 
-                {% if user.is_authenticated %}
+                <!-- JOUEUR / ADMIN / VISITEUR -->
+                {% if user.is_authenticated and user.team %}
+                    <li class="nav-item dropdown ms-3">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center text-gold fw-bold" 
+                           href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle fa-lg me-2"></i>
+                            {{ user.team.abbreviation|upper }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg" 
+                            style="background: rgba(10,14,23,0.98); border: 1px solid #e6c20033;">
+                            <li><a class="dropdown-item text-white" href="{% url 'my_matches' %}">
+                                <i class="fas fa-futbol me-2 text-success"></i>Mes Matchs
+                            </a></li>
+                            <li><a class="dropdown-item text-white" href="{% url 'edit_my_team' %}">
+                                <i class="fas fa-edit me-2 text-warning"></i>Mon Équipe
+                            </a></li>
+                            <li><hr class="dropdown-divider bg-secondary"></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'logout' %}">
+                                <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                            </a></li>
+                        </ul>
+                    </li>
 
-                    {% if user.is_staff %}
-                        <li class="nav-item ms-3">
-                            <a href="{% url 'dashboard' %}" class="btn btn-warning btn-sm">
-                                <i class="fas fa-cog me-1"></i> Dashboard
-                            </a>
-                        </li>
-                    {% endif %}
-
-                    <li class="nav-item ms-2">
-                        <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">
-                            <i class="fas fa-sign-out-alt me-1"></i> Déconnexion
+                {% elif user.is_authenticated and user.userprofile.role in 'superadmin,organisateur,paiement,match' %}
+                    <li class="nav-item ms-3">
+                        <a href="{% url 'dashboard' %}" class="btn btn-gold-pro px-4 py-2 rounded-pill fw-bold">
+                            <i class="fas fa-crown me-2"></i>DASHBOARD
                         </a>
                     </li>
 
                 {% else %}
-
-                    <li class="nav-item ms-3">
-                        <a href="{% url 'register_team' %}" class="btn btn-success btn-sm">
-                            <i class="fas fa-user-plus me-1"></i> S'inscrire
-                        </a>
-                    </li>
-
                     <li class="nav-item ms-2">
-                        <a href="{% url 'login' %}" class="btn btn-outline-light btn-sm">
-                            <i class="fas fa-sign-in-alt me-1"></i> Connexion
+                        <a href="{% url 'register_team' %}" class="btn btn-outline-gold px-4 py-2 rounded-pill">
+                            <i class="fas fa-user-plus me-2"></i>S'inscrire
                         </a>
                     </li>
-
+                    <li class="nav-item ms-2">
+                        <a href="{% url 'login' %}" class="btn btn-gold-pro px-4 py-2 rounded-pill">
+                            <i class="fas fa-sign-in-alt me-2"></i>Connexion
+                        </a>
+                    </li>
                 {% endif %}
+
+                <!-- DARK MODE -->
+                <li class="nav-item ms-3">
+                    <button id="themeToggle" class="btn btn-outline-light rounded-circle p-2" style="width: 42px; height: 42px;">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </li>
 
             </ul>
         </div>
@@ -100,93 +127,14 @@
 </nav>
 
 <style>
-
-/* NAVBAR BACKGROUND */
-.custom-navbar {
-    background: linear-gradient(135deg, #081020, #001a33);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-}
-
-/* LOGO */
-.logo-wrapper {
-    position: relative;
-    display: inline-block;
-}
-
-.navbar-logo {
-    height: 45px;
-    transition: 0.4s ease;
-}
-
-.logo-wrapper:hover .navbar-logo {
-    transform: scale(1.1);
-}
-
-.logo-glow {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 60px;
-    height: 60px;
-    background: radial-gradient(circle, rgba(255,215,0,0.4) 0%, transparent 70%);
-    transform: translate(-50%, -50%);
-    animation: glowPulse 2.5s infinite;
-    pointer-events: none;
-}
-
-@keyframes glowPulse {
-    0% { opacity: 0.6; }
-    50% { opacity: 1; }
-    100% { opacity: 0.6; }
-}
-
-/* BRAND TEXT */
-.brand-text-wrapper {
-    display: flex;
-    flex-direction: column;
-}
-
-.brand-text {
+.btn-gold-pro {
+    background: linear-gradient(45deg, #e6c200, #ffed4e);
+    color: #000 !important;
     font-weight: 700;
-    font-size: 1rem;
-    letter-spacing: 1px;
-    color: #ffd700;
+    box-shadow: 0 0 20px rgba(230,194,0,0.5);
 }
-
-.edition-badge {
-    font-size: 0.7rem;
-    color: #ffffff;
-    background: #003d82;
-    padding: 2px 6px;
-    border-radius: 10px;
-    margin-top: 2px;
-}
-
-/* NAV LINKS */
-.nav-link {
-    font-weight: 500;
-    color: #ffffff !important;
-    transition: 0.3s;
-}
-
-.nav-link:hover {
-    color: #ffd700 !important;
+.btn-gold-pro:hover {
+    box-shadow: 0 0 30px rgba(230,194,0,0.8);
     transform: translateY(-2px);
 }
-
-.nav-link i {
-    color: #ffd700;
-}
-
-/* MOBILE */
-@media (max-width: 991px) {
-    .navbar-logo {
-        height: 35px;
-    }
-
-    .brand-text {
-        font-size: 0.85rem;
-    }
-}
-
 </style>

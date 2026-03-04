@@ -1,11 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from .decorators import role_required   # ← Ligne magique
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q, F
 from django.utils import timezone
-from .models import Team, Competition, Phase, Match, Group, News
+from .models import Team, Competition, Phase, Match, Group, News, UserProfile
 from .forms import TeamRegistrationForm, MatchResultForm
 from django.contrib.auth.models import User
 from django.template.loader import render_to_string
@@ -21,6 +22,10 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 from io import BytesIO
+from .forms import CompetitionForm
+from django.contrib.auth.forms import UserCreationForm
+from functools import wraps
+from .models import AdminLog
 
 
 # ==========================================
@@ -106,9 +111,7 @@ def register_team(request):
             
             messages.success(
                 request,
-                _(f"🎉 Inscription réussée ! Votre demande est en attente de validation du paiement. "
-                  f"Vous recevrez une confirmation sur WhatsApp dès que votre paiement sera vérifié. "
-                  f"Vos identifiants de connexion : Username = {username}")
+                "✅ Inscription réussie ! Rejoignez le groupe WhatsApp et envoyez la preuve de paiement pour validation."
             )
             
             # Envoyer notification à l'admin (optionnel)
@@ -296,9 +299,7 @@ def news_detail(request, pk):
     return render(request, 'core/news_detail.html', context)
 
 
-# ==========================================
-# CONNEXION
-# ==========================================
+# =CONNEXION=========================================
 def user_login(request):
     """
     Page de connexion
@@ -313,16 +314,21 @@ def user_login(request):
             login(request, user)
             messages.success(request, _("Connexion réussie !"))
             
-            # Rediriger selon le type d'utilisateur
-            if user.is_staff:
+            # ✅ Redirection selon rôle personnalisé
+            if hasattr(user, 'userprofile') and user.userprofile.role in [
+                'superadmin',
+                'organisateur',
+                'paiement',
+                'match'
+            ]:
                 return redirect('dashboard')
             else:
                 return redirect('my_matches')
+
         else:
             messages.error(request, _("Nom d'utilisateur ou mot de passe incorrect."))
     
     return render(request, 'core/login.html')
-
 
 # ==========================================
 # DÉCONNEXION
@@ -341,36 +347,32 @@ def user_logout(request):
 # ==========================================
 @login_required
 def dashboard(request):
-    """
-    Dashboard de l'admin
-    """
-    if not request.user.is_staff:
-        messages.error(request, _("Accès refusé."))
+
+    # ✅ Vérifier rôle autorisé
+    if not hasattr(request.user, 'userprofile'):
         return redirect('home')
-    
-    # Statistiques
+
+    if request.user.userprofile.role not in [
+        'superadmin',
+        'organisateur',
+        'paiement',
+        'match'
+    ]:
+        messages.error(request, "Accès refusé.")
+        return redirect('home')
+
+    # ✅ Statistiques
     total_teams = Team.objects.filter(payment_validated=True).count()
     pending_teams = Team.objects.filter(payment_validated=False).count()
     total_matches = Match.objects.count()
     played_matches = Match.objects.filter(is_played=True).count()
-    upcoming_matches = Match.objects.filter(is_played=False, scheduled_date__gte=timezone.now()).count()
-    
-    # Prochains matchs
-    next_matches = Match.objects.filter(is_played=False).order_by('scheduled_date')[:5]
-    
-    # Compétition active
-    competition = Competition.objects.filter(is_active=True).first()
-    
-    context = {
+
+    return render(request, 'core/dashboard.html', {
         'total_teams': total_teams,
         'pending_teams': pending_teams,
         'total_matches': total_matches,
         'played_matches': played_matches,
-        'upcoming_matches': upcoming_matches,
-        'next_matches': next_matches,
-        'competition': competition,
-    }
-    return render(request, 'core/dashboard.html', context)
+    })
 
 
 # ==========================================
@@ -378,7 +380,13 @@ def dashboard(request):
 # ==========================================
 @login_required
 def encode_result(request, match_id):
-    if not request.user.is_staff:
+
+    # ✅ Vérification par rôle personnalisé
+    if not hasattr(request.user, 'userprofile') or request.user.userprofile.role not in [
+        'superadmin',
+        'organisateur',
+        'match'
+    ]:
         messages.error(request, _("Accès refusé."))
         return redirect('home')
     
@@ -405,7 +413,6 @@ def encode_result(request, match_id):
         'form': form,
         'match': match,
     })
-
 
 # ==========================================
 # FONCTION : METTRE À JOUR LES STATS
@@ -553,252 +560,153 @@ def report_match(request, match_id):
 # ==========================================
 # MATCHS SIGNALÉS (ADMIN)
 # ==========================================
-@login_required
+@role_required(['superadmin', 'organisateur', 'match'])
 def reported_matches(request):
-    """
-    Liste des matchs signalés (pour l'admin)
-    """
-    if not request.user.is_staff:
-        messages.error(request, _("Accès refusé."))
-        return redirect('home')
-    
-    # Matchs signalés
-    reported = Match.objects.filter(reported=True, is_played=False).order_by('report_date')
-    
-    # Matchs en retard (plus de 48h)
-    from datetime import timedelta
+
+    reported = Match.objects.filter(
+        reported=True,
+        is_played=False
+    ).order_by('report_date')
+
     deadline = timezone.now() - timedelta(hours=48)
+
     late_matches = Match.objects.filter(
         is_played=False,
         is_forfeit=False,
         scheduled_date__lt=deadline
     ).exclude(reported=True).order_by('scheduled_date')
-    
-    context = {
+
+    return render(request, 'core/reported_matches.html', {
         'reported_matches': reported,
         'late_matches': late_matches,
-    }
-    return render(request, 'core/reported_matches.html', context)
+    })
 
 
 # ==========================================
 # APPLIQUER UN FORFAIT (ADMIN)
 # ==========================================
-@login_required
+@role_required(['superadmin', 'organisateur', 'match'])
 def apply_forfeit_manual(request, match_id):
-    """
-    Appliquer un forfait manuellement à une équipe
-    """
-    if not request.user.is_staff:
-        messages.error(request, _("Accès refusé."))
-        return redirect('home')
-    
+
     match = get_object_or_404(Match, pk=match_id)
-    
+
     if request.method == 'POST':
         forfeit_team_id = request.POST.get('forfeit_team')
         forfeit_team = get_object_or_404(Team, pk=forfeit_team_id)
-        
-        # Appliquer le forfait
+
         match.is_forfeit = True
         match.is_played = True
         match.forfeit_team = forfeit_team
         match.played_date = timezone.now()
-        
+
         if forfeit_team == match.home_team:
             match.home_score = 0
             match.away_score = 3
-            match.notes = f"Forfait de {match.home_team.team_name}"
         else:
             match.home_score = 3
             match.away_score = 0
-            match.notes = f"Forfait de {match.away_team.team_name}"
-        
-        match.save()
-        
-        # Mettre à jour les statistiques
-        update_team_stats(match)
-        
-        messages.success(request, f"✅ Forfait appliqué à {forfeit_team.team_name}. Résultat : {match.home_score}-{match.away_score}")
-        return redirect('reported_matches')
-    
-    context = {
-        'match': match,
-    }
-    return render(request, 'core/apply_forfait.html', context)
 
+        match.save()
+        update_team_stats(match)
+
+        return redirect('reported_matches')
+
+    return render(request, 'core/apply_forfait.html', {
+        'match': match,
+    })
 
 # ==========================================
 # ACTIONS ADMIN : GÉNÉRER LE CALENDRIER
 # ==========================================
-@login_required
+@role_required(['superadmin', 'organisateur'])
 def generate_calendar(request):
-    """
-    Générer le calendrier de la phase de ligue
-    """
-    if not request.user.is_staff:
-        messages.error(request, _("Accès refusé."))
-        return redirect('home')
-    
-    from django.core.management import call_command
-    from io import StringIO
-    
-    out = StringIO()
-    
-    try:
-        call_command('generate_league_phase', stdout=out)
-        output = out.getvalue()
-        messages.success(request, f"✅ Calendrier généré avec succès !\n{output}")
-    except Exception as e:
-        messages.error(request, f"❌ Erreur : {str(e)}")
-    
+    call_command('generate_league_phase')
+    messages.success(request, "Calendrier généré avec succès !")
     return redirect('dashboard')
 
 
 # ==========================================
 # ACTIONS ADMIN : VÉRIFIER LES FORFAITS
 # ==========================================
-@login_required
+@role_required(['superadmin', 'organisateur'])
 def check_forfeits_view(request):
-    """
-    Vérifier les forfaits (48h)
-    """
-    if not request.user.is_staff:
-        messages.error(request, _("Accès refusé."))
-        return redirect('home')
-    
-    from django.core.management import call_command
+
     from io import StringIO
-    
+
     out = StringIO()
-    
-    try:
-        call_command('check_forfeits', stdout=out)
-        output = out.getvalue()
-        messages.info(request, f"🔍 Vérification terminée !\n{output}")
-    except Exception as e:
-        messages.error(request, f"❌ Erreur : {str(e)}")
-    
+
+    call_command('check_forfeits', stdout=out)
+
+    messages.success(request, "Vérification terminée.")
     return redirect('dashboard')
 
 
 # ==========================================
 # ACTIONS ADMIN : GÉNÉRER LES PLAYOFFS
 # ==========================================
-@login_required
+@role_required(['superadmin', 'organisateur'])
 def generate_playoffs_view(request):
-    """
-    Générer les barrages (playoffs)
-    """
-    if not request.user.is_staff:
-        messages.error(request, _("Accès refusé."))
-        return redirect('home')
-    
-    from django.core.management import call_command
-    from io import StringIO
-    
-    out = StringIO()
-    
-    try:
-        call_command('generate_knockout_phase', '--phase', 'playoff', stdout=out)
-        output = out.getvalue()
-        messages.success(request, f"✅ Playoffs générés !\n{output}")
-    except Exception as e:
-        messages.error(request, f"❌ Erreur : {str(e)}")
-    
+    call_command('generate_knockout_phase', '--phase', 'playoff')
+    messages.success(request, "Phase finale générée avec succès !")
     return redirect('dashboard')
 
 
 # ==========================================
 # ACTIONS ADMIN : RÉINITIALISER LA COMPÉTITION
 # ==========================================
-@login_required
+@role_required(['superadmin'])
 def reset_competition_view(request):
-    """
-    Réinitialiser toute la compétition (avec confirmation)
-    """
-    if not request.user.is_staff:
-        messages.error(request, _("Accès refusé."))
-        return redirect('home')
-    
+
     if request.method == 'POST':
-        from django.core.management import call_command
-        from io import StringIO
-        
-        out = StringIO()
-        
-        try:
-            call_command('reset_competition', '--confirm', stdout=out)
-            output = out.getvalue()
-            messages.warning(request, f"⚠️ Compétition réinitialisée !\n{output}")
-        except Exception as e:
-            messages.error(request, f"❌ Erreur : {str(e)}")
-        
+        call_command('reset_competition', '--confirm')
+        messages.warning(request, "Compétition réinitialisée.")
         return redirect('dashboard')
-    
+
     return render(request, 'core/confirm_reset.html')
 
 
 # ==========================================
 # VALIDATION DES PAIEMENTS (ADMIN)
 # ==========================================
-@login_required
+@role_required(['superadmin', 'paiement'])
 def pending_payments(request):
-    """
-    Liste des paiements en attente de validation
-    """
-    if not request.user.is_staff:
-        messages.error(request, _("Accès refusé."))
-        return redirect('home')
-    
-    pending_teams = Team.objects.filter(payment_validated=False).order_by('-created_at')
-    
-    context = {
+
+    pending_teams = Team.objects.filter(
+        payment_validated=False
+    ).order_by('-created_at')
+
+    return render(request, 'core/pending_payments.html', {
         'pending_teams': pending_teams,
-    }
-    return render(request, 'core/pending_payments.html', context)
+    })
 
 
-@login_required
+@role_required(['superadmin', 'paiement'])
 def validate_payment(request, team_id):
-    """
-    Valider le paiement d'une équipe
-    """
-    if not request.user.is_staff:
-        messages.error(request, _("Accès refusé."))
-        return redirect('home')
-    
+
     team = get_object_or_404(Team, pk=team_id)
-    
+
     if request.method == 'POST':
         action = request.POST.get('action')
-        
+
         if action == 'approve':
             team.payment_validated = True
             team.payment_validated_by = request.user
             team.payment_validated_at = timezone.now()
             team.save()
-            
-            messages.success(request, f"✅ Paiement validé pour {team.team_name} ({team.abbreviation})")
-            
-            # Envoyer notification WhatsApp (optionnel)
-            # send_whatsapp_confirmation(team)
-            
+
+            AdminLog.objects.create(
+                user=request.user,
+                action=f"Validation paiement {team.team_name}"
+            )
+
         elif action == 'reject':
-            # Supprimer l'équipe et l'utilisateur associé
-            user = team.user
             team.delete()
-            if user:
-                user.delete()
-            
-            messages.warning(request, f"❌ Paiement refusé. L'inscription de {team.team_name} a été supprimée.")
-        
+
         return redirect('pending_payments')
-    
-    context = {
+
+    return render(request, 'core/validate_payment.html', {
         'team': team,
-    }
-    return render(request, 'core/validate_payment.html', context)
+    })
 
 
 @login_required
@@ -887,3 +795,189 @@ def download_rules_pdf(request):
     response["Content-Disposition"] = f'attachment; filename="Reglement_GomaCL_{datetime.now().strftime("%Y%m%d")}.pdf"'
 
     return response
+
+
+@role_required(['superadmin', 'organisateur'])
+def manage_competition(request):
+    competition = Competition.objects.first()
+    return render(request, 'core/manage_competition.html', {
+        'competition': competition
+    })
+
+@role_required(['superadmin', 'organisateur'])
+def manage_teams(request):
+    teams = Team.objects.all()
+    return render(request, 'core/manage_teams.html', {
+        'teams': teams
+    })
+
+@role_required(['superadmin', 'organisateur', 'match'])
+def manage_matches(request):
+    matches = Match.objects.all().order_by('-scheduled_date')
+    return render(request, 'core/manage_matches.html', {
+        'matches': matches
+    })
+
+@role_required(['superadmin', 'organisateur'])
+def competition_list(request):
+    competitions = Competition.objects.all()
+    return render(request, 'core/admin/competition_list.html', {
+        'competitions': competitions
+    })
+
+
+@role_required(['superadmin', 'organisateur'])
+def competition_create(request):
+    form = CompetitionForm(request.POST or None)
+    if form.is_valid():
+        form.save()
+        messages.success(request, "Compétition créée avec succès !")
+        return redirect('competition_list')
+    return render(request, 'core/admin/competition_form.html', {
+        'form': form,
+        'title': 'Créer une compétition'
+    })
+
+
+@role_required(['superadmin', 'organisateur'])
+def competition_edit(request, pk):
+    competition = get_object_or_404(Competition, pk=pk)
+    form = CompetitionForm(request.POST or None, instance=competition)
+    if form.is_valid():
+        form.save()
+        messages.success(request, "Compétition modifiée avec succès !")
+        return redirect('competition_list')
+    return render(request, 'core/admin/competition_form.html', {
+        'form': form,
+        'title': 'Modifier la compétition'
+    })
+
+
+@role_required(['superadmin', 'organisateur'])
+def competition_delete(request, pk):
+    competition = get_object_or_404(Competition, pk=pk)
+    competition.delete()
+    messages.success(request, "Compétition supprimée.")
+    return redirect('competition_list')
+
+@role_required(['superadmin', 'organisateur'])
+def team_list(request):
+    teams = Team.objects.all()
+    return render(request, 'core/admin/team_list.html', {
+        'teams': teams
+    })
+
+
+@role_required(['superadmin', 'organisateur'])
+def team_delete(request, pk):
+    team = get_object_or_404(Team, pk=pk)
+    team.delete()
+    messages.success(request, "Équipe supprimée avec succès.")
+    return redirect('team_list')
+
+
+@login_required
+def edit_my_team(request):
+    team = get_object_or_404(Team, user=request.user)
+
+    form = TeamRegistrationForm(request.POST or None, instance=team)
+
+    if form.is_valid():
+        form.save()
+        return redirect('my_matches')
+
+    return render(request, 'core/edit_my_team.html', {
+        'form': form
+    })
+
+@role_required(['superadmin', 'organisateur'])
+def edit_team(request, pk):
+    team = get_object_or_404(Team, pk=pk)
+    form = TeamRegistrationForm(request.POST or None, instance=team)
+    if form.is_valid():
+        form.save()
+        messages.success(request, "Équipe modifiée avec succès !")
+        return redirect('team_list')
+    return render(request, 'core/admin/edit_team.html', {
+        'form': form,
+        'title': 'Modifier équipe'
+    })
+
+
+@role_required('superadmin')
+def manage_users(request):
+    users = UserProfile.objects.select_related('user')
+    return render(request, 'core/admin/manage_users.html', {
+        'users': users,
+        'title': 'Gestion des utilisateurs'
+    })
+
+
+@role_required('superadmin')
+def create_user(request):
+    form = UserCreationForm(request.POST or None)
+
+    if form.is_valid():
+        user = form.save()
+        return redirect('manage_users')
+
+    return render(request, 'core/admin/user_form.html', {
+        'form': form,
+        'title': 'Créer utilisateur'
+    })
+
+
+@role_required('superadmin')
+def edit_user(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    profile = user.userprofile
+
+    if request.method == 'POST':
+        role = request.POST.get('role')
+        profile.role = role
+        profile.save()
+        return redirect('manage_users')
+
+    return render(request, 'core/admin/edit_user.html', {
+        'user_obj': user,
+        'profile': profile,
+        'title': 'Modifier utilisateur'
+    })
+
+
+@role_required('superadmin')
+def delete_user(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    user.delete()
+    return redirect('manage_users')
+
+
+@login_required
+def admin_logs(request):
+    if not request.user.is_staff:
+        return redirect('home')
+
+    logs = AdminLog.objects.all().order_by('-timestamp')
+
+    return render(request, 'core/admin/logs.html', {
+        'logs': logs
+    })
+
+
+@role_required(['superadmin'])
+def edit_user_role(request, user_id):
+
+    user = get_object_or_404(User, pk=user_id)
+    profile = user.userprofile
+
+    if request.method == 'POST':
+        new_role = request.POST.get('role')
+        profile.role = new_role
+        profile.save()
+        return redirect('team_list')
+
+    return render(request, 'core/admin/edit_user_role.html', {
+        'user_obj': user,
+        'profile': profile,
+        'title': 'Modifier rôle utilisateur'
+    })
