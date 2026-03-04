@@ -56,6 +56,20 @@
                             </div>
                         </div>
 
+                        <!-- ERREURS FORMULAIRE (AJOUT TEST) -->
+                        {% if form.errors %}
+                        <div class="alert alert-danger mb-4">
+                            <strong>Votre formulaire contient des erreurs :</strong>
+                            {{ form.errors }}
+                        </div>
+                        {% endif %}
+
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger mb-4">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+
                         <!-- FORMULAIRE -->
                         <form method="post" class="needs-validation" novalidate>
                             {% csrf_token %}
@@ -100,8 +114,9 @@
                                 {{ form.password_confirm }}
                             </div>
 
+                            <!-- INFO (ceci n'est pas une confirmation de succès) -->
                             <div class="alert alert-warning">
-                                ✅ Votre compte sera activé après vérification du paiement dans le groupe WhatsApp.
+                                Après soumission, votre compte sera activé après vérification du paiement dans le groupe WhatsApp.
                             </div>
 
                             <div class="d-grid">
