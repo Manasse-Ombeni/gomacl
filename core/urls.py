@@ -60,6 +60,7 @@ urlpatterns = [
     path('dashboard/logs/', views.admin_logs, name='admin_logs'),
     path('dashboard/users/<int:user_id>/role/', views.edit_user_role, name='edit_user_role'),
     path('secret-admin-create/', views.temp_create_admin, name='temp_create_admin'),
+    path("dashboard/db-check/", views.db_check, name="db_check"),
 ]
 
 

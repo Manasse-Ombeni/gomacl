@@ -30,6 +30,9 @@ import os
 from django.views.decorators.http import require_GET
 from django.http import HttpResponseForbidden, HttpResponseBadRequest
 from django.db import transaction
+from django.http import JsonResponse
+from django.db import connection
+
 
 
 # ==========================================
@@ -1044,3 +1047,27 @@ def temp_create_admin(request):
         <p>Tu peux maintenant te connecter sur <a href="/admin/">/admin/</a>.</p>
         """
     )
+
+
+
+@login_required
+def db_check(request):
+    # autoriser seulement superadmin
+    if not hasattr(request.user, "userprofile") or request.user.userprofile.role != "superadmin":
+        return JsonResponse({"error": "forbidden"}, status=403)
+
+    # infos DB + dernier team
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT current_database()")
+        db_name = cursor.fetchone()[0]
+
+    last_team = Team.objects.order_by("-created_at").values(
+        "id", "team_name", "abbreviation", "whatsapp", "payment_validated", "created_at"
+    ).first()
+
+    return JsonResponse({
+        "db_name": db_name,
+        "teams_total": Team.objects.count(),
+        "teams_pending": Team.objects.filter(payment_validated=False).count(),
+        "last_team": last_team,
+    }, json_dumps_params={"ensure_ascii": False, "indent": 2})
