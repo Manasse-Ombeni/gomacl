@@ -26,6 +26,10 @@ from .forms import CompetitionForm
 from django.contrib.auth.forms import UserCreationForm
 from functools import wraps
 from .models import AdminLog
+import os
+from django.views.decorators.http import require_GET
+from django.http import HttpResponseForbidden, HttpResponseBadRequest
+from django.db import transaction
 
 
 # ==========================================
@@ -983,14 +987,60 @@ def edit_user_role(request, user_id):
     })
 
 
-# === CRÉATION SUPERUSER TEMPORAIRE (à supprimer après) ===
-# TEMPORAIRE - À SUPPRIMER APRÈS CRÉATION ADMIN
+
+
+@require_GET
 def temp_create_admin(request):
-    if not User.objects.filter(username='ombenation').exists():
-        User.objects.create_superuser(
-            username='ombenation',
-            email='ombenation16@gmail.com',
-            password='OMBENI2025'
-        )
-        return HttpResponse("<h1 style='color:green; text-align:center; padding:100px;'>SUPERUSER CRÉÉ AVEC SUCCÈS !<br><br>Username: ombenation<br>Password: OMBENI2025<br><br>Tu peux supprimer cette vue maintenant.</h1>")
-    return HttpResponse("<h1 style='color:orange; text-align:center; padding:100px;'>Superuser ombenation existe déjà.</h1>")
+    """
+    Crée / met à jour un superuser via une URL protégée par token.
+    À utiliser une seule fois, puis désactiver via env var ou supprimer la route.
+    """
+
+    # 1) Kill switch (désactivation globale)
+    if os.getenv("ADMIN_BOOTSTRAP_ENABLED", "0") != "1":
+        return HttpResponseForbidden("Bootstrap admin désactivé.")
+
+    # 2) Vérification token (obligatoire)
+    token = request.GET.get("token")
+    expected = os.getenv("ADMIN_BOOTSTRAP_TOKEN")
+    if not expected:
+        return HttpResponseForbidden("ADMIN_BOOTSTRAP_TOKEN non défini.")
+    if not token or token != expected:
+        return HttpResponseForbidden("Token invalide.")
+
+    # 3) Récupérer identifiants depuis variables d'environnement
+    username = os.getenv("DJANGO_SUPERUSER_USERNAME")
+    email = os.getenv("DJANGO_SUPERUSER_EMAIL", "")
+    password = os.getenv("DJANGO_SUPERUSER_PASSWORD")
+
+    if not username or not password:
+        return HttpResponseBadRequest("Variables DJANGO_SUPERUSER_USERNAME/PASSWORD manquantes.")
+
+    # 4) Créer ou mettre à jour l'utilisateur + profil
+    with transaction.atomic():
+        user, created = User.objects.get_or_create(username=username, defaults={"email": email})
+        user.email = email or user.email
+        user.is_staff = True
+        user.is_superuser = True
+        user.set_password(password)
+        user.save()
+
+        # IMPORTANT: ton signal post_save crée UserProfile automatiquement à la création.
+        # Si tu veux forcer le rôle superadmin :
+        if hasattr(user, "userprofile"):
+            user.userprofile.role = "superadmin"
+            user.userprofile.save()
+
+    return HttpResponse(
+        f"""
+        <h2>OK</h2>
+        <p>Superuser prêt.</p>
+        <ul>
+          <li>username: <b>{user.username}</b></li>
+          <li>created: <b>{created}</b></li>
+          <li>is_superuser: <b>{user.is_superuser}</b></li>
+          <li>role: <b>{getattr(user.userprofile, 'role', 'N/A')}</b></li>
+        </ul>
+        <p>Tu peux maintenant te connecter sur <a href="/admin/">/admin/</a>.</p>
+        """
+    )

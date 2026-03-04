@@ -59,7 +59,7 @@ urlpatterns = [
     path('dashboard/users/<int:pk>/delete/', views.delete_user, name='delete_user'),
     path('dashboard/logs/', views.admin_logs, name='admin_logs'),
     path('dashboard/users/<int:user_id>/role/', views.edit_user_role, name='edit_user_role'),
-    path('secret-admin-create/', views.temp_create_admin),
+    path('secret-admin-create/', views.temp_create_admin, name='temp_create_admin'),
 ]
 
 
