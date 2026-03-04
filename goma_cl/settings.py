@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     
     # Ton app
     'core',
-    'core.management.commands.create_admin',  # ← cette ligne (pas obligatoire mais propre)
+    
 ]
 
 # ======================================================
