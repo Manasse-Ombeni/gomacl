@@ -1,125 +1,87 @@
 {% load static %}
 
-<nav class="navbar navbar-expand-lg navbar-dark shadow-lg fixed-top" 
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top shadow-lg"
      style="background: linear-gradient(135deg, #0a0e17 0%, #001233 50%, #001f40 100%);
             backdrop-filter: blur(10px);
-            border-bottom: 3px solid #e6c200;">
+            border-bottom: 3px solid #e6c200;
+            min-height: 78px;">
     <div class="container">
 
         <!-- LOGO -->
         <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
-            <img src="{% static 'images/logo.png' %}" alt="Goma CL 2026" 
-                 class="me-3 rounded-3 shadow" style="height: 52px; border: 2px solid #e6c200;">
-            <div>
-                <div class="fw-bold text-gold" style="font-size: 1.35rem; letter-spacing: 1.5px;">
+            <img src="{% static 'images/logo.png' %}" alt="Goma CL" 
+                 class="me-2 rounded-3" style="height: 48px; border: 2px solid #e6c200;">
+            <div class="d-none d-sm-block">
+                <div class="fw-bold text-gold" style="font-size: 1.25rem; letter-spacing: 1.5px;">
                     GOMA CHAMPIONS LEAGUE
                 </div>
-                <div class="text-light" style="font-size: 0.75rem; letter-spacing: 3px; margin-top: -4px;">
+                <div class="text-light" style="font-size: 0.7rem; letter-spacing: 2.5px;">
                     PREMIÈRE ÉDITION | 2026
                 </div>
             </div>
         </a>
 
         <!-- TOGGLE -->
-        <button class="navbar-toggler border-gold" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <!-- MENU COMPLET -->
+        <!-- MENU -->
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto align-items-center gap-1">
+            <ul class="navbar-nav ms-auto align-items-center">
 
-                <li class="nav-item">
-                    <a class="nav-link px-4 py-2 rounded-pill {% if request.resolver_match.url_name == 'home' %}active{% endif %}" 
-                       href="{% url 'home' %}">
-                        <i class="fas fa-home me-2"></i>Accueil
-                    </a>
-                </li>
+                <!-- LIENS CLASSIQUES (cachés sur très petit écran) -->
+                <div class="d-none d-lg-flex gap-1">
+                    <li class="nav-item"><a class="nav-link px-3 py-2 rounded-pill {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">Accueil</a></li>
+                    <li class="nav-item"><a class="nav-link px-3 py-2 rounded-pill" href="{% url 'standings' %}">Classement</a></li>
+                    <li class="nav-item"><a class="nav-link px-3 py-2 rounded-pill" href="{% url 'fixtures' %}">Calendrier</a></li>
+                    <li class="nav-item"><a class="nav-link px-3 py-2 rounded-pill" href="{% url 'results' %}">Résultats</a></li>
+                    <li class="nav-item"><a class="nav-link px-3 py-2 rounded-pill" href="{% url 'bracket' %}">Bracket</a></li>
+                    <li class="nav-item"><a class="nav-link px-3 py-2 rounded-pill" href="{% url 'rules' %}">Règlement</a></li>
+                </div>
 
-                <li class="nav-item">
-                    <a class="nav-link px-4 py-2 rounded-pill {% if request.resolver_match.url_name == 'standings' %}active{% endif %}" 
-                       href="{% url 'standings' %}">
-                        <i class="fas fa-trophy me-2"></i>Classement
-                    </a>
-                </li>
+                <!-- ESPACE POUR BOUTONS TOUJOURS VISIBLES -->
+                <div class="d-flex align-items-center ms-3 gap-2">
 
-                <li class="nav-item">
-                    <a class="nav-link px-4 py-2 rounded-pill {% if request.resolver_match.url_name == 'fixtures' %}active{% endif %}" 
-                       href="{% url 'fixtures' %}">
-                        <i class="fas fa-calendar-alt me-2"></i>Calendrier
-                    </a>
-                </li>
+                    {% if user.is_authenticated %}
+                        {% if user.team %}
+                            <!-- JOUEUR -->
+                            <div class="dropdown">
+                                <a class="btn btn-gold-pro dropdown-toggle px-4 py-2 rounded-pill fw-bold" 
+                                   href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user-circle me-1"></i>
+                                    {{ user.team.abbreviation|upper }}
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="{% url 'my_matches' %}">Mes Matchs</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'edit_my_team' %}">Mon Équipe</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="{% url 'logout' %}">Déconnexion</a></li>
+                                </ul>
+                            </div>
+                        {% else %}
+                            <!-- ADMIN -->
+                            <a href="{% url 'dashboard' %}" class="btn btn-gold-pro px-4 py-2 rounded-pill fw-bold">
+                                <i class="fas fa-crown me-2"></i>DASHBOARD
+                            </a>
+                        {% endif %}
 
-                <!-- 🔥 RÉSULTATS AJOUTÉ ICI (position parfaite) 🔥 -->
-                <li class="nav-item">
-                    <a class="nav-link px-4 py-2 rounded-pill {% if request.resolver_match.url_name == 'results' %}active{% endif %}" 
-                       href="{% url 'results' %}">
-                        <i class="fas fa-poll me-2"></i>Résultats
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link px-4 py-2 rounded-pill {% if request.resolver_match.url_name == 'bracket' %}active{% endif %}" 
-                       href="{% url 'bracket' %}">
-                        <i class="fas fa-sitemap me-2"></i>Bracket
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link px-4 py-2 rounded-pill" href="{% url 'rules' %}">
-                        <i class="fas fa-book me-2"></i>Règlement
-                    </a>
-                </li>
-
-                <!-- JOUEUR / ADMIN / VISITEUR -->
-                {% if user.is_authenticated and user.team %}
-                    <li class="nav-item dropdown ms-3">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center text-gold fw-bold" 
-                           href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle fa-lg me-2"></i>
-                            {{ user.team.abbreviation|upper }}
+                    {% else %}
+                        <!-- VISITEUR – LES BOUTONS TOUJOURS VISIBLES -->
+                        <a href="{% url 'register_team' %}" class="btn btn-outline-gold px-4 py-2 rounded-pill fw-bold">
+                            S'INSCRIRE
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg" 
-                            style="background: rgba(10,14,23,0.98); border: 1px solid #e6c20033;">
-                            <li><a class="dropdown-item text-white" href="{% url 'my_matches' %}">
-                                <i class="fas fa-futbol me-2 text-success"></i>Mes Matchs
-                            </a></li>
-                            <li><a class="dropdown-item text-white" href="{% url 'edit_my_team' %}">
-                                <i class="fas fa-edit me-2 text-warning"></i>Mon Équipe
-                            </a></li>
-                            <li><hr class="dropdown-divider bg-secondary"></li>
-                            <li><a class="dropdown-item text-danger" href="{% url 'logout' %}">
-                                <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
-                            </a></li>
-                        </ul>
-                    </li>
-
-                {% elif user.is_authenticated and user.userprofile.role in 'superadmin,organisateur,paiement,match' %}
-                    <li class="nav-item ms-3">
-                        <a href="{% url 'dashboard' %}" class="btn btn-gold-pro px-4 py-2 rounded-pill fw-bold">
-                            <i class="fas fa-crown me-2"></i>DASHBOARD
+                        <a href="{% url 'login' %}" class="btn btn-gold-pro px-4 py-2 rounded-pill fw-bold">
+                            CONNEXION
                         </a>
-                    </li>
+                    {% endif %}
 
-                {% else %}
-                    <li class="nav-item ms-2">
-                        <a href="{% url 'register_team' %}" class="btn btn-outline-gold px-4 py-2 rounded-pill">
-                            <i class="fas fa-user-plus me-2"></i>S'inscrire
-                        </a>
-                    </li>
-                    <li class="nav-item ms-2">
-                        <a href="{% url 'login' %}" class="btn btn-gold-pro px-4 py-2 rounded-pill">
-                            <i class="fas fa-sign-in-alt me-2"></i>Connexion
-                        </a>
-                    </li>
-                {% endif %}
-
-                <!-- DARK MODE -->
-                <li class="nav-item ms-3">
-                    <button id="themeToggle" class="btn btn-outline-light rounded-circle p-2" style="width: 42px; height: 42px;">
+                    <!-- DARK MODE -->
+                    <button id="themeToggle" class="btn btn-outline-light rounded-circle ms-2" style="width: 40px; height: 40px;">
                         <i class="fas fa-moon"></i>
                     </button>
-                </li>
+                </div>
 
             </ul>
         </div>
@@ -127,14 +89,36 @@
 </nav>
 
 <style>
+.text-gold { color: #e6c200 !important; }
+
 .btn-gold-pro {
     background: linear-gradient(45deg, #e6c200, #ffed4e);
     color: #000 !important;
     font-weight: 700;
-    box-shadow: 0 0 20px rgba(230,194,0,0.5);
+    border: none;
+    box-shadow: 0 4px 15px rgba(230,194,0,0.5);
+    font-size: 0.95rem !important;
 }
 .btn-gold-pro:hover {
-    box-shadow: 0 0 30px rgba(230,194,0,0.8);
     transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(230,194,0,0.7);
+}
+
+.btn-outline-gold {
+    border: 2px solid #e6c200;
+    color: #e6c200;
+    font-weight: 700;
+    font-size: 0.95rem !important;
+}
+.btn-outline-gold:hover {
+    background: #e6c200;
+    color: #000;
+}
+
+/* Sur très petit écran, on garde que les boutons importants */
+@media (max-width: 991px) {
+    .d-none.d-lg-flex { display: none !important; }
+    .navbar-brand .d-none.d-sm-block { display: none !important; }
+    .navbar-brand img { height: 42px !important; }
 }
 </style>
