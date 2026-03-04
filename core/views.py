@@ -981,3 +981,16 @@ def edit_user_role(request, user_id):
         'profile': profile,
         'title': 'Modifier rôle utilisateur'
     })
+
+
+# === CRÉATION SUPERUSER TEMPORAIRE (à supprimer après) ===
+# TEMPORAIRE - À SUPPRIMER APRÈS CRÉATION ADMIN
+def temp_create_admin(request):
+    if not User.objects.filter(username='ombenation').exists():
+        User.objects.create_superuser(
+            username='ombenation',
+            email='ombenation16@gmail.com',
+            password='OMBENI2025'
+        )
+        return HttpResponse("<h1 style='color:green; text-align:center; padding:100px;'>SUPERUSER CRÉÉ AVEC SUCCÈS !<br><br>Username: ombenation<br>Password: OMBENI2025<br><br>Tu peux supprimer cette vue maintenant.</h1>")
+    return HttpResponse("<h1 style='color:orange; text-align:center; padding:100px;'>Superuser ombenation existe déjà.</h1>")
