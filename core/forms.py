@@ -2,6 +2,7 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from .models import Team, Match, Competition
+import re
 
 
 # ==========================================
@@ -11,15 +12,9 @@ class TeamRegistrationForm(forms.ModelForm):
 
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
-        min_length=6,
-        required=False,
+        min_length=4,          # plus simple
+        required=False,        # obligatoire seulement à la création (voir clean)
         label=_('Mot de passe')
-    )
-
-    password_confirm = forms.CharField(
-        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
-        required=False,
-        label=_('Confirmer le mot de passe')
     )
 
     class Meta:
@@ -31,82 +26,69 @@ class TeamRegistrationForm(forms.ModelForm):
             'team_name': forms.TextInput(attrs={'class': 'form-control'}),
             'abbreviation': forms.TextInput(attrs={
                 'class': 'form-control',
-                'maxlength': '3',
+                'maxlength': '5',  # un peu plus souple
                 'style': 'text-transform: uppercase;',
             }),
-            'whatsapp': forms.TextInput(attrs={'class': 'form-control'}),
+            'whatsapp': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '+243999999999',
+            }),
         }
 
-    # ✅ ABRÉVIATION UNIQUE CORRIGÉE
     def clean_abbreviation(self):
-        abbreviation = self.cleaned_data.get('abbreviation')
+        abbr = (self.cleaned_data.get('abbreviation') or '').upper().strip()
 
-        if abbreviation:
-            abbreviation = abbreviation.upper()
+        if not abbr:
+            raise ValidationError(_("Abréviation obligatoire."))
 
-            qs = Team.objects.filter(abbreviation=abbreviation)
+        # Plus simple: 2 à 5 caractères, lettres/chiffres
+        if len(abbr) < 2 or len(abbr) > 5:
+            raise ValidationError(_("Abréviation: 2 à 5 caractères."))
 
-            if self.instance.pk:
-                qs = qs.exclude(pk=self.instance.pk)
+        if not abbr.isalnum():
+            raise ValidationError(_("Abréviation: lettres et chiffres seulement (pas d'espaces)."))
 
-            if qs.exists():
-                raise ValidationError(_('Cette abréviation est déjà utilisée.'))
+        qs = Team.objects.filter(abbreviation=abbr)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise ValidationError(_("Cette abréviation est déjà utilisée."))
 
-            if len(abbreviation) != 3:
-                raise ValidationError(_('L\'abréviation doit contenir exactement 3 lettres.'))
+        return abbr
 
-            if not abbreviation.isalpha():
-                raise ValidationError(_('L\'abréviation doit contenir uniquement des lettres.'))
-
-        return abbreviation
-
-    # ✅ WHATSAPP UNIQUE CORRIGÉ
     def clean_whatsapp(self):
-        whatsapp = self.cleaned_data.get('whatsapp')
+        whatsapp = (self.cleaned_data.get('whatsapp') or '').replace(" ", "").strip()
 
-        if whatsapp:
-            whatsapp = whatsapp.replace(" ", "")
+        if not whatsapp:
+            raise ValidationError(_("Numéro WhatsApp obligatoire."))
 
-            qs = Team.objects.filter(whatsapp=whatsapp)
+        # Assoupli: + optionnel, 9 à 15 chiffres
+        if not re.match(r'^\+?\d{9,15}$', whatsapp):
+            raise ValidationError(_("WhatsApp invalide. Exemple: +243999999999"))
 
-            if self.instance.pk:
-                qs = qs.exclude(pk=self.instance.pk)
-
-            if qs.exists():
-                raise ValidationError(_('Ce numéro WhatsApp est déjà enregistré.'))
+        qs = Team.objects.filter(whatsapp=whatsapp)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise ValidationError(_("Ce numéro WhatsApp est déjà enregistré."))
 
         return whatsapp
 
-    # ✅ GESTION PASSWORD INTELLIGENTE
     def clean(self):
         cleaned_data = super().clean()
-
         password = cleaned_data.get('password')
-        password_confirm = cleaned_data.get('password_confirm')
 
-        # ✅ SI CRÉATION → mot de passe obligatoire
-        if not self.instance.pk:
-            if not password:
-                raise ValidationError(_('Le mot de passe est obligatoire.'))
-
-            if password != password_confirm:
-                raise ValidationError(_('Les mots de passe ne correspondent pas.'))
-
-        # ✅ SI MODIFICATION → mot de passe facultatif
-        else:
-            if password:
-                if password != password_confirm:
-                    raise ValidationError(_('Les mots de passe ne correspondent pas.'))
+        # À la création uniquement: password obligatoire
+        if not self.instance.pk and not password:
+            raise ValidationError(_("Le mot de passe est obligatoire."))
 
         return cleaned_data
 
-    # ✅ SAVE PASSWORD CORRECTEMENT
     def save(self, commit=True):
         team = super().save(commit=False)
-
         password = self.cleaned_data.get('password')
 
-        # ✅ Vérifier si user existe
+        # Si modification: si password fourni, on change le password du user lié
         if password and team.user:
             team.user.set_password(password)
             team.user.save()
@@ -115,7 +97,6 @@ class TeamRegistrationForm(forms.ModelForm):
             team.save()
 
         return team
-
 
 # ==========================================
 # FORMULAIRE : RÉSULTAT D'UN MATCH

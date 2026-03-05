@@ -16,7 +16,7 @@ from reportlab.pdfgen import canvas
 from django.http import HttpResponse
 from django.core.management import call_command
 from io import StringIO
-from datetime import datetime
+from datetime import datetime, timedelta
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib import colors
@@ -126,7 +126,7 @@ def register_team(request):
             
             return redirect('home')
         else:
-            messages.error(request, _("Erreur dans le formulaire. Veuillez vérifier les informations."))
+            messages.error(request, _("Inscription refusée : corrige les champs en rouge puis réessaie."))
     else:
         form = TeamRegistrationForm()
     
@@ -675,7 +675,7 @@ def reset_competition_view(request):
 # ==========================================
 # VALIDATION DES PAIEMENTS (ADMIN)
 # ==========================================
-@role_required(['superadmin', 'paiement'])
+@role_required(['superadmin', 'organisateur', 'paiement'])
 def pending_payments(request):
 
     pending_teams = Team.objects.filter(
@@ -687,7 +687,7 @@ def pending_payments(request):
     })
 
 
-@role_required(['superadmin', 'paiement'])
+@role_required(['superadmin', 'organisateur', 'paiement'])
 def validate_payment(request, team_id):
 
     team = get_object_or_404(Team, pk=team_id)
@@ -1071,3 +1071,67 @@ def db_check(request):
         "teams_pending": Team.objects.filter(payment_validated=False).count(),
         "last_team": last_team,
     }, json_dumps_params={"ensure_ascii": False, "indent": 2})
+
+
+@role_required(['superadmin', 'organisateur'])
+def reset_user_password(request, user_id):
+    user_obj = get_object_or_404(User, pk=user_id)
+
+    if request.method == 'POST':
+        new_password = (request.POST.get('new_password') or '').strip()
+
+        if len(new_password) < 4:
+            messages.error(request, "Mot de passe trop court (minimum 4 caractères).")
+            return redirect('reset_user_password', user_id=user_id)
+
+        user_obj.set_password(new_password)
+        user_obj.save()
+
+        AdminLog.objects.create(
+            user=request.user,
+            action=f"Reset mot de passe pour {user_obj.username}"
+        )
+
+        messages.success(request, f"Mot de passe réinitialisé pour {user_obj.username}.")
+        return redirect('manage_users')
+
+    return render(request, 'core/admin/reset_password.html', {
+        'user_obj': user_obj,
+        'title': 'Réinitialiser mot de passe'
+    })
+
+
+
+@role_required(['superadmin', 'organisateur'])
+def reset_team_user_password(request, team_id):
+    team = get_object_or_404(Team, pk=team_id)
+
+    if not team.user:
+        messages.error(request, "Cette équipe n'a aucun compte utilisateur lié.")
+        return redirect('team_list')
+
+    user_obj = team.user
+
+    if request.method == 'POST':
+        new_password = (request.POST.get('new_password') or '').strip()
+
+        if len(new_password) < 4:
+            messages.error(request, "Mot de passe trop court (minimum 4 caractères).")
+            return redirect('reset_team_user_password', team_id=team_id)
+
+        user_obj.set_password(new_password)
+        user_obj.save()
+
+        AdminLog.objects.create(
+            user=request.user,
+            action=f"Reset mot de passe pour {user_obj.username} (team {team.abbreviation})"
+        )
+
+        messages.success(request, f"Mot de passe réinitialisé pour {user_obj.username}.")
+        return redirect('team_list')
+
+    return render(request, 'core/admin/reset_password_team.html', {
+        'team': team,
+        'user_obj': user_obj,
+        'title': 'Réinitialiser mot de passe'
+    })

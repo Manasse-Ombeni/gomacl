@@ -32,7 +32,7 @@ body {
 /* ==========================================
    NAVBAR
    ========================================== */
-.navbar {
+.navbar:not(.ucl-nav) {
     background: linear-gradient(135deg, var(--dark-bg) 0%, var(--primary-color) 100%) !important;
     box-shadow: var(--shadow);
     padding: 1rem 0;
@@ -53,10 +53,19 @@ body {
     letter-spacing: 1px;
 }
 
-.nav-link {
+.nav-link:not(.ucl-link):not(.ucl-mobile-link) {
     font-weight: 500;
     transition: all 0.3s;
     position: relative;
+}
+
+.nav-link:not(.ucl-link):not(.ucl-mobile-link):hover {
+    color: var(--gold-color) !important;
+    transform: translateY(-2px);
+}
+
+.nav-link.active:not(.ucl-link):not(.ucl-mobile-link) {
+    color: var(--gold-color) !important;
 }
 
 .nav-link:hover {
@@ -361,4 +370,16 @@ body {
     align-items: center;
     justify-content: center;
     text-transform: uppercase;
+}
+
+body { padding-top: 70px; }
+@media (max-width: 991px){
+  body { padding-top: 66px; }
+}
+
+.ucl-nav{
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+}
+.ucl-btn-gold{
+  box-shadow: 0 12px 26px rgba(230,194,0,.18);
 }

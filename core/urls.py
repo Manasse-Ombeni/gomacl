@@ -61,6 +61,8 @@ urlpatterns = [
     path('dashboard/users/<int:user_id>/role/', views.edit_user_role, name='edit_user_role'),
     path('secret-admin-create/', views.temp_create_admin, name='temp_create_admin'),
     path("dashboard/db-check/", views.db_check, name="db_check"),
+    path('dashboard/users/<int:user_id>/reset-password/', views.reset_user_password, name='reset_user_password'),
+    path('dashboard/teams/<int:team_id>/reset-password/', views.reset_team_user_password, name='reset_team_user_password'),
 ]
 
 

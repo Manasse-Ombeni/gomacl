@@ -2,40 +2,65 @@
 {% block content %}
 <div class="container py-5">
 
-<h2>Gestion des Équipes</h2>
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h2 class="mb-0">Gestion des Équipes</h2>
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-sm">← Retour dashboard</a>
+  </div>
 
-<table class="table table-dark table-striped">
-<thead>
-<tr>
-<th>Nom</th>
-<th>Abréviation</th>
-<th>Validé</th>
-<th>Actions</th>
-</tr>
-</thead>
-<tbody>
-{% for team in teams %}
-<tr>
-<td>{{ team.team_name }}</td>
-<td>{{ team.abbreviation }}</td>
-<td>{{ team.payment_validated }}</td>
-<td>
-<a href="{% url 'team_delete' team.pk %}" class="btn btn-danger btn-sm">Supprimer</a>
-<a href="{% url 'edit_team' team.pk %}" class="btn btn-warning btn-sm">Modifier</a>
-{% if team.user %}
-<a href="{% url 'edit_user_role' team.user.id %}" 
-   class="btn btn-warning btn-sm">
-    Gérer rôle
-</a>
-{% else %}
-<span class="text-muted">Aucun compte lié</span>
-{% endif %}
-</a>
-</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
+  <div class="table-responsive">
+    <table class="table table-dark table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Abréviation</th>
+          <th>Validé</th>
+          <th>Compte</th>
+          <th style="min-width: 320px;">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+      {% for team in teams %}
+        <tr>
+          <td>{{ team.team_name }}</td>
+          <td><strong>{{ team.abbreviation }}</strong></td>
+          <td>
+            {% if team.payment_validated %}
+              <span class="badge bg-success">Oui</span>
+            {% else %}
+              <span class="badge bg-warning text-dark">Non</span>
+            {% endif %}
+          </td>
+
+          <td>
+            {% if team.user %}
+              <span class="badge bg-info text-dark">{{ team.user.username }}</span>
+            {% else %}
+              <span class="text-muted">Aucun</span>
+            {% endif %}
+          </td>
+
+          <td class="d-flex flex-wrap gap-2">
+            <a href="{% url 'edit_team' team.pk %}" class="btn btn-warning btn-sm">Modifier</a>
+            <a href="{% url 'team_delete' team.pk %}" class="btn btn-danger btn-sm">Supprimer</a>
+
+            {% if team.user %}
+              <a href="{% url 'edit_user_role' team.user.id %}" class="btn btn-secondary btn-sm">
+                Rôle
+              </a>
+
+              <a href="{% url 'reset_team_user_password' team.id %}" class="btn btn-info btn-sm">
+                Mot de passe
+              </a>
+            {% else %}
+              <span class="text-muted">Aucun compte lié</span>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
 </div>
 {% endblock %}
