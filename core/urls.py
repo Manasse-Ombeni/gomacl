@@ -63,6 +63,11 @@ urlpatterns = [
     path("dashboard/db-check/", views.db_check, name="db_check"),
     path('dashboard/users/<int:user_id>/reset-password/', views.reset_user_password, name='reset_user_password'),
     path('dashboard/teams/<int:team_id>/reset-password/', views.reset_team_user_password, name='reset_team_user_password'),
+    path('dashboard/league-draw/', views.league_draw_live, name='league_draw_live'),
+    path('dashboard/league-draw/random8/<int:team_id>/', views.league_draw_random8, name='league_draw_random8'),
+    path('dashboard/league-draw/reset/', views.league_draw_reset, name='league_draw_reset'),
+    path('dashboard/league-draw/generate-matches/', views.league_draw_generate_matches, name='league_draw_generate_matches'),
+
 ]
 
 

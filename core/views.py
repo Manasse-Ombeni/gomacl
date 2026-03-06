@@ -32,6 +32,9 @@ from django.http import HttpResponseForbidden, HttpResponseBadRequest
 from django.db import transaction
 from django.http import JsonResponse
 from django.db import connection
+import random
+from django.db.models import Count, Q
+
 
 
 
@@ -1135,3 +1138,209 @@ def reset_team_user_password(request, team_id):
         'user_obj': user_obj,
         'title': 'Réinitialiser mot de passe'
     })
+
+
+from .models import LeagueDrawSession, LeagueDrawPair
+
+def _order_pair(team1, team2):
+    return (team1, team2) if team1.id < team2.id else (team2, team1)
+
+def _degree(session, team):
+    return LeagueDrawPair.objects.filter(session=session).filter(
+        Q(team_a=team) | Q(team_b=team)
+    ).count()
+
+
+
+@role_required(['superadmin', 'organisateur'])
+def league_draw_live(request):
+    competition = Competition.objects.filter(is_active=True).first()
+    if not competition:
+        messages.error(request, "Aucune compétition active.")
+        return redirect('dashboard')
+
+    session = LeagueDrawSession.objects.filter(is_active=True, competition=competition).order_by('-created_at').first()
+    if not session:
+        session = LeagueDrawSession.objects.create(
+            name=f"Tirage Ligue - {competition.name}",
+            competition=competition,
+            is_active=True
+        )
+
+    # Teams validées
+    teams = Team.objects.filter(payment_validated=True, competition=competition).annotate(
+        draw_count=Count('league_pairs_a', filter=Q(league_pairs_a__session=session), distinct=True) +
+                   Count('league_pairs_b', filter=Q(league_pairs_b__session=session), distinct=True)
+    ).order_by('team_name')
+
+    pairs_qs = LeagueDrawPair.objects.filter(session=session).select_related('team_a', 'team_b')
+    pairs_count = pairs_qs.count()
+
+    teams_count = teams.count()
+    done = (teams_count > 0 and all(t.draw_count >= 8 for t in teams))
+
+    last_pairs = pairs_qs.order_by('-created_at')[:50]
+
+    return render(request, 'core/admin/league_draw_live.html', {
+        'competition': competition,
+        'session': session,
+        'teams': teams,
+        'pairs': last_pairs,
+        'done': done,
+        'teams_count': teams_count,
+        'pairs_count': pairs_count,
+    })
+
+@role_required(['superadmin', 'organisateur'])
+def league_draw_random8(request, team_id):
+    competition = Competition.objects.filter(is_active=True).first()
+    session = LeagueDrawSession.objects.filter(is_active=True, competition=competition).order_by('-created_at').first()
+    if not session:
+        session = LeagueDrawSession.objects.create(
+            name=f"Tirage Ligue - {competition.name}",
+            competition=competition,
+            is_active=True
+        )
+
+    team = get_object_or_404(Team, pk=team_id, payment_validated=True, competition=competition)
+
+    with transaction.atomic():
+        # Tant que l'équipe n'a pas 8 adversaires
+        safety = 0
+        while _degree(session, team) < 8:
+            safety += 1
+            if safety > 2000:
+                messages.error(request, "Blocage détecté (safety stop). Utilise Reset et relance.")
+                return redirect('league_draw_live')
+
+            # équipes déjà rencontrées par team
+            existing = LeagueDrawPair.objects.filter(session=session).filter(
+                Q(team_a=team) | Q(team_b=team)
+            )
+            already_ids = set()
+            for p in existing:
+                already_ids.add(p.team_a_id)
+                already_ids.add(p.team_b_id)
+            already_ids.discard(team.id)
+
+            # candidats: validés, même compétition, pas lui, pas déjà rencontrés, et avec slots dispo (<8)
+            candidates = Team.objects.filter(payment_validated=True, competition=competition).exclude(pk=team.id).exclude(pk__in=already_ids)
+
+            candidates = [t for t in candidates if _degree(session, t) < 8]
+
+            if not candidates:
+                messages.error(request, "Impossible de compléter les 8 adversaires (plus de candidats). Reset recommandé.")
+                return redirect('league_draw_live')
+
+            opponent = random.choice(list(candidates))
+            a, b = _order_pair(team, opponent)
+            LeagueDrawPair.objects.get_or_create(session=session, team_a=a, team_b=b)
+
+    messages.success(request, f"Tirage terminé: {team.team_name} a maintenant 8 adversaires.")
+    return redirect('league_draw_live')
+
+
+@role_required(['superadmin', 'organisateur'])
+def league_draw_reset(request):
+    competition = Competition.objects.filter(is_active=True).first()
+    session = LeagueDrawSession.objects.filter(is_active=True, competition=competition).order_by('-created_at').first()
+    if session:
+        session.pairs.all().delete()
+    messages.warning(request, "Tirage réinitialisé.")
+    return redirect('league_draw_live')
+
+
+@role_required(['superadmin', 'organisateur'])
+def league_draw_generate_matches(request):
+    """
+    Crée Phase 'league' + Matchs à partir des paires.
+    - Home/Away fixe: team_a (home) vs team_b (away)
+    - Date de départ choisie via formulaire (jour), heure auto 00:00
+    - scheduled_date: placeholders toutes les 10 minutes (tu modifies ensuite)
+    - Anti-doublons: vérifie aussi l'inverse
+    """
+    competition = Competition.objects.filter(is_active=True).first()
+    if not competition:
+        messages.error(request, "Aucune compétition active.")
+        return redirect('dashboard')
+
+    session = LeagueDrawSession.objects.filter(is_active=True, competition=competition).order_by('-created_at').first()
+    if not session:
+        messages.error(request, "Aucun tirage actif.")
+        return redirect('league_draw_live')
+
+    teams = Team.objects.filter(payment_validated=True, competition=competition)
+
+    # Vérifier tirage complet (8 adversaires par équipe)
+    degs = {t.id: _degree(session, t) for t in teams}
+    not_ready = [t for t in teams if degs.get(t.id, 0) < 8]
+    if not_ready:
+        messages.error(request, "Tirage incomplet: certaines équipes n'ont pas 8 adversaires.")
+        return redirect('league_draw_live')
+
+    pairs_qs = LeagueDrawPair.objects.filter(session=session).select_related('team_a', 'team_b').order_by('id')
+    pairs_count = pairs_qs.count()
+    if pairs_count != 144:
+        messages.warning(request, f"Attention: nombre de paires = {pairs_count} (attendu: 144 pour 36 équipes).")
+
+    # GET -> afficher formulaire
+    if request.method != 'POST':
+        return render(request, 'core/admin/league_generate_matches.html', {
+            'competition': competition,
+            'pairs_count': pairs_count
+        })
+
+    # POST -> générer
+    start_date_str = (request.POST.get('start_date') or '').strip()
+    if not start_date_str:
+        messages.error(request, "Veuillez choisir une date de début.")
+        return redirect('league_draw_generate_matches')
+
+    try:
+        # attendu: YYYY-MM-DD
+        start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+    except ValueError:
+        messages.error(request, "Format de date invalide. Utilise YYYY-MM-DD.")
+        return redirect('league_draw_generate_matches')
+
+    # base datetime à 00:00 heure locale
+    base_dt = timezone.make_aware(datetime.combine(start_date, datetime.min.time()))
+    slot_minutes = 10
+
+    # Phase league (création si inexistante)
+    phase, _ = Phase.objects.get_or_create(
+        competition=competition,
+        name='league',
+        defaults={'order': 1, 'is_active': True}
+    )
+
+    created = 0
+    existing = 0
+
+    with transaction.atomic():
+        for i, p in enumerate(pairs_qs):
+            home = p.team_a
+            away = p.team_b
+            scheduled = base_dt + timedelta(minutes=slot_minutes * i)
+
+            # Anti-doublons (même paire, peu importe le sens)
+            pair_exists = Match.objects.filter(phase=phase).filter(
+                Q(home_team=home, away_team=away) | Q(home_team=away, away_team=home)
+            ).exists()
+
+            if pair_exists:
+                existing += 1
+                continue
+
+            Match.objects.create(
+                phase=phase,
+                home_team=home,
+                away_team=away,
+                match_leg='unique',
+                scheduled_date=scheduled,
+                is_played=False
+            )
+            created += 1
+
+    messages.success(request, f"Phase League OK. Matchs générés: {created} créés, {existing} déjà existants.")
+    return redirect('dashboard')

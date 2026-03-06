@@ -384,3 +384,33 @@ class AdminLog(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.action}"
+
+
+
+class LeagueDrawSession(models.Model):
+    name = models.CharField(max_length=120, default="Tirage Ligue")
+    competition = models.ForeignKey('Competition', on_delete=models.CASCADE, related_name='league_draw_sessions')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} - {self.competition.name}"
+
+
+class LeagueDrawPair(models.Model):
+    """
+    Paire unique pour la phase de ligue (sans aller/retour).
+    On stocke toujours dans un ordre stable (team_low_id, team_high_id) pour éviter doublons.
+    """
+    session = models.ForeignKey(LeagueDrawSession, on_delete=models.CASCADE, related_name='pairs')
+    team_a = models.ForeignKey('Team', on_delete=models.CASCADE, related_name='league_pairs_a')
+    team_b = models.ForeignKey('Team', on_delete=models.CASCADE, related_name='league_pairs_b')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['session', 'team_a', 'team_b'], name='unique_league_pair_per_session')
+        ]
+
+    def __str__(self):
+        return f"{self.team_a.abbreviation} vs {self.team_b.abbreviation}"
