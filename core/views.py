@@ -1344,3 +1344,148 @@ def league_draw_generate_matches(request):
 
     messages.success(request, f"Phase League OK. Matchs générés: {created} créés, {existing} déjà existants.")
     return redirect('dashboard')
+
+
+@role_required(['superadmin', 'organisateur'])
+def league_draw_global(request):
+    competition = Competition.objects.filter(is_active=True).first()
+    if not competition:
+        messages.error(request, "Aucune compétition active.")
+        return redirect('dashboard')
+
+    session = LeagueDrawSession.objects.filter(is_active=True, competition=competition).order_by('-created_at').first()
+    if not session:
+        session = LeagueDrawSession.objects.create(
+            name=f"Tirage Ligue - {competition.name}",
+            competition=competition,
+            is_active=True
+        )
+
+    teams = list(Team.objects.filter(payment_validated=True, competition=competition).order_by('id'))
+
+    if len(teams) != 36:
+        messages.error(request, f"Tirage global nécessite 36 équipes validées. Actuel: {len(teams)}.")
+        return redirect('league_draw_live')
+
+    # RESET + MESSAGE
+    deleted = session.pairs.count()
+    if deleted > 0:
+        session.pairs.all().delete()
+        messages.warning(request, f"Tirage existant supprimé: {deleted} paires effacées. Nouveau tirage global en cours...")
+
+    # Randomiser l'ordre des équipes (effet tirage)
+    random.shuffle(teams)
+
+    n = len(teams)
+    k = 4  # 4 voisins devant => degré 8 total
+
+    created = 0
+    with transaction.atomic():
+        for i in range(n):
+            for d in range(1, k + 1):
+                t1 = teams[i]
+                t2 = teams[(i + d) % n]  # uniquement vers l'avant => pas de doublons
+                a, b = _order_pair(t1, t2)
+                obj, was_created = LeagueDrawPair.objects.get_or_create(session=session, team_a=a, team_b=b)
+                if was_created:
+                    created += 1
+
+    messages.success(request, f"Tirage global terminé: {created} paires créées (attendu: 144).")
+    return redirect('league_draw_live')
+
+@role_required(['superadmin', 'organisateur'])
+def league_generate_8_matchdays(request):
+    """
+    Génère Phase 'league' + 8 journées.
+    - 36 équipes validées uniquement
+    - 18 matchs / journée
+    - 2 journées / jour => 4 jours au total
+    - Journée impaire => 00:00, Journée paire => 00:01 (même fenêtre 24h)
+    - Les joueurs peuvent jouer n'importe quelle heure dans la journée (00:00-23:59)
+
+    MODE A (DELETE) :
+    - Supprime d'abord tous les Matchs existants de la phase 'league' (pour repartir propre).
+    """
+    competition = Competition.objects.filter(is_active=True).first()
+    if not competition:
+        messages.error(request, "Aucune compétition active.")
+        return redirect('dashboard')
+
+    teams = list(Team.objects.filter(payment_validated=True, competition=competition).order_by('id'))
+    if len(teams) != 36:
+        messages.error(request, f"Cette génération nécessite 36 équipes validées. Actuel: {len(teams)}.")
+        return redirect('league_draw_live')
+
+    if request.method != 'POST':
+        return render(request, 'core/admin/league_generate_8_matchdays.html', {
+            'competition': competition
+        })
+
+    start_date_str = (request.POST.get('start_date') or '').strip()
+    if not start_date_str:
+        messages.error(request, "Veuillez choisir une date de début.")
+        return redirect('league_generate_8_matchdays')
+
+    try:
+        start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+    except ValueError:
+        messages.error(request, "Format de date invalide.")
+        return redirect('league_generate_8_matchdays')
+
+    # Phase league
+    phase, _ = Phase.objects.get_or_create(
+        competition=competition,
+        name='league',
+        defaults={'order': 1, 'is_active': True}
+    )
+
+    # ✅ MODE A: on repart propre (supprime tous les matchs de league existants)
+    deleted, _ = Match.objects.filter(phase=phase).delete()
+
+    # Tirage aléatoire UEFA-style (round-robin partiel)
+    random.shuffle(teams)
+
+    fixed = teams[0]
+    rotating = teams[1:]  # 35
+    n_rounds = 8          # 8 journées
+
+    created = 0
+
+    with transaction.atomic():
+        for r in range(1, n_rounds + 1):
+            left = [fixed] + rotating[:17]      # 18
+            right = rotating[17:][::-1]         # 18 (inversée)
+            day_pairs = list(zip(left, right))  # 18 matchs
+
+            # 2 journées par jour (même fenêtre 24h)
+            day_index = (r - 1) // 2
+            minute = 0 if (r % 2 == 1) else 1   # 00:00 et 00:01
+
+            round_dt = timezone.make_aware(
+                datetime.combine(start_date + timedelta(days=day_index), datetime.min.time())
+            ).replace(hour=0, minute=minute, second=0, microsecond=0)
+
+            for t1, t2 in day_pairs:
+                # Home/Away fixe et stable (ordre par id pour éviter doublons)
+                home, away = _order_pair(t1, t2)
+
+                Match.objects.create(
+                    phase=phase,
+                    home_team=home,
+                    away_team=away,
+                    match_leg='unique',
+                    scheduled_date=round_dt,
+                    matchday=r,
+                    is_played=False
+                )
+                created += 1
+
+            # Rotation cercle
+            rotating = [rotating[-1]] + rotating[:-1]
+
+    messages.success(
+        request,
+        f"Calendrier League généré: {created} matchs créés (8 journées). "
+        f"Ancien calendrier supprimé: {deleted} matchs."
+    )
+    return redirect('dashboard')

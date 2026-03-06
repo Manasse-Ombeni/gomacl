@@ -67,6 +67,8 @@ urlpatterns = [
     path('dashboard/league-draw/random8/<int:team_id>/', views.league_draw_random8, name='league_draw_random8'),
     path('dashboard/league-draw/reset/', views.league_draw_reset, name='league_draw_reset'),
     path('dashboard/league-draw/generate-matches/', views.league_draw_generate_matches, name='league_draw_generate_matches'),
+    path('dashboard/league-draw/global/', views.league_draw_global, name='league_draw_global'),
+    path('dashboard/league-draw/generate-8-matchdays/', views.league_generate_8_matchdays, name='league_generate_8_matchdays'),
 
 ]
 

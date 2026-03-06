@@ -16,6 +16,8 @@
 
     <div class="d-flex gap-2">
       <a href="{% url 'dashboard' %}" class="btn btn-outline-light">← Dashboard</a>
+      <a href="{% url 'league_draw_global' %}" class="btn btn-warning">Tirage global (garanti 8/8)</a>
+      <a href="{% url 'league_generate_8_matchdays' %}" class="btn btn-outline-success">Générer 8 Journées (2/jour)</a>
       <a href="{% url 'league_draw_reset' %}" class="btn btn-danger">Reset tirage</a>
     </div>
   </div>

@@ -193,6 +193,7 @@ class Match(models.Model):
     
     # Date/heure
     scheduled_date = models.DateTimeField(verbose_name=_("Date prévue"))
+    matchday = models.PositiveIntegerField(default=1, verbose_name=_("Journée"))
     played_date = models.DateTimeField(null=True, blank=True, verbose_name=_("Date jouée"))
     
     # Screenshot (preuve)
