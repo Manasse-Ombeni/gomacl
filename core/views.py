@@ -60,7 +60,7 @@ def home(request):
     ).order_by('scheduled_date')[:3]
     
     # Dernières actualités
-    latest_news = News.objects.filter(is_published=True)[:3]
+    latest_news = News.objects.filter(is_published=True).order_by('-created_at')[:3]
     
     context = {
         'competition': competition,
