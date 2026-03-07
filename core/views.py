@@ -34,7 +34,8 @@ from django.http import JsonResponse
 from django.db import connection
 import random
 from django.db.models import Count, Q
-
+from django.utils.crypto import get_random_string
+from .forms import SimplePasswordResetForm
 
 
 
@@ -79,33 +80,33 @@ def register_team(request):
     Page d'inscription pour un nouveau joueur/équipe avec paiement
     """
     competition = Competition.objects.filter(is_active=True, registration_open=True).first()
-    
+
     if not competition:
         messages.error(request, _("Les inscriptions sont fermées."))
         return redirect('home')
-    
+
     if competition.is_registration_full:
         messages.error(request, _(f"Le nombre maximum d'équipes ({competition.max_teams}) a été atteint."))
         return redirect('home')
-    
+
     if request.method == 'POST':
         form = TeamRegistrationForm(request.POST, request.FILES)
         if form.is_valid():
             team = form.save(commit=False)
-            
+
             # Créer un utilisateur pour ce joueur
             username = form.cleaned_data['abbreviation'].lower()
             password = form.cleaned_data['password']
-            
+
             # Vérifier si le username existe déjà
             if User.objects.filter(username=username).exists():
                 messages.error(request, _(f"L'abréviation {username} est déjà utilisée comme nom d'utilisateur."))
                 return render(request, 'core/register_team.html', {
-                    'form': form, 
+                    'form': form,
                     'competition': competition,
                     'remaining_slots': competition.max_teams - competition.registered_teams_count,
                 })
-            
+
             # Créer l'utilisateur
             user = User.objects.create_user(
                 username=username,
@@ -113,33 +114,35 @@ def register_team(request):
                 first_name=form.cleaned_data['player_name'],
                 email=f"{username}@gomacl.local"
             )
-            
+
+            # ✅ IMPORTANT : forcer le rôle "player" (joueur)
+            # (ton signal crée UserProfile à la création du user)
+            if hasattr(user, "userprofile"):
+                user.userprofile.role = "player"
+                user.userprofile.save()
+
             team.user = user
             team.competition = competition
             team.payment_validated = False  # En attente de validation
             team.save()
-            
+
             messages.success(
                 request,
                 "✅ Inscription réussie ! Rejoignez le groupe WhatsApp et envoyez la preuve de paiement pour validation."
             )
-            
-            # Envoyer notification à l'admin (optionnel)
-            # send_admin_notification(team)
-            
+
             return redirect('home')
         else:
             messages.error(request, _("Inscription refusée : corrige les champs en rouge puis réessaie."))
     else:
         form = TeamRegistrationForm()
-    
+
     context = {
         'form': form,
         'competition': competition,
         'remaining_slots': competition.max_teams - competition.registered_teams_count if competition else 0,
     }
     return render(request, 'core/register_team.html', context)
-
 
 # ==========================================
 # LISTE DES ÉQUIPES
@@ -314,31 +317,24 @@ def user_login(request):
     """
     Page de connexion
     """
+    next_url = request.GET.get("next") or request.POST.get("next")
+
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
-        
+
         user = authenticate(request, username=username, password=password)
-        
+
         if user is not None:
             login(request, user)
             messages.success(request, _("Connexion réussie !"))
-            
-            # ✅ Redirection selon rôle personnalisé
-            if hasattr(user, 'userprofile') and user.userprofile.role in [
-                'superadmin',
-                'organisateur',
-                'paiement',
-                'match'
-            ]:
-                return redirect('dashboard')
-            else:
-                return redirect('my_matches')
 
+            # ✅ Redirection unique vers HOME (sauf si next est fourni)
+            return redirect(next_url) if next_url else redirect('home')
         else:
             messages.error(request, _("Nom d'utilisateur ou mot de passe incorrect."))
-    
-    return render(request, 'core/login.html')
+
+    return render(request, 'core/login.html', {"next": next_url})
 
 # ==========================================
 # DÉCONNEXION
@@ -407,14 +403,14 @@ def encode_result(request, match_id):
             match = form.save(commit=False)
             match.is_played = True
             match.played_date = timezone.now()
-            match.save()
+            match.save()  # ✅ signals => recalcul auto si phase league
 
-            # ✅ Recalcul complet pour éviter double comptage
-            if match.phase.name == 'league':
-                call_command('recalc_league_table')
+            if match.phase and match.phase.name == "league":
+                messages.success(request, _("Résultat enregistré. Classement mis à jour automatiquement."))
+            else:
+                messages.success(request, _("Résultat enregistré avec succès !"))
 
-            messages.success(request, _("Résultat enregistré avec succès !"))
-            return redirect('fixtures')   # ✅ retour calendrier
+            return redirect('fixtures')
     else:
         form = MatchResultForm(instance=match)
 
@@ -422,7 +418,6 @@ def encode_result(request, match_id):
         'form': form,
         'match': match,
     })
-
 # ==========================================
 # FONCTION : METTRE À JOUR LES STATS
 # ==========================================
@@ -596,7 +591,6 @@ def reported_matches(request):
 # ==========================================
 @role_required(['superadmin', 'organisateur', 'match'])
 def apply_forfeit_manual(request, match_id):
-
     match = get_object_or_404(Match, pk=match_id)
 
     if request.method == 'POST':
@@ -608,7 +602,6 @@ def apply_forfeit_manual(request, match_id):
         match.forfeit_team = forfeit_team
         match.played_date = timezone.now()
 
-        # score forfait
         if forfeit_team == match.home_team:
             match.home_score = 0
             match.away_score = 3
@@ -616,18 +609,16 @@ def apply_forfeit_manual(request, match_id):
             match.home_score = 3
             match.away_score = 0
 
-        match.save()
+        match.save()  # ✅ signals => recalcul auto si phase league
 
-        # ✅ Recalcul complet pour éviter double comptage
-        if match.phase.name == 'league':
-            call_command('recalc_league_table')
+        if match.phase and match.phase.name == "league":
+            messages.success(request, "Forfait appliqué. Classement mis à jour automatiquement.")
+        else:
+            messages.success(request, "Forfait appliqué.")
 
-        messages.success(request, "Forfait appliqué. Classement recalculé.")
         return redirect('reported_matches')
 
-    return render(request, 'core/apply_forfait.html', {
-        'match': match,
-    })
+    return render(request, 'core/apply_forfait.html', {'match': match})
 
 # ==========================================
 # ACTIONS ADMIN : GÉNÉRER LE CALENDRIER
@@ -723,12 +714,13 @@ def validate_payment(request, team_id):
     })
 
 
-@login_required
+@role_required(['superadmin', 'organisateur', 'match'])
 def download_calendar_pdf(request):
-    if not request.user.is_staff:
-        return redirect('home')
-
     competition = Competition.objects.filter(is_active=True).first()
+    if not competition:
+        messages.error(request, "Aucune compétition active.")
+        return redirect('dashboard')
+
     phases = Phase.objects.filter(competition=competition).prefetch_related('matches')
 
     response = HttpResponse(content_type='application/pdf')
@@ -764,11 +756,8 @@ def download_calendar_pdf(request):
     return response
 
 
-@login_required
+@role_required(['superadmin', 'organisateur'])
 def backup_database(request):
-    if not request.user.is_staff:
-        return redirect('home')
-
     response = HttpResponse(content_type='application/json')
     filename = f"backup_gomacl_{datetime.now().strftime('%Y%m%d_%H%M')}.json"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
@@ -776,7 +765,6 @@ def backup_database(request):
     output = StringIO()
     call_command('dumpdata', stdout=output)
     response.write(output.getvalue())
-
     return response
 
 
@@ -966,32 +954,39 @@ def delete_user(request, pk):
     return redirect('manage_users')
 
 
-@login_required
+@role_required(['superadmin'])
 def admin_logs(request):
-    if not request.user.is_staff:
-        return redirect('home')
-
     logs = AdminLog.objects.all().order_by('-timestamp')
-
-    return render(request, 'core/admin/logs.html', {
-        'logs': logs
-    })
+    return render(request, 'core/admin/logs.html', {'logs': logs})
 
 
 @role_required(['superadmin'])
 def edit_user_role(request, user_id):
+    user_obj = get_object_or_404(User, pk=user_id)
+    profile = user_obj.userprofile
 
-    user = get_object_or_404(User, pk=user_id)
-    profile = user.userprofile
+    allowed_roles = [key for key, _label in UserProfile.ROLE_CHOICES]
 
     if request.method == 'POST':
-        new_role = request.POST.get('role')
+        new_role = (request.POST.get('role') or '').strip()
+
+        if new_role not in allowed_roles:
+            messages.error(request, _("Rôle invalide."))
+            return redirect('edit_user_role', user_id=user_id)
+
         profile.role = new_role
         profile.save()
-        return redirect('team_list')
+
+        AdminLog.objects.create(
+            user=request.user,
+            action=f"Changement rôle: {user_obj.username} => {new_role}"
+        )
+
+        messages.success(request, _("Rôle mis à jour avec succès."))
+        return redirect('team_list')  # ou 'manage_users' si tu préfères
 
     return render(request, 'core/admin/edit_user_role.html', {
-        'user_obj': user,
+        'user_obj': user_obj,
         'profile': profile,
         'title': 'Modifier rôle utilisateur'
     })
@@ -1522,17 +1517,53 @@ def cancel_result(request, match_id):
 
         match.played_date = None
         match.notes = ""
-        match.save()
-
-        if match.phase.name == 'league':
-            call_command('recalc_league_table')
+        match.save()  # ✅ signals => recalcul auto si phase league
 
         AdminLog.objects.create(
             user=request.user,
             action=f"Annulation résultat match {match.home_team.abbreviation} vs {match.away_team.abbreviation}"
         )
 
-        messages.success(request, "Résultat annulé. Le classement a été recalculé.")
+        if match.phase and match.phase.name == "league":
+            messages.success(request, "Résultat annulé. Classement mis à jour automatiquement.")
+        else:
+            messages.success(request, "Résultat annulé.")
+
         return redirect(request.META.get('HTTP_REFERER', 'manage_matches'))
 
     return render(request, 'core/admin/confirm_cancel_result.html', {'match': match})
+
+# core/views.py
+
+
+def forgot_password(request):
+    temp_password = None
+    form = SimplePasswordResetForm(request.POST or None)
+
+    if request.method == "POST" and form.is_valid():
+        username = form.cleaned_data["username"]
+        whatsapp = form.cleaned_data["whatsapp"]
+
+        user = User.objects.filter(username__iexact=username).first()
+
+        # Pour rester simple: on ne reset que les comptes joueurs liés à une Team
+        if not user or not hasattr(user, "team") or not user.team:
+            form.add_error(None, "Informations incorrectes.")
+        else:
+            # Comparaison WhatsApp (normalisation basique)
+            db_whatsapp = (user.team.whatsapp or "").replace(" ", "").strip()
+            if db_whatsapp != whatsapp:
+                form.add_error(None, "Informations incorrectes.")
+            else:
+                # Générer un mot de passe temporaire simple à taper
+                temp_password = get_random_string(
+                    8,
+                    allowed_chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+                )
+                user.set_password(temp_password)
+                user.save()
+
+    return render(request, "core/forgot_password.html", {
+        "form": form,
+        "temp_password": temp_password
+    })

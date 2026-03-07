@@ -1,4 +1,5 @@
 {% load static %}
+{% load roles %}
 
 <nav class="navbar navbar-expand-lg navbar-dark fixed-top shadow-sm ucl-nav">
   <div class="container-fluid px-3 px-lg-4">
@@ -39,7 +40,37 @@
 
         <!-- AUTH ACTIONS (DESKTOP) -->
         {% if user.is_authenticated %}
-          {% if user.team %}
+
+          {% if user|has_role:"superadmin,organisateur,paiement,match" %}
+            <li class="nav-item dropdown ms-lg-2">
+              <a class="btn ucl-btn ucl-btn-gold dropdown-toggle"
+                 data-bs-toggle="dropdown"
+                 role="button"
+                 aria-expanded="false">
+                ADMIN
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end shadow ucl-dropdown">
+                <li>
+                  <span class="dropdown-item-text text-light" style="opacity:.85;">
+                    {{ user.username }} —
+                    {% if user.userprofile %}{{ user.userprofile.get_role_display }}{% endif %}
+                  </span>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+
+                <li><a class="dropdown-item" href="{% url 'dashboard' %}">Dashboard</a></li>
+
+                {% if user.team %}
+                  <li><a class="dropdown-item" href="{% url 'my_matches' %}">Mes matchs</a></li>
+                  <li><a class="dropdown-item" href="{% url 'edit_my_team' %}">Mon équipe</a></li>
+                {% endif %}
+
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="{% url 'logout' %}">Déconnexion</a></li>
+              </ul>
+            </li>
+
+          {% elif user.team %}
             <li class="nav-item dropdown ms-lg-2">
               <a class="btn ucl-btn ucl-btn-gold dropdown-toggle"
                  data-bs-toggle="dropdown"
@@ -54,11 +85,21 @@
                 <li><a class="dropdown-item text-danger" href="{% url 'logout' %}">Déconnexion</a></li>
               </ul>
             </li>
+
           {% else %}
-            <li class="nav-item ms-lg-2">
-              <a href="{% url 'dashboard' %}" class="btn ucl-btn ucl-btn-gold">Dashboard</a>
+            <li class="nav-item dropdown ms-lg-2">
+              <a class="btn ucl-btn ucl-btn-outline dropdown-toggle"
+                 data-bs-toggle="dropdown"
+                 role="button"
+                 aria-expanded="false">
+                {{ user.username }}
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end shadow ucl-dropdown">
+                <li><a class="dropdown-item text-danger" href="{% url 'logout' %}">Déconnexion</a></li>
+              </ul>
             </li>
           {% endif %}
+
         {% else %}
           <li class="nav-item ms-lg-2">
             <a href="{% url 'register_team' %}" class="btn ucl-btn ucl-btn-outline">Inscription</a>
@@ -100,7 +141,27 @@
       <hr class="border-secondary my-3">
 
       {% if user.is_authenticated %}
-        {% if user.team %}
+
+        {% if user|has_role:"superadmin,organisateur,paiement,match" %}
+          <div class="ucl-mobile-card">
+            <div class="ucl-mobile-chip">ADMIN</div>
+            <div class="text-light mt-2" style="opacity:.8;">
+              {{ user.username }} — {% if user.userprofile %}{{ user.userprofile.get_role_display }}{% endif %}
+            </div>
+
+            <div class="d-grid gap-2 mt-3">
+              <a href="{% url 'dashboard' %}" class="btn ucl-btn ucl-btn-gold">Dashboard</a>
+
+              {% if user.team %}
+                <a href="{% url 'my_matches' %}" class="btn ucl-btn ucl-btn-outline">Mes matchs</a>
+                <a href="{% url 'edit_my_team' %}" class="btn ucl-btn ucl-btn-outline">Mon équipe</a>
+              {% endif %}
+
+              <a href="{% url 'logout' %}" class="btn ucl-btn ucl-btn-danger">Déconnexion</a>
+            </div>
+          </div>
+
+        {% elif user.team %}
           <div class="ucl-mobile-card">
             <div class="ucl-mobile-chip">{{ user.team.abbreviation|upper }}</div>
             <div class="d-grid gap-2 mt-3">
@@ -109,12 +170,13 @@
               <a href="{% url 'logout' %}" class="btn ucl-btn ucl-btn-danger">Déconnexion</a>
             </div>
           </div>
+
         {% else %}
           <div class="d-grid gap-2">
-            <a href="{% url 'dashboard' %}" class="btn ucl-btn ucl-btn-gold">Dashboard admin</a>
             <a href="{% url 'logout' %}" class="btn ucl-btn ucl-btn-danger">Déconnexion</a>
           </div>
         {% endif %}
+
       {% else %}
         <div class="d-grid gap-2">
           <a href="{% url 'register_team' %}" class="btn ucl-btn ucl-btn-gold">Inscription</a>

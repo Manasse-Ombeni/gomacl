@@ -71,13 +71,14 @@ urlpatterns = [
     path('dashboard/league-draw/generate-8-matchdays/', views.league_generate_8_matchdays, name='league_generate_8_matchdays'),
     path('dashboard/recalc-table/', views.recalc_league_table_view, name='recalc_league_table_view'),
     path('dashboard/matches/<int:match_id>/cancel-result/', views.cancel_result, name='cancel_result'),
+    path('forgot-password/', views.forgot_password, name='forgot_password'),
+    
 
 ]
 
 
 
     
-    # Admin - Matchs signalés
-    
+
 
 

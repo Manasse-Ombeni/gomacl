@@ -5,23 +5,37 @@ class Command(BaseCommand):
     help = "Recalculer les stats (phase league) à partir des matchs joués"
 
     def handle(self, *args, **options):
-        # Reset stats
-        Team.objects.update(
-            played=0, wins=0, draws=0, losses=0,
-            goals_for=0, goals_against=0, points=0
-        )
+        # Charger toutes les équipes UNE SEULE FOIS (1 objet par team)
+        teams = Team.objects.in_bulk()  # {id: Team}
 
-        matches = Match.objects.filter(is_played=True, phase__name='league').select_related(
-            'home_team', 'away_team', 'forfeit_team', 'phase'
+        # Reset stats (en mémoire)
+        for t in teams.values():
+            t.played = 0
+            t.wins = 0
+            t.draws = 0
+            t.losses = 0
+            t.goals_for = 0
+            t.goals_against = 0
+            t.points = 0
+
+        matches = Match.objects.filter(
+            is_played=True,
+            phase__name='league'
+        ).values(
+            'home_team_id', 'away_team_id',
+            'is_forfeit', 'forfeit_team_id',
+            'home_score', 'away_score'
         )
 
         for m in matches:
-            home = m.home_team
-            away = m.away_team
+            home = teams.get(m['home_team_id'])
+            away = teams.get(m['away_team_id'])
+            if not home or not away:
+                continue
 
-            if m.is_forfeit:
-                # Forfait = victoire 3-0 pour l'autre
-                if m.forfeit_team_id == home.id:
+            if m['is_forfeit']:
+                # Forfait = 3-0
+                if m['forfeit_team_id'] == home.id:
                     # away gagne
                     away.played += 1
                     away.wins += 1
@@ -41,34 +55,38 @@ class Command(BaseCommand):
                     away.played += 1
                     away.losses += 1
                     away.goals_against += 3
+
             else:
-                hs = m.home_score or 0
-                as_ = m.away_score or 0
+                hs = m['home_score'] or 0
+                a_s = m['away_score'] or 0
 
                 home.played += 1
                 away.played += 1
 
                 home.goals_for += hs
-                home.goals_against += as_
+                home.goals_against += a_s
 
-                away.goals_for += as_
+                away.goals_for += a_s
                 away.goals_against += hs
 
-                if hs > as_:
+                if hs > a_s:
                     home.wins += 1
                     home.points += 3
                     away.losses += 1
-                elif hs < as_:
+                elif hs < a_s:
                     away.wins += 1
                     away.points += 3
                     home.losses += 1
                 else:
                     home.draws += 1
-                    home.points += 1
                     away.draws += 1
+                    home.points += 1
                     away.points += 1
 
-            home.save()
-            away.save()
+        # Sauvegarde en une fois (très important)
+        Team.objects.bulk_update(
+            teams.values(),
+            ['played', 'wins', 'draws', 'losses', 'goals_for', 'goals_against', 'points']
+        )
 
         self.stdout.write(self.style.SUCCESS("OK: Classement recalculé (phase league)."))

@@ -5,6 +5,7 @@ from .models import Team, Match, Competition
 import re
 
 
+
 # ==========================================
 # FORMULAIRE : INSCRIPTION / MODIFICATION ÉQUIPE
 # ==========================================
@@ -163,3 +164,25 @@ class CompetitionForm(forms.ModelForm):
             'start_date',
             'end_date'
         ]
+    
+
+
+
+class SimplePasswordResetForm(forms.Form):
+    username = forms.CharField(
+        label=_("Nom d'utilisateur (abréviation)"),
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "ex: gom"})
+    )
+    whatsapp = forms.CharField(
+        label=_("Numéro WhatsApp"),
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "+243999999999"})
+    )
+
+    def clean_username(self):
+        return (self.cleaned_data.get("username") or "").strip().lower()
+
+    def clean_whatsapp(self):
+        w = (self.cleaned_data.get("whatsapp") or "").replace(" ", "").strip()
+        if not re.match(r'^\+?\d{9,15}$', w):
+            raise forms.ValidationError(_("WhatsApp invalide. Exemple: +243999999999"))
+        return w

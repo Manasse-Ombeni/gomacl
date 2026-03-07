@@ -355,10 +355,10 @@ class News(models.Model):
     def __str__(self):
         return self.title
 
-
 class UserProfile(models.Model):
 
     ROLE_CHOICES = [
+        ('player', 'Joueur'),  # ✅ nouveau
         ('superadmin', 'Super Admin'),
         ('organisateur', 'Organisateur'),
         ('paiement', 'Modérateur Paiements'),
@@ -366,7 +366,7 @@ class UserProfile(models.Model):
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='organisateur')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='player')  # ✅ default joueur
 
     def __str__(self):
         return f"{self.user.username} - {self.role}"
@@ -375,7 +375,9 @@ class UserProfile(models.Model):
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
-        UserProfile.objects.create(user=instance)
+        # ✅ superuser => superadmin, sinon => player
+        role = "superadmin" if instance.is_superuser else "player"
+        UserProfile.objects.create(user=instance, role=role)
 
 
 class AdminLog(models.Model):
