@@ -391,7 +391,6 @@ def dashboard(request):
 @login_required
 def encode_result(request, match_id):
 
-    # ✅ Vérification par rôle personnalisé
     if not hasattr(request.user, 'userprofile') or request.user.userprofile.role not in [
         'superadmin',
         'organisateur',
@@ -399,26 +398,26 @@ def encode_result(request, match_id):
     ]:
         messages.error(request, _("Accès refusé."))
         return redirect('home')
-    
+
     match = get_object_or_404(Match, pk=match_id)
-    
+
     if request.method == 'POST':
-        form = MatchResultForm(request.POST, request.FILES, instance=match)
+        form = MatchResultForm(request.POST, instance=match)
         if form.is_valid():
             match = form.save(commit=False)
             match.is_played = True
             match.played_date = timezone.now()
             match.save()
-            
-            # ✅ Mise à jour des stats UNIQUEMENT pour la phase de ligue
+
+            # ✅ Recalcul complet pour éviter double comptage
             if match.phase.name == 'league':
-                update_team_stats(match)
-            
+                call_command('recalc_league_table')
+
             messages.success(request, _("Résultat enregistré avec succès !"))
-            return redirect('dashboard')
+            return redirect('fixtures')   # ✅ retour calendrier
     else:
         form = MatchResultForm(instance=match)
-    
+
     return render(request, 'core/encode_result.html', {
         'form': form,
         'match': match,
@@ -609,6 +608,7 @@ def apply_forfeit_manual(request, match_id):
         match.forfeit_team = forfeit_team
         match.played_date = timezone.now()
 
+        # score forfait
         if forfeit_team == match.home_team:
             match.home_score = 0
             match.away_score = 3
@@ -617,8 +617,12 @@ def apply_forfeit_manual(request, match_id):
             match.away_score = 0
 
         match.save()
-        update_team_stats(match)
 
+        # ✅ Recalcul complet pour éviter double comptage
+        if match.phase.name == 'league':
+            call_command('recalc_league_table')
+
+        messages.success(request, "Forfait appliqué. Classement recalculé.")
         return redirect('reported_matches')
 
     return render(request, 'core/apply_forfait.html', {
@@ -1489,3 +1493,46 @@ def league_generate_8_matchdays(request):
         f"Ancien calendrier supprimé: {deleted} matchs."
     )
     return redirect('dashboard')
+
+@role_required(['superadmin', 'organisateur'])
+def recalc_league_table_view(request):
+    if request.method == 'POST':
+        call_command('recalc_league_table')
+        messages.success(request, "Classement recalculé avec succès.")
+        return redirect('dashboard')
+
+    # petite page de confirmation
+    return render(request, 'core/admin/confirm_recalc_table.html')
+
+@role_required(['superadmin', 'organisateur', 'match'])
+def cancel_result(request, match_id):
+    match = get_object_or_404(Match, pk=match_id)
+
+    if request.method == 'POST':
+        match.is_played = False
+        match.is_forfeit = False
+        match.forfeit_team = None
+
+        match.home_score = None
+        match.away_score = None
+        match.home_extra_time = None
+        match.away_extra_time = None
+        match.home_penalties = None
+        match.away_penalties = None
+
+        match.played_date = None
+        match.notes = ""
+        match.save()
+
+        if match.phase.name == 'league':
+            call_command('recalc_league_table')
+
+        AdminLog.objects.create(
+            user=request.user,
+            action=f"Annulation résultat match {match.home_team.abbreviation} vs {match.away_team.abbreviation}"
+        )
+
+        messages.success(request, "Résultat annulé. Le classement a été recalculé.")
+        return redirect(request.META.get('HTTP_REFERER', 'manage_matches'))
+
+    return render(request, 'core/admin/confirm_cancel_result.html', {'match': match})

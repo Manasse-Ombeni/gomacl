@@ -62,6 +62,7 @@
                 </div>
               </div>
 
+              <!-- DESKTOP TABLE -->
               <div class="table-responsive">
                 <table class="table table-dark table-striped table-fixtures align-middle mb-0">
                   <thead>
@@ -72,7 +73,7 @@
                       <th>Extérieur</th>
                       <th class="text-center" style="width:130px;">WhatsApp</th>
                       {% if user.is_staff %}
-                        <th class="text-end" style="width:120px;">Admin</th>
+                        <th class="text-end" style="width:220px;">Admin</th>
                       {% endif %}
                     </tr>
                   </thead>
@@ -93,7 +94,7 @@
                         {% endif %}
                       </td>
 
-                      <!-- HOME (name first, abbr under, with letter icon) -->
+                      <!-- HOME -->
                       <td class="team-cell">
                         <div class="team-row">
                           <div class="team-logo">
@@ -142,9 +143,17 @@
 
                       {% if user.is_staff %}
                       <td class="text-end">
-                        <a href="{% url 'encode_result' match.id %}" class="btn btn-outline-warning btn-sm rounded-pill px-3">
-                          Encoder
-                        </a>
+                        <div class="d-inline-flex flex-wrap gap-2 justify-content-end">
+                          <a href="{% url 'encode_result' match.id %}" class="btn btn-outline-warning btn-sm rounded-pill px-3">
+                            {% if match.is_played %}Modifier{% else %}Encoder{% endif %}
+                          </a>
+
+                          {% if match.is_played %}
+                            <a href="{% url 'cancel_result' match.id %}" class="btn btn-outline-danger btn-sm rounded-pill px-3">
+                              Annuler
+                            </a>
+                          {% endif %}
+                        </div>
                       </td>
                       {% endif %}
                     </tr>
@@ -153,7 +162,7 @@
                 </table>
               </div>
 
-              <!-- MOBILE COMPACT GRID (no big cards) -->
+              <!-- MOBILE COMPACT GRID -->
               <div class="mobile-fixtures">
                 {% for match in day.list %}
                 <div class="mfix {% if match.is_late and not match.is_played and not match.is_forfeit %}mfix-late{% endif %}">
@@ -205,8 +214,14 @@
 
                     {% if user.is_staff %}
                       <a href="{% url 'encode_result' match.id %}" class="btn btn-outline-warning btn-sm rounded-pill px-3">
-                        Encoder
+                        {% if match.is_played %}Modifier{% else %}Encoder{% endif %}
                       </a>
+
+                      {% if match.is_played %}
+                        <a href="{% url 'cancel_result' match.id %}" class="btn btn-outline-danger btn-sm rounded-pill px-3">
+                          Annuler
+                        </a>
+                      {% endif %}
                     {% endif %}
                   </div>
                 </div>
@@ -234,153 +249,51 @@
 </section>
 
 <style>
-.calendar-pro{
-  background: linear-gradient(135deg, #0a0e17 0%, #0f1a2d 100%);
-  min-height: 100vh;
-  color:#eee;
-}
+.calendar-pro{ background: linear-gradient(135deg, #0a0e17 0%, #0f1a2d 100%); min-height: 100vh; color:#eee; }
 .text-gold{ color:#e6c200 !important; }
 
 /* Note compact */
-.ucl-note{
-  display:flex; gap:12px;
-  padding: 12px 12px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(0,167,225,.10);
-  color: rgba(255,255,255,.92);
-}
-.ucl-note__icon{
-  width: 34px; height: 34px;
-  border-radius: 12px;
-  display:flex; align-items:center; justify-content:center;
-  color:#0a0e17;
-  background: linear-gradient(45deg, #e6c200, #ffed4e);
-  flex:0 0 auto;
-}
+.ucl-note{ display:flex; gap:12px; padding: 12px 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,.12); background: rgba(0,167,225,.10); color: rgba(255,255,255,.92); }
+.ucl-note__icon{ width: 34px; height: 34px; border-radius: 12px; display:flex; align-items:center; justify-content:center; color:#0a0e17; background: linear-gradient(45deg, #e6c200, #ffed4e); flex:0 0 auto; }
 .ucl-note__title{ font-weight: 900; color:#e6c200; margin-bottom: 2px; }
 .ucl-note__text{ color: rgba(255,255,255,.86); font-size: .95rem; line-height: 1.35; }
-.ucl-note__list{ display:none; } /* on masque pour rester compact */
+.ucl-note__list{ display:none; }
 
 /* phase */
-.phase-title h2{
-  font-weight: 900;
-  color:#e6c200;
-  letter-spacing: .6px;
-  font-size: 1.25rem;
-}
+.phase-title h2{ font-weight: 900; color:#e6c200; letter-spacing: .6px; font-size: 1.25rem; }
 
 /* matchday */
-.matchday-header{
-  display:flex;
-  justify-content: space-between;
-  align-items:center;
-  margin-bottom: 8px;
-}
+.matchday-header{ display:flex; justify-content: space-between; align-items:center; margin-bottom: 8px; }
 .matchday-left{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
-.matchday-pill{
-  display:inline-block;
-  padding: 5px 10px;
-  border-radius: 999px;
-  font-weight: 900;
-  background: rgba(230,194,0,.12);
-  border: 1px solid rgba(230,194,0,.28);
-  color:#ffed4e;
-  font-size: .9rem;
-}
-.matchday-date{
-  color: rgba(255,255,255,.75);
-  font-weight: 700;
-  font-size: .92rem;
-}
+.matchday-pill{ display:inline-block; padding: 5px 10px; border-radius: 999px; font-weight: 900; background: rgba(230,194,0,.12); border: 1px solid rgba(230,194,0,.28); color:#ffed4e; font-size: .9rem; }
+.matchday-date{ color: rgba(255,255,255,.75); font-weight: 700; font-size: .92rem; }
 
 /* table desktop */
-.table-fixtures thead th{
-  font-size: .80rem;
-  text-transform: uppercase;
-  letter-spacing: .8px;
-  color: rgba(255,255,255,.75);
-  border-bottom: 1px solid rgba(255,255,255,.12) !important;
-}
-.table-fixtures td{
-  border-top: 1px solid rgba(255,255,255,.08) !important;
-  padding-top: 10px;
-  padding-bottom: 10px;
-}
+.table-fixtures thead th{ font-size: .80rem; text-transform: uppercase; letter-spacing: .8px; color: rgba(255,255,255,.75); border-bottom: 1px solid rgba(255,255,255,.12) !important; }
+.table-fixtures td{ border-top: 1px solid rgba(255,255,255,.08) !important; padding-top: 10px; padding-bottom: 10px; }
 
 /* team block */
-.team-row{
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
+.team-row{ display:flex; align-items:center; gap:10px; }
 .team-row.justify-end{ justify-content:flex-end; }
-.team-logo{
-  width: 36px; height: 36px;
-  border-radius: 12px;
-  display:flex; align-items:center; justify-content:center;
-  font-weight: 1000;
-  color: #0a0e17;
-  background: linear-gradient(45deg, #e6c200, #ffed4e);
-  box-shadow: 0 10px 20px rgba(230,194,0,.15);
-  flex: 0 0 auto;
-}
-.team-logo--alt{
-  background: linear-gradient(135deg, rgba(0,167,225,.95), rgba(0,61,130,.85));
-  color: #fff;
-  box-shadow: 0 10px 20px rgba(0,167,225,.12);
-}
+.team-logo{ width: 36px; height: 36px; border-radius: 12px; display:flex; align-items:center; justify-content:center; font-weight: 1000; color: #0a0e17; background: linear-gradient(45deg, #e6c200, #ffed4e); box-shadow: 0 10px 20px rgba(230,194,0,.15); flex: 0 0 auto; }
+.team-logo--alt{ background: linear-gradient(135deg, rgba(0,167,225,.95), rgba(0,61,130,.85)); color: #fff; box-shadow: 0 10px 20px rgba(0,167,225,.12); }
 .team-meta{ line-height: 1.1; }
-.team-name{
-  color: rgba(255,255,255,.92);
-  font-weight: 900;
-  font-size: .98rem;
-}
-.team-abbr{
-  color: rgba(255,255,255,.70);
-  font-weight: 800;
-  font-size: .82rem;
-  letter-spacing: .8px;
-  text-transform: uppercase;
-}
+.team-name{ color: rgba(255,255,255,.92); font-weight: 900; font-size: .98rem; }
+.team-abbr{ color: rgba(255,255,255,.70); font-weight: 800; font-size: .82rem; letter-spacing: .8px; text-transform: uppercase; }
 
 /* center */
-.fixture-vs .vs{
-  font-weight: 1000;
-  color:#e6c200;
-  letter-spacing: .8px;
-  font-size: .95rem;
-  text-transform: uppercase;
-}
-.fixture-vs .score{
-  font-weight: 1000;
-  color:#e6c200;
-  font-size: 1.05rem;
-}
+.fixture-vs .vs{ font-weight: 1000; color:#e6c200; letter-spacing: .8px; font-size: .95rem; text-transform: uppercase; }
+.fixture-vs .score{ font-weight: 1000; color:#e6c200; font-size: 1.05rem; }
 
 /* whatsapp mini */
 .wa-mini{ display:flex; justify-content:center; gap:8px; }
-.wa-dot{
-  width: 34px; height: 34px;
-  border-radius: 999px;
-  display:inline-flex; align-items:center; justify-content:center;
-  border: 1px solid rgba(37,211,102,.35);
-  background: rgba(37,211,102,.10);
-  color: rgba(255,255,255,.92);
-  font-weight: 900;
-}
+.wa-dot{ width: 34px; height: 34px; border-radius: 999px; display:inline-flex; align-items:center; justify-content:center; border: 1px solid rgba(37,211,102,.35); background: rgba(37,211,102,.10); color: rgba(255,255,255,.92); font-weight: 900; }
 .wa-dot:hover{ background: rgba(37,211,102,.18); color:#fff; }
 
 .row-late{ box-shadow: inset 3px 0 0 rgba(220,53,69,.9); }
 
 /* PDF */
-.btn-pdf-pro{
-  background: linear-gradient(135deg, #dc3545, #c82333);
-  color:#fff;
-  padding: 8px 14px;
-  border-radius: 999px;
-  font-weight: 900;
-}
+.btn-pdf-pro{ background: linear-gradient(135deg, #dc3545, #c82333); color:#fff; padding: 8px 14px; border-radius: 999px; font-weight: 900; }
 .btn-pdf-pro:hover{ color:#fff; opacity:.92; }
 
 /* MOBILE: show compact grid, hide table */
@@ -390,81 +303,25 @@
   .table-responsive{ display:none; }
   .mobile-fixtures{ display:grid; grid-template-columns: 1fr; gap: 8px; }
 
-  .mfix{
-    border: 1px solid rgba(255,255,255,.10);
-    border-radius: 14px;
-    background: rgba(17,28,47,.55);
-    padding: 10px 10px;
-  }
+  .mfix{ border: 1px solid rgba(255,255,255,.10); border-radius: 14px; background: rgba(17,28,47,.55); padding: 8px 8px; }
   .mfix-late{ box-shadow: inset 3px 0 0 rgba(220,53,69,.9); }
-
   .mfix-status{ margin-bottom: 6px; }
 
-  .mfix-main{
-    display:grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items:center;
-    gap: 8px;
-  }
-
+  .mfix-main{ display:grid; grid-template-columns: 1fr auto 1fr; align-items:center; gap: 8px; }
   .mteam{ display:flex; align-items:center; gap:8px; min-width: 0; }
   .mteam-right{ justify-content:flex-end; }
-  .mlogo{
-    width: 28px; height: 28px;
-    border-radius: 10px;
-    display:flex; align-items:center; justify-content:center;
-    font-weight: 1000;
-    font-size: .95rem;
-    color:#0a0e17;
-    background: linear-gradient(45deg, #e6c200, #ffed4e);
-    flex: 0 0 auto;
-  }
-  .mlogo-alt{
-    background: linear-gradient(135deg, rgba(0,167,225,.95), rgba(0,61,130,.85));
-    color:#fff;
-  }
-  .mtext{ min-width: 0; }
-  .mname{
-    font-weight: 900;
-    color: rgba(255,255,255,.92);
-    font-size: .88rem;
-    line-height: 1.1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 140px;
-  }
-  .mabbr{
-    font-weight: 800;
-    color: rgba(255,255,255,.70);
-    font-size: .75rem;
-    letter-spacing: .7px;
-    text-transform: uppercase;
-  }
+
+  .mlogo{ width: 28px; height: 28px; border-radius: 10px; display:flex; align-items:center; justify-content:center; font-weight: 1000; font-size: .95rem; color:#0a0e17; background: linear-gradient(45deg, #e6c200, #ffed4e); flex: 0 0 auto; }
+  .mlogo-alt{ background: linear-gradient(135deg, rgba(0,167,225,.95), rgba(0,61,130,.85)); color:#fff; }
+
+  .mname{ font-weight: 900; color: rgba(255,255,255,.92); font-size: .88rem; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+  .mabbr{ font-weight: 800; color: rgba(255,255,255,.70); font-size: .75rem; letter-spacing: .7px; text-transform: uppercase; }
+
   .mvs{ text-align:center; }
-  .mvs-txt{
-    font-weight: 1000;
-    color:#e6c200;
-    font-size: .92rem;
-    text-transform: uppercase;
-  }
-  .mscore{
-    font-weight: 1000;
-    color:#e6c200;
-    font-size: 1.0rem;
-  }
+  .mvs-txt{ font-weight: 1000; color:#e6c200; font-size: .92rem; text-transform: uppercase; }
+  .mscore{ font-weight: 1000; color:#e6c200; font-size: 1.0rem; }
 
-  .mfix-actions{
-    display:flex;
-    justify-content:flex-end;
-    align-items:center;
-    gap: 8px;
-    margin-top: 8px;
-  }
-
-  /* Make it super compact: show more matches before scroll */
-  .mfix{ padding: 8px 8px; }
-  .mfix-actions{ margin-top: 6px; }
+  .mfix-actions{ display:flex; justify-content:flex-end; align-items:center; gap: 8px; margin-top: 6px; }
   .wa-dot{ width: 32px; height: 32px; }
 }
 </style>

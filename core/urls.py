@@ -69,6 +69,8 @@ urlpatterns = [
     path('dashboard/league-draw/generate-matches/', views.league_draw_generate_matches, name='league_draw_generate_matches'),
     path('dashboard/league-draw/global/', views.league_draw_global, name='league_draw_global'),
     path('dashboard/league-draw/generate-8-matchdays/', views.league_generate_8_matchdays, name='league_generate_8_matchdays'),
+    path('dashboard/recalc-table/', views.recalc_league_table_view, name='recalc_league_table_view'),
+    path('dashboard/matches/<int:match_id>/cancel-result/', views.cancel_result, name='cancel_result'),
 
 ]
 
