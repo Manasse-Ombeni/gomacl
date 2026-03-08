@@ -1,37 +1,36 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load roles %}
+{% load i18n %}
 
-{% block title %}Calendrier Officiel - Goma Champions League 2026{% endblock %}
+{% block title %}Calendrier - Goma Champions League 2026{% endblock %}
 
 {% block content %}
-<section class="calendar-pro py-4">
+<section class="fx-page py-4">
   <div class="container">
 
     <!-- HEADER -->
     <div class="text-center mb-3">
-      <h1 class="display-6 fw-bold text-white mb-1" style="letter-spacing:.6px;">
-        Calendrier officiel
-      </h1>
-      <p class="text-gold mb-0">Phase Ligue • 8 journées • 2 matchs / jour</p>
+      <h1 class="fx-title mb-1">Calendrier officiel</h1>
+      <p class="fx-subtitle mb-0">Phase Ligue • 8 journées • Jouable 00:00 → 23:59</p>
     </div>
 
-    <!-- NOTE (compact) -->
-    <div class="ucl-note ucl-note--compact mb-3">
-      <div class="ucl-note__icon"><i class="fas fa-circle-info"></i></div>
-      <div class="ucl-note__body">
-        <div class="ucl-note__title">Important</div>
-        <div class="ucl-note__text">
-          Les heures <strong>00:00</strong> et <strong>00:01</strong> servent seulement à identifier la journée.
-          Matchs jouables de <strong>00:00 → 23:59</strong>. Forfait possible après <strong>48h</strong>.
+    <!-- NOTE -->
+    <div class="fx-note mb-3">
+      <div class="fx-note__icon"><i class="fas fa-circle-info"></i></div>
+      <div class="fx-note__body">
+        <div class="fx-note__title">Important</div>
+        <div class="fx-note__text">
+          Les heures <strong>00:00</strong> et <strong>00:01</strong> servent à repérer la journée.
+          Les matchs sont jouables pendant la journée entière. Forfait possible après <strong>48h</strong>.
         </div>
       </div>
     </div>
 
-    <!-- PDF ADMIN -->
+    <!-- PDF (admin roles) -->
     {% if user|has_role:"superadmin,organisateur,match" %}
       <div class="d-flex justify-content-end mb-3">
-        <a href="{% url 'download_calendar_pdf' %}" class="btn btn-pdf-pro btn-sm">
+        <a href="{% url 'download_calendar_pdf' %}" class="fx-btn fx-btn--pdf">
           <i class="fas fa-file-pdf me-2"></i>PDF calendrier
         </a>
       </div>
@@ -39,216 +38,418 @@
 
     {% if phases %}
       {% for phase in phases %}
+        <div class="fx-phase mb-4">
 
-        <div class="phase-title mb-2">
-          <h2 class="mb-0">
-            <i class="fas fa-layer-group me-2"></i>{{ phase.get_name_display }}
-          </h2>
-        </div>
-
-        {% if phase.matches.all %}
-          {% regroup phase.matches.all by matchday as matchdays %}
-
-          {% for day in matchdays %}
-            <div class="matchday-block mb-3">
-              <div class="matchday-header">
-                <div class="matchday-left">
-                  <span class="matchday-pill">J{{ day.grouper }}</span>
-                  <span class="matchday-date">
-                    <i class="far fa-calendar me-2"></i>
-                    {% with day.list.0 as first_match %}
-                      {{ first_match.scheduled_date|date:"d/m/Y" }}
-                    {% endwith %}
-                  </span>
-                </div>
+          <!-- Phase header -->
+          <div class="fx-phase__head">
+            <div class="fx-phase__left">
+              <div class="fx-phase__badge">
+                <i class="fas fa-layer-group me-2"></i>{{ phase.get_name_display }}
               </div>
-
-              <!-- DESKTOP TABLE -->
-              <div class="table-responsive">
-                <table class="table table-dark table-striped table-fixtures align-middle mb-0">
-                  <thead>
-                    <tr>
-                      <th style="width:95px;">Statut</th>
-                      <th>Domicile</th>
-                      <th class="text-center" style="width:90px;">Score</th>
-                      <th>Extérieur</th>
-                      <th class="text-center" style="width:130px;">WhatsApp</th>
-
-                      {% if user|has_role:"superadmin,organisateur,match" %}
-                        <th class="text-end" style="width:220px;">Admin</th>
-                      {% endif %}
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {% for match in day.list %}
-                    <tr class="{% if match.is_late and not match.is_played and not match.is_forfeit %}row-late{% endif %}">
-                      <!-- STATUT -->
-                      <td>
-                        {% if match.is_forfeit %}
-                          <span class="badge bg-danger">Forfait</span>
-                        {% elif match.is_played %}
-                          <span class="badge bg-success">Terminé</span>
-                        {% elif match.is_late %}
-                          <span class="badge bg-warning text-dark">Retard</span>
-                        {% else %}
-                          <span class="badge bg-info text-dark">À venir</span>
-                        {% endif %}
-                      </td>
-
-                      <!-- HOME -->
-                      <td class="team-cell">
-                        <div class="team-row">
-                          <div class="team-logo">
-                            {{ match.home_team.team_name|slice:":1"|upper }}
-                          </div>
-                          <div class="team-meta">
-                            <div class="team-name">{{ match.home_team.team_name }}</div>
-                            <div class="team-abbr">{{ match.home_team.abbreviation }}</div>
-                          </div>
-                        </div>
-                      </td>
-
-                      <!-- SCORE / VS -->
-                      <td class="text-center fixture-vs">
-                        {% if match.is_played %}
-                          <div class="score">{{ match.home_score }} - {{ match.away_score }}</div>
-                        {% else %}
-                          <div class="vs">VS</div>
-                        {% endif %}
-                      </td>
-
-                      <!-- AWAY -->
-                      <td class="team-cell">
-                        <div class="team-row justify-end">
-                          <div class="team-meta text-end">
-                            <div class="team-name">{{ match.away_team.team_name }}</div>
-                            <div class="team-abbr">{{ match.away_team.abbreviation }}</div>
-                          </div>
-                          <div class="team-logo team-logo--alt">
-                            {{ match.away_team.team_name|slice:":1"|upper }}
-                          </div>
-                        </div>
-                      </td>
-
-                      <!-- WHATSAPP -->
-                      <td class="text-center">
-                        <div class="wa-mini">
-                          <a class="wa-dot" href="https://wa.me/{{ match.home_team.whatsapp|cut:'+' }}" target="_blank" title="WhatsApp domicile">
-                            <i class="fab fa-whatsapp"></i>
-                          </a>
-                          <a class="wa-dot" href="https://wa.me/{{ match.away_team.whatsapp|cut:'+' }}" target="_blank" title="WhatsApp extérieur">
-                            <i class="fab fa-whatsapp"></i>
-                          </a>
-                        </div>
-                      </td>
-
-                      {% if user|has_role:"superadmin,organisateur,match" %}
-                      <td class="text-end">
-                        <div class="d-inline-flex flex-wrap gap-2 justify-content-end">
-                          <a href="{% url 'encode_result' match.id %}" class="btn btn-outline-warning btn-sm rounded-pill px-3">
-                            {% if match.is_played %}Modifier{% else %}Encoder{% endif %}
-                          </a>
-
-                          {% if match.is_played %}
-                            <a href="{% url 'cancel_result' match.id %}" class="btn btn-outline-danger btn-sm rounded-pill px-3">
-                              Annuler
-                            </a>
-                          {% endif %}
-                        </div>
-                      </td>
-                      {% endif %}
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- MOBILE COMPACT GRID -->
-              <div class="mobile-fixtures">
-                {% for match in day.list %}
-                <div class="mfix {% if match.is_late and not match.is_played and not match.is_forfeit %}mfix-late{% endif %}">
-                  <div class="mfix-status">
-                    {% if match.is_forfeit %}
-                      <span class="badge bg-danger">Forfait</span>
-                    {% elif match.is_played %}
-                      <span class="badge bg-success">Terminé</span>
-                    {% elif match.is_late %}
-                      <span class="badge bg-warning text-dark">Retard</span>
-                    {% else %}
-                      <span class="badge bg-info text-dark">À venir</span>
-                    {% endif %}
-                  </div>
-
-                  <div class="mfix-main">
-                    <div class="mteam">
-                      <div class="mlogo">{{ match.home_team.team_name|slice:":1"|upper }}</div>
-                      <div class="mtext">
-                        <div class="mname">{{ match.home_team.team_name }}</div>
-                        <div class="mabbr">{{ match.home_team.abbreviation }}</div>
-                      </div>
-                    </div>
-
-                    <div class="mvs">
-                      {% if match.is_played %}
-                        <span class="mscore">{{ match.home_score }}-{{ match.away_score }}</span>
-                      {% else %}
-                        <span class="mvs-txt">vs</span>
-                      {% endif %}
-                    </div>
-
-                    <div class="mteam mteam-right">
-                      <div class="mtext text-end">
-                        <div class="mname">{{ match.away_team.team_name }}</div>
-                        <div class="mabbr">{{ match.away_team.abbreviation }}</div>
-                      </div>
-                      <div class="mlogo mlogo-alt">{{ match.away_team.team_name|slice:":1"|upper }}</div>
-                    </div>
-                  </div>
-
-                  <div class="mfix-actions">
-                    <a class="wa-dot" href="https://wa.me/{{ match.home_team.whatsapp|cut:'+' }}" target="_blank" title="WhatsApp domicile">
-                      <i class="fab fa-whatsapp"></i>
-                    </a>
-                    <a class="wa-dot" href="https://wa.me/{{ match.away_team.whatsapp|cut:'+' }}" target="_blank" title="WhatsApp extérieur">
-                      <i class="fab fa-whatsapp"></i>
-                    </a>
-
-                    {% if user|has_role:"superadmin,organisateur,match" %}
-                      <a href="{% url 'encode_result' match.id %}" class="btn btn-outline-warning btn-sm rounded-pill px-3">
-                        {% if match.is_played %}Modifier{% else %}Encoder{% endif %}
-                      </a>
-
-                      {% if match.is_played %}
-                        <a href="{% url 'cancel_result' match.id %}" class="btn btn-outline-danger btn-sm rounded-pill px-3">
-                          Annuler
-                        </a>
-                      {% endif %}
-                    {% endif %}
-                  </div>
-                </div>
-                {% endfor %}
-              </div>
-
+              <div class="fx-phase__hint">Liste officielle des matchs</div>
             </div>
-          {% endfor %}
-
-        {% else %}
-          <div class="text-center py-4 text-light" style="opacity:.75;">
-            Aucun match programmé pour cette phase.
           </div>
-        {% endif %}
 
+          {% if phase.matches.all %}
+            {% regroup phase.matches.all by matchday as matchdays %}
+
+            {# NAV JOURNÉES (scroll horizontal) #}
+            {% if matchdays|length > 1 %}
+              <div class="fx-days" data-phase="{{ phase.id }}">
+                <div class="fx-days__track" role="tablist" aria-label="Journées">
+                  {% for day in matchdays %}
+                    {% with first_match=day.list.0 %}
+                      {% with mdate=first_match.scheduled_date|date:"Y-m-d" tdate=today|date:"Y-m-d" %}
+                        <button
+                          type="button"
+                          class="fx-daytab {% if forloop.first %}is-active{% endif %} {% if mdate == tdate %}is-today{% endif %}"
+                          data-target="phase{{ phase.id }}-day{{ day.grouper }}"
+                          role="tab"
+                          aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
+                          
+                          {% language 'fr' %}
+                            <div class="fx-daytab__top">
+                              {% if mdate == tdate %}
+                                Aujourd’hui
+                              {% else %}
+                                J{{ day.grouper }}
+                              {% endif %}
+                            </div>
+
+                            <div class="fx-daytab__bottom">
+                              {% if mdate == tdate %}
+                                J{{ day.grouper }}
+                              {% else %}
+                                {{ first_match.scheduled_date|date:"d M" }}
+                              {% endif %}
+                            </div>
+                          {% endlanguage %}
+                        </button>
+                      {% endwith %}
+                    {% endwith %}
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+
+            {# PANELS JOURNÉES #}
+            <div class="fx-panels" data-phase-panels="{{ phase.id }}">
+              {% for day in matchdays %}
+                {% with first_match=day.list.0 %}
+                  {% with mdate=first_match.scheduled_date|date:"Y-m-d" tdate=today|date:"Y-m-d" %}
+                    <div
+                      id="phase{{ phase.id }}-day{{ day.grouper }}"
+                      class="fx-panel {% if forloop.first %}is-active{% endif %}"
+                      data-is-today="{% if mdate == tdate %}1{% else %}0{% endif %}">
+
+                      <div class="fx-panel__title">
+                        {% language 'fr' %}
+                          {% if mdate == tdate %}
+                            <div class="fx-panel__pill fx-panel__pill--today">Aujourd’hui</div>
+                            <div class="fx-panel__date">
+                              <i class="far fa-calendar me-2"></i>J{{ day.grouper }} • {{ first_match.scheduled_date|date:"l d F Y" }}
+                            </div>
+                          {% else %}
+                            <div class="fx-panel__pill">J{{ day.grouper }}</div>
+                            <div class="fx-panel__date">
+                              <i class="far fa-calendar me-2"></i>{{ first_match.scheduled_date|date:"l d F Y" }}
+                            </div>
+                          {% endif %}
+                        {% endlanguage %}
+                      </div>
+
+                      <div class="fx-list">
+                        {% for match in day.list %}
+
+                          <div class="fx-item
+                            {% if match.is_late and not match.is_played and not match.is_forfeit %}is-late{% endif %}
+                            {% if match.is_forfeit %}is-forfeit{% endif %}
+                          ">
+
+                            <!-- LEFT TEAM -->
+                            <div class="fx-team fx-team--left">
+                              <div class="fx-team__logo">
+                                {{ match.home_team.team_name|slice:":1"|upper }}
+                              </div>
+                              <div class="fx-team__name" title="{{ match.home_team.team_name }}">
+                                {{ match.home_team.team_name }}
+                              </div>
+                            </div>
+
+                            <!-- CENTER (time/score/status) -->
+                            <div class="fx-mid">
+                              {% if match.is_played %}
+                                <div class="fx-mid__main fx-mid__score">
+                                  {{ match.home_score }} - {{ match.away_score }}
+                                </div>
+                                <div class="fx-mid__sub">
+                                  {% if match.is_forfeit %}
+                                    <span class="fx-tag fx-tag--danger">Forfait</span>
+                                  {% else %}
+                                    <span class="fx-tag fx-tag--success">Terminé</span>
+                                  {% endif %}
+                                </div>
+                              {% else %}
+                                {% with t=match.scheduled_date|time:"H:i" %}
+                                  <div class="fx-mid__main fx-mid__time">
+                                    {% if t == "00:00" or t == "00:01" %}
+                                      Toute la journée
+                                    {% else %}
+                                      {{ t }}
+                                    {% endif %}
+                                  </div>
+                                {% endwith %}
+
+                                <div class="fx-mid__sub">
+                                  {% if match.is_late %}
+                                    <span class="fx-tag fx-tag--warn">Retard</span>
+                                  {% else %}
+                                    <span class="fx-tag fx-tag--info">À jouer</span>
+                                  {% endif %}
+                                </div>
+                              {% endif %}
+                            </div>
+
+                            <!-- RIGHT TEAM -->
+                            <div class="fx-team fx-team--right">
+                              <div class="fx-team__name text-end" title="{{ match.away_team.team_name }}">
+                                {{ match.away_team.team_name }}
+                              </div>
+                              <div class="fx-team__logo fx-team__logo--alt">
+                                {{ match.away_team.team_name|slice:":1"|upper }}
+                              </div>
+                            </div>
+
+                            <!-- ADMIN ACTIONS -->
+                            {% if user|has_role:"superadmin,organisateur,match" %}
+                              <div class="fx-admin">
+                                <a href="{% url 'encode_result' match.id %}" class="fx-admin__btn fx-admin__btn--gold">
+                                  {% if match.is_played %}Modifier{% else %}Encoder{% endif %}
+                                </a>
+                                {% if match.is_played %}
+                                  <a href="{% url 'cancel_result' match.id %}" class="fx-admin__btn fx-admin__btn--danger">
+                                    Annuler
+                                  </a>
+                                {% endif %}
+                              </div>
+                            {% endif %}
+
+                          </div>
+
+                        {% endfor %}
+                      </div>
+                    </div>
+                  {% endwith %}
+                {% endwith %}
+              {% endfor %}
+            </div>
+
+          {% else %}
+            <div class="fx-empty">Aucun match programmé pour cette phase.</div>
+          {% endif %}
+
+        </div>
       {% endfor %}
     {% else %}
-      <div class="text-center py-5">
-        <h3 class="text-light">Le calendrier sera publié très prochainement</h3>
-        <p class="text-gold">Préparez vos équipes champions...</p>
-      </div>
+      <div class="fx-empty">Le calendrier sera publié très prochainement.</div>
     {% endif %}
 
   </div>
 </section>
 
-{# le CSS inchangé... #}
+<style>
+.fx-page{
+  background: linear-gradient(135deg, #0a0e17 0%, #0f1a2d 100%);
+  min-height: 100vh;
+  color: rgba(255,255,255,.92);
+}
+.fx-title{ font-weight: 1000; letter-spacing: .6px; color:#fff; margin:0; }
+.fx-subtitle{ color:#e6c200; font-weight:700; opacity:.95; }
+
+.fx-note{
+  display:flex; gap: 12px;
+  padding: 12px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,167,225,.10);
+}
+.fx-note__icon{
+  width: 36px; height: 36px; border-radius: 12px;
+  display:flex; align-items:center; justify-content:center;
+  background: linear-gradient(45deg, #e6c200, #ffed4e);
+  color: #0a0e17; flex: 0 0 auto;
+}
+.fx-note__title{ color:#e6c200; font-weight: 900; }
+.fx-note__text{ color: rgba(255,255,255,.86); line-height: 1.35; }
+
+.fx-btn{
+  display:inline-flex; align-items:center; justify-content:center; gap: 8px;
+  padding: 10px 14px; border-radius: 999px; font-weight: 900; text-decoration: none;
+  border: 1px solid rgba(255,255,255,.12);
+}
+.fx-btn--pdf{ background: linear-gradient(135deg, #dc3545, #c82333); color: #fff; }
+.fx-btn--pdf:hover{ opacity: .92; color:#fff; }
+
+.fx-phase{
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(17,28,47,.45);
+  border-radius: 18px;
+  padding: 14px;
+  backdrop-filter: blur(10px);
+}
+.fx-phase__badge{
+  display:inline-flex; align-items:center; gap: 8px;
+  padding: 8px 12px; border-radius: 999px; font-weight: 1000;
+  background: rgba(230,194,0,.12);
+  border: 1px solid rgba(230,194,0,.26);
+  color: #ffed4e;
+}
+.fx-phase__hint{ margin-top: 6px; color: rgba(255,255,255,.72); font-weight: 650; font-size: .95rem; }
+
+.fx-days{ margin: 10px 0 12px; }
+.fx-days__track{
+  display:flex; gap: 10px; overflow:auto; padding-bottom: 6px; scrollbar-width: thin;
+}
+.fx-daytab{
+  min-width: 96px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+  color: rgba(255,255,255,.86);
+  border-radius: 14px;
+  padding: 10px 10px;
+  text-align:left;
+  font-weight: 900;
+}
+.fx-daytab__top{ font-size: .95rem; color:#e6c200; }
+.fx-daytab__bottom{ font-size: .82rem; opacity:.85; margin-top: 2px; }
+
+.fx-daytab.is-active{
+  background: rgba(230,194,0,.14);
+  border-color: rgba(230,194,0,.35);
+}
+.fx-daytab.is-today{
+  border-color: rgba(0,167,225,.45);
+  box-shadow: inset 0 0 0 1px rgba(0,167,225,.30);
+}
+
+.fx-panel{ display:none; }
+.fx-panel.is-active{ display:block; }
+
+.fx-panel__title{
+  display:flex; align-items:center; gap: 10px;
+  padding: 8px 4px 12px;
+}
+.fx-panel__pill{
+  padding: 6px 10px; border-radius: 999px; font-weight: 1000;
+  background: rgba(0,167,225,.12);
+  border: 1px solid rgba(0,167,225,.25);
+  color: rgba(255,255,255,.92);
+}
+.fx-panel__pill--today{
+  background: rgba(230,194,0,.14);
+  border-color: rgba(230,194,0,.35);
+  color:#ffed4e;
+}
+.fx-panel__date{ color: rgba(255,255,255,.75); font-weight: 800; }
+
+.fx-list{ display:flex; flex-direction:column; gap: 10px; }
+
+.fx-item{
+  display:grid;
+  grid-template-columns: 1fr 120px 1fr;
+  gap: 10px;
+  align-items:center;
+  padding: 12px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+}
+.fx-item.is-late{ box-shadow: inset 3px 0 0 rgba(220,53,69,.9); }
+.fx-item.is-forfeit{ box-shadow: inset 3px 0 0 rgba(220,53,69,.9); }
+
+.fx-team{ display:flex; align-items:center; gap: 10px; min-width: 0; }
+.fx-team--right{ justify-content:flex-end; }
+.fx-team__logo{
+  width: 32px; height: 32px;
+  border-radius: 12px;
+  display:flex; align-items:center; justify-content:center;
+  font-weight: 1000;
+  background: linear-gradient(45deg, #e6c200, #ffed4e);
+  color: #0a0e17;
+  flex: 0 0 auto;
+}
+.fx-team__logo--alt{
+  background: linear-gradient(135deg, rgba(0,167,225,.95), rgba(0,61,130,.85));
+  color: #fff;
+}
+.fx-team__name{
+  font-weight: 950;
+  color: rgba(255,255,255,.92);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fx-mid{ text-align:center; }
+.fx-mid__main{ font-weight: 1000; color: #e6c200; line-height: 1.1; }
+.fx-mid__score{ font-size: 1.15rem; }
+.fx-mid__time{ font-size: .95rem; }
+.fx-mid__sub{ margin-top: 6px; }
+
+.fx-tag{
+  display:inline-flex;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 950;
+  font-size: .82rem;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+}
+.fx-tag--success{ border-color: rgba(40,167,69,.35); background: rgba(40,167,69,.12); }
+.fx-tag--danger{ border-color: rgba(220,53,69,.35); background: rgba(220,53,69,.12); }
+.fx-tag--warn{ border-color: rgba(255,193,7,.45); background: rgba(255,193,7,.14); color: #fff; }
+.fx-tag--info{ border-color: rgba(0,167,225,.35); background: rgba(0,167,225,.12); }
+
+.fx-admin{
+  grid-column: 1 / -1;
+  display:flex;
+  justify-content:flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+.fx-admin__btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 950;
+  text-decoration:none;
+  border: 1px solid rgba(255,255,255,.12);
+  color: rgba(255,255,255,.92);
+  background: rgba(255,255,255,.06);
+}
+.fx-admin__btn--gold{
+  border: none;
+  background: linear-gradient(45deg, #e6c200, #ffed4e);
+  color: #0a0e17;
+}
+.fx-admin__btn--danger{
+  border-color: rgba(220,53,69,.45);
+  background: rgba(220,53,69,.14);
+  color: rgba(255,255,255,.92);
+}
+
+.fx-empty{
+  padding: 18px;
+  border-radius: 16px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.10);
+  color: rgba(255,255,255,.78);
+  text-align:center;
+}
+
+@media (max-width: 576px){
+  .fx-item{ grid-template-columns: 1fr 96px 1fr; padding: 10px 10px; gap: 8px; }
+  .fx-team__logo{ width: 28px; height: 28px; border-radius: 10px; }
+  .fx-team__name{ font-size: .92rem; }
+  .fx-mid__score{ font-size: 1.05rem; }
+  .fx-mid__time{ font-size: .88rem; }
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  document.querySelectorAll(".fx-days").forEach(daysNav => {
+    const phaseId = daysNav.getAttribute("data-phase");
+    const panelsWrap = document.querySelector('[data-phase-panels="' + phaseId + '"]');
+    if (!panelsWrap) return;
+
+    const tabs = Array.from(daysNav.querySelectorAll(".fx-daytab"));
+
+    const setActive = (targetId) => {
+      tabs.forEach(t => {
+        const isActive = t.getAttribute("data-target") === targetId;
+        t.classList.toggle("is-active", isActive);
+        t.setAttribute("aria-selected", isActive ? "true" : "false");
+      });
+
+      panelsWrap.querySelectorAll(".fx-panel").forEach(p => {
+        p.classList.toggle("is-active", p.id === targetId);
+      });
+
+      const activeTab = daysNav.querySelector('.fx-daytab.is-active');
+      if (activeTab) activeTab.scrollIntoView({behavior: "smooth", inline: "center", block: "nearest"});
+    };
+
+    // ✅ Par défaut: aujourd'hui si existe, sinon 1ère journée
+    const todayTab = tabs.find(t => t.classList.contains("is-today"));
+    if (todayTab) setActive(todayTab.getAttribute("data-target"));
+
+    tabs.forEach(tab => tab.addEventListener("click", () => setActive(tab.getAttribute("data-target"))));
+  });
+
+});
+</script>
 {% endblock %}

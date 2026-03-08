@@ -180,19 +180,17 @@ def standings(request):
 # CALENDRIER DES MATCHS
 # ==========================================
 def fixtures(request):
-    """
-    Calendrier de tous les matchs
-    """
     competition = Competition.objects.filter(is_active=True).first()
-    
+
     if competition:
         phases = Phase.objects.filter(competition=competition).prefetch_related('matches')
     else:
         phases = []
-    
+
     context = {
         'competition': competition,
         'phases': phases,
+        'today': timezone.localdate(),  # ✅ AJOUT
     }
     return render(request, 'core/fixtures.html', context)
 
