@@ -40,7 +40,6 @@
       {% for phase in phases %}
         <div class="fx-phase mb-4">
 
-          <!-- Phase header -->
           <div class="fx-phase__head">
             <div class="fx-phase__left">
               <div class="fx-phase__badge">
@@ -53,7 +52,6 @@
           {% if phase.matches.all %}
             {% regroup phase.matches.all by matchday as matchdays %}
 
-            {# NAV JOURNÉES (scroll horizontal) #}
             {% if matchdays|length > 1 %}
               <div class="fx-days" data-phase="{{ phase.id }}">
                 <div class="fx-days__track" role="tablist" aria-label="Journées">
@@ -66,16 +64,11 @@
                           data-target="phase{{ phase.id }}-day{{ day.grouper }}"
                           role="tab"
                           aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
-                          
+
                           {% language 'fr' %}
                             <div class="fx-daytab__top">
-                              {% if mdate == tdate %}
-                                Aujourd’hui
-                              {% else %}
-                                J{{ day.grouper }}
-                              {% endif %}
+                              {% if mdate == tdate %}Aujourd’hui{% else %}J{{ day.grouper }}{% endif %}
                             </div>
-
                             <div class="fx-daytab__bottom">
                               {% if mdate == tdate %}
                                 J{{ day.grouper }}
@@ -92,7 +85,6 @@
               </div>
             {% endif %}
 
-            {# PANELS JOURNÉES #}
             <div class="fx-panels" data-phase-panels="{{ phase.id }}">
               {% for day in matchdays %}
                 {% with first_match=day.list.0 %}
@@ -126,13 +118,25 @@
                             {% if match.is_forfeit %}is-forfeit{% endif %}
                           ">
 
-                            <!-- LEFT TEAM -->
+                            <!-- LEFT TEAM (design inchangé + bouton WA sous le nom) -->
                             <div class="fx-team fx-team--left">
                               <div class="fx-team__logo">
                                 {{ match.home_team.team_name|slice:":1"|upper }}
                               </div>
-                              <div class="fx-team__name" title="{{ match.home_team.team_name }}">
-                                {{ match.home_team.team_name }}
+
+                              <div class="fx-team__stack">
+                                <div class="fx-team__name" title="{{ match.home_team.team_name }}">
+                                  {{ match.home_team.team_name }}
+                                </div>
+
+                                {% if match.home_team.whatsapp %}
+                                  <a class="fx-wa"
+                                     href="https://wa.me/{{ match.home_team.whatsapp|cut:'+' }}"
+                                     target="_blank" rel="noopener">
+                                    <i class="fab fa-whatsapp"></i>
+                                    <span class="fx-wa__num">{{ match.home_team.whatsapp }}</span>
+                                  </a>
+                                {% endif %}
                               </div>
                             </div>
 
@@ -170,11 +174,23 @@
                               {% endif %}
                             </div>
 
-                            <!-- RIGHT TEAM -->
+                            <!-- RIGHT TEAM (design inchangé + bouton WA sous le nom) -->
                             <div class="fx-team fx-team--right">
-                              <div class="fx-team__name text-end" title="{{ match.away_team.team_name }}">
-                                {{ match.away_team.team_name }}
+                              <div class="fx-team__stack text-end">
+                                <div class="fx-team__name" title="{{ match.away_team.team_name }}">
+                                  {{ match.away_team.team_name }}
+                                </div>
+
+                                {% if match.away_team.whatsapp %}
+                                  <a class="fx-wa fx-wa--right"
+                                     href="https://wa.me/{{ match.away_team.whatsapp|cut:'+' }}"
+                                     target="_blank" rel="noopener">
+                                    <i class="fab fa-whatsapp"></i>
+                                    <span class="fx-wa__num">{{ match.away_team.whatsapp }}</span>
+                                  </a>
+                                {% endif %}
                               </div>
+
                               <div class="fx-team__logo fx-team__logo--alt">
                                 {{ match.away_team.team_name|slice:":1"|upper }}
                               </div>
@@ -218,6 +234,7 @@
 </section>
 
 <style>
+/* --- Ton design existant (inchangé) --- */
 .fx-page{
   background: linear-gradient(135deg, #0a0e17 0%, #0f1a2d 100%);
   min-height: 100vh;
@@ -226,6 +243,7 @@
 .fx-title{ font-weight: 1000; letter-spacing: .6px; color:#fff; margin:0; }
 .fx-subtitle{ color:#e6c200; font-weight:700; opacity:.95; }
 
+/* NOTE */
 .fx-note{
   display:flex; gap: 12px;
   padding: 12px 12px;
@@ -242,6 +260,7 @@
 .fx-note__title{ color:#e6c200; font-weight: 900; }
 .fx-note__text{ color: rgba(255,255,255,.86); line-height: 1.35; }
 
+/* PDF BTN */
 .fx-btn{
   display:inline-flex; align-items:center; justify-content:center; gap: 8px;
   padding: 10px 14px; border-radius: 999px; font-weight: 900; text-decoration: none;
@@ -250,6 +269,7 @@
 .fx-btn--pdf{ background: linear-gradient(135deg, #dc3545, #c82333); color: #fff; }
 .fx-btn--pdf:hover{ opacity: .92; color:#fff; }
 
+/* PHASE */
 .fx-phase{
   border: 1px solid rgba(255,255,255,.10);
   background: rgba(17,28,47,.45);
@@ -266,6 +286,7 @@
 }
 .fx-phase__hint{ margin-top: 6px; color: rgba(255,255,255,.72); font-weight: 650; font-size: .95rem; }
 
+/* DAYS */
 .fx-days{ margin: 10px 0 12px; }
 .fx-days__track{
   display:flex; gap: 10px; overflow:auto; padding-bottom: 6px; scrollbar-width: thin;
@@ -282,7 +303,6 @@
 }
 .fx-daytab__top{ font-size: .95rem; color:#e6c200; }
 .fx-daytab__bottom{ font-size: .82rem; opacity:.85; margin-top: 2px; }
-
 .fx-daytab.is-active{
   background: rgba(230,194,0,.14);
   border-color: rgba(230,194,0,.35);
@@ -292,6 +312,7 @@
   box-shadow: inset 0 0 0 1px rgba(0,167,225,.30);
 }
 
+/* PANELS */
 .fx-panel{ display:none; }
 .fx-panel.is-active{ display:block; }
 
@@ -312,6 +333,7 @@
 }
 .fx-panel__date{ color: rgba(255,255,255,.75); font-weight: 800; }
 
+/* LIST ITEMS */
 .fx-list{ display:flex; flex-direction:column; gap: 10px; }
 
 .fx-item{
@@ -327,8 +349,10 @@
 .fx-item.is-late{ box-shadow: inset 3px 0 0 rgba(220,53,69,.9); }
 .fx-item.is-forfeit{ box-shadow: inset 3px 0 0 rgba(220,53,69,.9); }
 
+/* TEAM (inchangé) */
 .fx-team{ display:flex; align-items:center; gap: 10px; min-width: 0; }
 .fx-team--right{ justify-content:flex-end; }
+
 .fx-team__logo{
   width: 32px; height: 32px;
   border-radius: 12px;
@@ -350,6 +374,38 @@
   text-overflow: ellipsis;
 }
 
+/* ✅ AJOUT MINIMAL: stack + bouton WhatsApp sous le nom */
+.fx-team__stack{
+  min-width: 0;
+  display:flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.fx-wa{
+  display:inline-flex;
+  align-items:center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(37,211,102,.35);
+  background: rgba(37,211,102,.10);
+  color: rgba(255,255,255,.92);
+  font-weight: 900;
+  font-size: .78rem;
+  text-decoration:none;
+  width: fit-content;
+  max-width: 100%;
+}
+.fx-wa:hover{ background: rgba(37,211,102,.18); color:#fff; }
+.fx-wa__num{
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fx-wa--right{ margin-left: auto; }
+
+/* MID */
 .fx-mid{ text-align:center; }
 .fx-mid__main{ font-weight: 1000; color: #e6c200; line-height: 1.1; }
 .fx-mid__score{ font-size: 1.15rem; }
@@ -370,6 +426,7 @@
 .fx-tag--warn{ border-color: rgba(255,193,7,.45); background: rgba(255,193,7,.14); color: #fff; }
 .fx-tag--info{ border-color: rgba(0,167,225,.35); background: rgba(0,167,225,.12); }
 
+/* ADMIN */
 .fx-admin{
   grid-column: 1 / -1;
   display:flex;
@@ -415,12 +472,12 @@
   .fx-team__name{ font-size: .92rem; }
   .fx-mid__score{ font-size: 1.05rem; }
   .fx-mid__time{ font-size: .88rem; }
+  .fx-wa__num{ max-width: 110px; }
 }
 </style>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-
   document.querySelectorAll(".fx-days").forEach(daysNav => {
     const phaseId = daysNav.getAttribute("data-phase");
     const panelsWrap = document.querySelector('[data-phase-panels="' + phaseId + '"]');
@@ -443,13 +500,11 @@ document.addEventListener("DOMContentLoaded", function () {
       if (activeTab) activeTab.scrollIntoView({behavior: "smooth", inline: "center", block: "nearest"});
     };
 
-    // ✅ Par défaut: aujourd'hui si existe, sinon 1ère journée
     const todayTab = tabs.find(t => t.classList.contains("is-today"));
     if (todayTab) setActive(todayTab.getAttribute("data-target"));
 
     tabs.forEach(tab => tab.addEventListener("click", () => setActive(tab.getAttribute("data-target"))));
   });
-
 });
 </script>
 {% endblock %}
