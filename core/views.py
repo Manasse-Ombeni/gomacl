@@ -36,8 +36,8 @@ import random
 from django.db.models import Count, Q
 from django.utils.crypto import get_random_string
 from .forms import SimplePasswordResetForm
-
 from django.db.models import Prefetch
+from .forms import MatchRescheduleForm
 
 
 
@@ -1709,3 +1709,47 @@ def sync_knockout_bracket_view(request):
             messages.error(request, f"Erreur sync bracket : {e}")
 
     return redirect('knockout_tools')
+
+
+
+
+@role_required(['superadmin', 'organisateur', 'match'])
+def reschedule_match(request, match_id):
+    match = get_object_or_404(Match, pk=match_id)
+
+    if match.is_played:
+        messages.error(request, "Impossible: ce match est déjà joué.")
+        return redirect('manage_matches')
+
+    form = MatchRescheduleForm(request.POST or None, instance=match)
+
+    if request.method == "POST" and form.is_valid():
+        old_dt = match.scheduled_date
+
+        obj = form.save(commit=False)
+        obj.rescheduled_from = old_dt
+        obj.rescheduled_by = request.user
+        obj.rescheduled_at = timezone.now()
+
+        # Optionnel: remettre le signalement à zéro après décision admin
+        obj.reported = False
+        obj.reported_by = None
+        obj.report_reason = ""
+        obj.report_details = ""
+        obj.report_date = None
+
+        obj.save()
+
+        AdminLog.objects.create(
+            user=request.user,
+            action=f"Report match {match.home_team.abbreviation} vs {match.away_team.abbreviation} -> {obj.scheduled_date}"
+        )
+
+        messages.success(request, "Match reporté avec succès.")
+        return redirect('manage_matches')
+
+    return render(request, "core/admin/reschedule_match.html", {
+        "match": match,
+        "form": form,
+        "title": "Reporter un match",
+    })

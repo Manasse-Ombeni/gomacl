@@ -227,6 +227,18 @@ class Match(models.Model):
     matchday = models.PositiveIntegerField(default=1, verbose_name=_("Journée"))
     played_date = models.DateTimeField(null=True, blank=True, verbose_name=_("Date jouée"))
 
+    # ✅ Report / reprogrammation (admin)
+    rescheduled_from = models.DateTimeField(null=True, blank=True, verbose_name=_("Ancienne date"))
+    rescheduled_reason = models.CharField(max_length=200, blank=True, verbose_name=_("Raison du report"))
+    rescheduled_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="rescheduled_matches",
+        verbose_name=_("Reporté par")
+    )
+    rescheduled_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Date du report"))
+
     # Screenshot (preuve)
     screenshot = models.ImageField(upload_to='match_screenshots/', null=True, blank=True, verbose_name=_("Capture d'écran"))
 

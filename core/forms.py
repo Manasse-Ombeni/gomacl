@@ -186,3 +186,19 @@ class SimplePasswordResetForm(forms.Form):
         if not re.match(r'^\+?\d{9,15}$', w):
             raise forms.ValidationError(_("WhatsApp invalide. Exemple: +243999999999"))
         return w
+
+
+class MatchRescheduleForm(forms.ModelForm):
+    class Meta:
+        model = Match
+        fields = ["scheduled_date", "rescheduled_reason"]
+        widgets = {
+            "scheduled_date": forms.DateTimeInput(attrs={"type": "datetime-local", "class": "form-control"}),
+            "rescheduled_reason": forms.TextInput(attrs={"class": "form-control", "placeholder": "Ex: problème réseau / coupure courant / accord des 2 joueurs..."}),
+        }
+
+    def clean_scheduled_date(self):
+        dt = self.cleaned_data["scheduled_date"]
+        if not dt:
+            raise forms.ValidationError(_("Date obligatoire."))
+        return dt

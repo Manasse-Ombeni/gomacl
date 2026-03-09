@@ -57,7 +57,7 @@
               <div class="fx-days" data-phase="{{ phase.id }}">
                 <div class="fx-days__track" role="tablist" aria-label="Journées">
 
-                  {# ✅ 1 SEUL TAB "AUJOURD'HUI" si la phase a des matchs today #}
+                  {# ✅ 1 SEUL TAB AUJOURD'HUI #}
                   {% if phase.today_matches %}
                     <button
                       type="button"
@@ -72,7 +72,7 @@
                     </button>
                   {% endif %}
 
-                  {# Tabs J1..J8 (sans "Aujourd’hui") #}
+                  {# Tabs J1..J8 #}
                   {% for day in matchdays %}
                     {% with first_match=day.list.0 %}
                       <button
@@ -96,7 +96,6 @@
             <!-- PANELS -->
             <div class="fx-panels" data-phase-panels="{{ phase.id }}">
 
-              {# ✅ Panel AUJOURD'HUI : regroupe tous les matchs du jour #}
               {% if phase.today_matches %}
                 <div id="phase{{ phase.id }}-today" class="fx-panel is-active">
                   <div class="fx-panel__title">
@@ -116,7 +115,6 @@
                 </div>
               {% endif %}
 
-              {# Panels J1..J8 #}
               {% for day in matchdays %}
                 {% with first_match=day.list.0 %}
                   <div
@@ -156,6 +154,7 @@
 </section>
 
 <style>
+/* ===== PAGE ===== */
 .fx-page{
   background: linear-gradient(135deg, #0a0e17 0%, #0f1a2d 100%);
   min-height: 100vh;
@@ -170,6 +169,7 @@
 .fx-note__title{ color:#e6c200; font-weight:900; }
 .fx-note__text{ color: rgba(255,255,255,.86); line-height:1.35; }
 
+/* PDF */
 .fx-btn{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:999px; font-weight:900; text-decoration:none; border:1px solid rgba(255,255,255,.12); }
 .fx-btn--pdf{ background: linear-gradient(135deg,#dc3545,#c82333); color:#fff; }
 .fx-btn--pdf:hover{ opacity:.92; color:#fff; }
@@ -179,7 +179,7 @@
 .fx-phase__badge{ display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; font-weight:1000; background: rgba(230,194,0,.12); border:1px solid rgba(230,194,0,.26); color:#ffed4e; }
 .fx-phase__hint{ margin-top:6px; color: rgba(255,255,255,.72); font-weight:650; font-size:.95rem; }
 
-/* DAYS NAV */
+/* DAYS */
 .fx-days{ margin: 10px 0 12px; }
 .fx-days__track{ display:flex; gap:10px; overflow:auto; padding-bottom:6px; scrollbar-width: thin; }
 .fx-daytab{
@@ -206,9 +206,136 @@
 .fx-panel__date{ color: rgba(255,255,255,.75); font-weight:800; }
 
 /* LIST */
-.fx-list{ display:flex; flex-direction:column; gap:10px; }
-
+.fx-list{ display:flex; flex-direction:column; gap:8px; } /* compact */
 .fx-empty{ padding:18px; border-radius:16px; background: rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.10); color: rgba(255,255,255,.78); text-align:center; }
+
+/* ===== MATCH ITEM ===== */
+.fx-item{
+  display:grid;
+  grid-template-columns: minmax(0,1fr) 110px minmax(0,1fr);
+  gap: 8px;
+  align-items:start;
+  padding: 10px 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+}
+.fx-item.is-late{ box-shadow: inset 3px 0 0 rgba(220,53,69,.9); }
+
+.fx-team{ min-width:0; }
+.fx-team--right{ display:flex; justify-content:flex-end; }
+
+.fx-team__stack{ display:flex; flex-direction:column; gap:4px; min-width:0; }
+.fx-team__name{
+  font-weight: 950;
+  color: rgba(255,255,255,.92);
+  line-height: 1.12;
+  white-space: normal;
+  word-break: break-word;
+  font-size: .96rem;
+}
+
+/* WhatsApp icon only */
+.fx-wa{
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border: 1px solid rgba(37,211,102,.35);
+  background: rgba(37,211,102,.10);
+  color: rgba(255,255,255,.92);
+  text-decoration: none;
+}
+.fx-wa:hover{ background: rgba(37,211,102,.18); color:#fff; }
+.fx-wa--right{ margin-left:auto; }
+
+/* Mid */
+.fx-mid{ text-align:center; }
+.fx-mid__main{ font-weight: 1000; color:#e6c200; line-height:1.05; }
+.fx-mid__score{ font-size: 1.05rem; }
+.fx-mid__time{ font-size: .86rem; }
+.fx-mid__sub{ margin-top: 4px; }
+
+.fx-tag{
+  display:inline-flex;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-weight: 950;
+  font-size: .78rem;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+}
+.fx-tag--success{ border-color: rgba(40,167,69,.35); background: rgba(40,167,69,.12); }
+.fx-tag--danger{ border-color: rgba(220,53,69,.35); background: rgba(220,53,69,.12); }
+.fx-tag--warn{ border-color: rgba(255,193,7,.45); background: rgba(255,193,7,.14); color: #fff; }
+.fx-tag--info{ border-color: rgba(0,167,225,.35); background: rgba(0,167,225,.12); }
+.fx-tag--rescheduled{ border-color: rgba(0,167,225,.35); background: rgba(0,167,225,.12); }
+
+/* Reported (compact) */
+.fx-rescheduled{ margin-top: 5px; }
+.fx-rescheduled__reason{
+  margin-top: 3px;
+  font-size: .75rem;
+  color: rgba(255,255,255,.72);
+  font-weight: 750;
+
+  /* 1 ligne max sur mobile pour garder la hauteur basse */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Admin buttons */
+.fx-admin{
+  grid-column: 1 / -1;
+  display:flex;
+  justify-content:flex-end;
+  gap: 6px;
+  margin-top: 6px;
+}
+.fx-admin__btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-weight: 950;
+  font-size: .85rem;
+  text-decoration:none;
+  border: 1px solid rgba(255,255,255,.12);
+  color: rgba(255,255,255,.92);
+  background: rgba(255,255,255,.06);
+}
+.fx-admin__btn--gold{
+  border:none;
+  background: linear-gradient(45deg,#e6c200,#ffed4e);
+  color:#0a0e17;
+}
+.fx-admin__btn--danger{
+  border-color: rgba(220,53,69,.45);
+  background: rgba(220,53,69,.14);
+}
+.fx-admin__btn--light{
+  border-color: rgba(255,255,255,.18);
+  background: rgba(255,255,255,.06);
+}
+
+/* Mobile: plus compact -> plus de matchs visibles */
+@media (max-width: 576px){
+  .fx-phase{ padding: 12px; }
+  .fx-note{ padding: 10px; }
+  .fx-item{
+    grid-template-columns: minmax(0,1fr) 76px minmax(0,1fr);
+    padding: 8px 8px;
+    gap: 6px;
+  }
+  .fx-team__name{ font-size: .92rem; }
+  .fx-mid__score{ font-size: 1.0rem; }
+  .fx-mid__time{ font-size: .82rem; }
+  .fx-wa{ width: 26px; height: 26px; }
+}
 </style>
 
 <script>
@@ -235,8 +362,6 @@ document.addEventListener("DOMContentLoaded", function () {
       if (activeTab) activeTab.scrollIntoView({behavior: "smooth", inline: "center", block: "nearest"});
     };
 
-    // ✅ si onglet Aujourd'hui existe, il est déjà actif en HTML.
-    // sinon, laisser le 1er matchday actif.
     const active = daysNav.querySelector(".fx-daytab.is-active");
     if (active) setActive(active.getAttribute("data-target"));
 
