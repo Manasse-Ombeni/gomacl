@@ -1,0 +1,129 @@
+{% load roles %}
+
+<div class="fx-item
+  {% if match.is_late and not match.is_played and not match.is_forfeit %}is-late{% endif %}
+  {% if match.is_forfeit %}is-forfeit{% endif %}
+">
+
+  <!-- HOME -->
+  <div class="fx-team fx-team--left">
+    <div class="fx-team__stack">
+      <div class="fx-team__name">{{ match.home_team.team_name }}</div>
+      {% if match.home_team.whatsapp %}
+        <a class="fx-wa" href="https://wa.me/{{ match.home_team.whatsapp|cut:'+' }}" target="_blank" rel="noopener">
+          <i class="fab fa-whatsapp"></i>
+          <span class="fx-wa__num">{{ match.home_team.whatsapp }}</span>
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- MID -->
+  <div class="fx-mid">
+    {% if show_matchday %}
+      <div class="fx-mdpill">J{{ match.matchday }}</div>
+    {% endif %}
+
+    {% if match.is_played %}
+      <div class="fx-mid__main fx-mid__score">{{ match.home_score }} - {{ match.away_score }}</div>
+      <div class="fx-mid__sub">
+        {% if match.is_forfeit %}
+          <span class="fx-tag fx-tag--danger">Forfait</span>
+        {% else %}
+          <span class="fx-tag fx-tag--success">Terminé</span>
+        {% endif %}
+      </div>
+    {% else %}
+      {% with t=match.scheduled_date|time:"H:i" %}
+        <div class="fx-mid__main fx-mid__time">
+          {% if t == "00:00" or t == "00:01" %}Toute la journée{% else %}{{ t }}{% endif %}
+        </div>
+      {% endwith %}
+      <div class="fx-mid__sub">
+        {% if match.is_late %}
+          <span class="fx-tag fx-tag--warn">Retard</span>
+        {% else %}
+          <span class="fx-tag fx-tag--info">À jouer</span>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- AWAY -->
+  <div class="fx-team fx-team--right">
+    <div class="fx-team__stack text-end">
+      <div class="fx-team__name">{{ match.away_team.team_name }}</div>
+      {% if match.away_team.whatsapp %}
+        <a class="fx-wa fx-wa--right" href="https://wa.me/{{ match.away_team.whatsapp|cut:'+' }}" target="_blank" rel="noopener">
+          <i class="fab fa-whatsapp"></i>
+          <span class="fx-wa__num">{{ match.away_team.whatsapp }}</span>
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if user|has_role:"superadmin,organisateur,match" %}
+    <div class="fx-admin">
+      <a href="{% url 'encode_result' match.id %}" class="fx-admin__btn fx-admin__btn--gold">
+        {% if match.is_played %}Modifier{% else %}Encoder{% endif %}
+      </a>
+      {% if match.is_played %}
+        <a href="{% url 'cancel_result' match.id %}" class="fx-admin__btn fx-admin__btn--danger">Annuler</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+
+<style>
+/* juste pour le badge Jx sur le panel Aujourd'hui */
+.fx-item{
+  display:grid;
+  grid-template-columns: minmax(0, 1fr) 120px minmax(0, 1fr);
+  gap: 10px;
+  align-items:start;
+  padding: 12px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+}
+.fx-team__stack{ display:flex; flex-direction: column; gap:6px; min-width:0; }
+.fx-team__name{ font-weight:950; white-space: normal; word-break: break-word; line-height:1.15; }
+
+.fx-mid{ text-align:center; }
+.fx-mid__main{ font-weight:1000; color:#e6c200; }
+.fx-mid__sub{ margin-top:6px; }
+
+.fx-mdpill{
+  display:inline-block;
+  margin-bottom: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-weight: 950;
+  font-size: .78rem;
+  color: rgba(255,255,255,.9);
+  background: rgba(0,167,225,.12);
+  border: 1px solid rgba(0,167,225,.25);
+}
+
+.fx-wa{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:4px 10px; border-radius:999px;
+  border:1px solid rgba(37,211,102,.35);
+  background: rgba(37,211,102,.10);
+  color: rgba(255,255,255,.92);
+  font-weight: 900; font-size: .78rem; text-decoration:none;
+  width: fit-content; max-width: 100%;
+}
+.fx-wa__num{ max-width: 170px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis; }
+.fx-wa--right{ margin-left:auto; }
+
+.fx-admin{ grid-column: 1 / -1; display:flex; justify-content:flex-end; gap:8px; margin-top:8px; }
+.fx-admin__btn{ padding:8px 12px; border-radius:999px; font-weight:950; text-decoration:none; border:1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.06); color:#fff; }
+.fx-admin__btn--gold{ border:none; background: linear-gradient(45deg,#e6c200,#ffed4e); color:#0a0e17; }
+.fx-admin__btn--danger{ border-color: rgba(220,53,69,.45); background: rgba(220,53,69,.14); }
+
+@media (max-width:576px){
+  .fx-item{ grid-template-columns: minmax(0,1fr) 88px minmax(0,1fr); gap:8px; padding:10px; }
+  .fx-wa__num{ max-width: 130px; }
+}
+</style>

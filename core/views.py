@@ -37,6 +37,12 @@ from django.db.models import Count, Q
 from django.utils.crypto import get_random_string
 from .forms import SimplePasswordResetForm
 
+from django.db.models import Prefetch
+
+
+
+
+
 
 
 # ==========================================
@@ -179,20 +185,33 @@ def standings(request):
 # ==========================================
 # CALENDRIER DES MATCHS
 # ==========================================
+
+
 def fixtures(request):
     competition = Competition.objects.filter(is_active=True).first()
+    today = timezone.localdate()
 
     if competition:
-        phases = Phase.objects.filter(competition=competition).prefetch_related('matches')
+        phases = Phase.objects.filter(competition=competition).prefetch_related(
+            Prefetch(
+                'matches',
+                queryset=Match.objects.select_related('home_team', 'away_team', 'phase').order_by('scheduled_date')
+            )
+        )
+        # ✅ construire today_matches pour chaque phase
+        for ph in phases:
+            ph.today_matches = [
+                m for m in ph.matches.all()
+                if timezone.localtime(m.scheduled_date).date() == today
+            ]
     else:
         phases = []
 
-    context = {
+    return render(request, 'core/fixtures.html', {
         'competition': competition,
         'phases': phases,
-        'today': timezone.localdate(),  # ✅ AJOUT
-    }
-    return render(request, 'core/fixtures.html', context)
+        'today': today,
+    })
 
 
 # ==========================================
@@ -213,39 +232,110 @@ def results(request):
 # ==========================================
 # TABLEAU ÉLIMINATOIRE (BRACKET)
 # ==========================================
+def _tie_payload(return_match: Match):
+    """
+    Construit un objet prêt à afficher pour un aller/retour à partir du match retour.
+    team_a = home du retour, team_b = away du retour.
+    """
+    leg1 = return_match.first_leg
+    team_a = return_match.home_team
+    team_b = return_match.away_team
+
+    # Scores de l'aller dans l'ordre (team_a / team_b), même si home/away inversés
+    leg1_a = leg1_b = None
+    if leg1 and leg1.is_played:
+        if leg1.home_team_id == team_a.id:
+            leg1_a = leg1.home_score
+            leg1_b = leg1.away_score
+        else:
+            leg1_a = leg1.away_score
+            leg1_b = leg1.home_score
+
+    # Scores du retour (ordre team_a/team_b)
+    leg2_a = return_match.home_score if return_match.is_played else None
+    leg2_b = return_match.away_score if return_match.is_played else None
+
+    agg = return_match.aggregate_score  # {'home': total team_a, 'away': total team_b} ou None
+    winner = return_match.winner
+
+    return {
+        "match": return_match,
+        "team_a": team_a,
+        "team_b": team_b,
+        "leg1": leg1,
+        "leg1_a": leg1_a,
+        "leg1_b": leg1_b,
+        "leg2_a": leg2_a,
+        "leg2_b": leg2_b,
+        "agg_a": agg["home"] if agg else None,
+        "agg_b": agg["away"] if agg else None,
+        "winner_id": winner.id if winner else None,
+        "is_forfeit": return_match.is_forfeit,
+        "pen_a": return_match.home_penalties,
+        "pen_b": return_match.away_penalties,
+    }
+
+
 def bracket(request):
     competition = Competition.objects.filter(is_active=True).first()
-    
-    if competition:
-        round_16 = Match.objects.filter(
-            phase__name='round_16',
-            phase__competition=competition
-        ).order_by('scheduled_date')
-        
-        quarters = Match.objects.filter(
-            phase__name='quarter',
-            phase__competition=competition
-        ).order_by('scheduled_date')
-        
-        semis = Match.objects.filter(
-            phase__name='semi',
-            phase__competition=competition
-        ).order_by('scheduled_date')
-        
-        final = Match.objects.filter(
-            phase__name='final',
-            phase__competition=competition
-        ).first()
-    else:
-        round_16 = quarters = semis = final = None
-    
-    return render(request, 'core/bracket.html', {
-        'competition': competition,
-        'round_16': round_16,
-        'quarters': quarters,
-        'semis': semis,
-        'final': final,
-    })
+    if not competition:
+        return render(request, "core/bracket.html", {"competition": None})
+
+    def get_returns(phase_name):
+        return Match.objects.filter(
+            phase__competition=competition,
+            phase__name=phase_name,
+            match_leg="retour",
+        ).select_related(
+            "phase",
+            "home_team", "away_team",
+            "first_leg", "first_leg__home_team", "first_leg__away_team",
+        ).order_by("id")
+
+    playoff_returns = get_returns("playoff")
+    r16_returns = get_returns("round_16")
+    qf_returns = get_returns("quarter")
+    sf_returns = get_returns("semi")
+
+    final_match = Match.objects.filter(
+        phase__competition=competition,
+        phase__name="final",
+        match_leg="unique",
+    ).select_related("phase", "home_team", "away_team").order_by("id").first()
+
+    playoff_ties = [_tie_payload(m) for m in playoff_returns]
+    r16_ties = [_tie_payload(m) for m in r16_returns]
+    qf_ties = [_tie_payload(m) for m in qf_returns]
+    sf_ties = [_tie_payload(m) for m in sf_returns]
+
+    def split_lr(lst):
+        mid = len(lst) // 2
+        return lst[:mid], lst[mid:]
+
+    playoff_left, playoff_right = split_lr(playoff_ties)
+    r16_left, r16_right = split_lr(r16_ties)
+    qf_left, qf_right = split_lr(qf_ties)
+    sf_left, sf_right = split_lr(sf_ties)
+
+    context = {
+        "competition": competition,
+
+        "playoff_left": playoff_left,
+        "playoff_right": playoff_right,
+
+        "r16_left": r16_left,
+        "r16_right": r16_right,
+
+        "qf_left": qf_left,
+        "qf_right": qf_right,
+
+        "sf_left": sf_left,
+        "sf_right": sf_right,
+
+        "final_match": final_match,
+    }
+
+    return render(request, "core/bracket.html", context)
 
 # ==========================================
 # RÈGLEMENT
@@ -1565,3 +1655,57 @@ def forgot_password(request):
         "form": form,
         "temp_password": temp_password
     })
+
+
+@role_required(['superadmin', 'organisateur'])
+def knockout_tools(request):
+    """
+    Page outils phase finale (UCL bracket)
+    """
+    return render(request, 'core/admin/knockout_tools.html')
+
+
+@role_required(['superadmin', 'organisateur'])
+def generate_ucl_bracket_view(request):
+    """
+    Générer le bracket UCL complet via interface admin.
+    """
+    if request.method != 'POST':
+        return render(request, 'core/admin/generate_ucl_bracket.html')
+
+    start_date = (request.POST.get('start_date') or '').strip()
+    reset = request.POST.get('reset') == '1'
+
+    try:
+        # 1) s'assurer que Team TBD existe
+        call_command('ensure_tbd_team')
+
+        # 2) générer bracket
+        if start_date:
+            # valide format
+            datetime.strptime(start_date, "%Y-%m-%d")
+            call_command('generate_ucl_bracket', start_date=start_date, reset=reset)
+        else:
+            call_command('generate_ucl_bracket', reset=reset)
+
+        messages.success(request, "Bracket UCL généré avec succès (barrages → finale).")
+        return redirect('knockout_tools')
+
+    except Exception as e:
+        messages.error(request, f"Erreur génération bracket : {e}")
+        return redirect('generate_ucl_bracket_view')
+
+
+@role_required(['superadmin', 'organisateur', 'match'])
+def sync_knockout_bracket_view(request):
+    """
+    Synchroniser les TBD avec les vainqueurs (après encodage des retours).
+    """
+    if request.method == 'POST':
+        try:
+            call_command('sync_knockout_bracket')
+            messages.success(request, "Bracket synchronisé : TBD mis à jour si des vainqueurs existent.")
+        except Exception as e:
+            messages.error(request, f"Erreur sync bracket : {e}")
+
+    return redirect('knockout_tools')

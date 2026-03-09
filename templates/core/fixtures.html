@@ -52,178 +52,100 @@
           {% if phase.matches.all %}
             {% regroup phase.matches.all by matchday as matchdays %}
 
+            <!-- NAV JOURNÉES -->
             {% if matchdays|length > 1 %}
               <div class="fx-days" data-phase="{{ phase.id }}">
                 <div class="fx-days__track" role="tablist" aria-label="Journées">
+
+                  {# ✅ 1 SEUL TAB "AUJOURD'HUI" si la phase a des matchs today #}
+                  {% if phase.today_matches %}
+                    <button
+                      type="button"
+                      class="fx-daytab is-active is-today"
+                      data-target="phase{{ phase.id }}-today"
+                      role="tab"
+                      aria-selected="true">
+                      {% language 'fr' %}
+                        <div class="fx-daytab__top">Aujourd’hui</div>
+                        <div class="fx-daytab__bottom">{{ today|date:"d M" }}</div>
+                      {% endlanguage %}
+                    </button>
+                  {% endif %}
+
+                  {# Tabs J1..J8 (sans "Aujourd’hui") #}
                   {% for day in matchdays %}
                     {% with first_match=day.list.0 %}
-                      {% with mdate=first_match.scheduled_date|date:"Y-m-d" tdate=today|date:"Y-m-d" %}
-                        <button
-                          type="button"
-                          class="fx-daytab {% if forloop.first %}is-active{% endif %} {% if mdate == tdate %}is-today{% endif %}"
-                          data-target="phase{{ phase.id }}-day{{ day.grouper }}"
-                          role="tab"
-                          aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
-
-                          {% language 'fr' %}
-                            <div class="fx-daytab__top">
-                              {% if mdate == tdate %}Aujourd’hui{% else %}J{{ day.grouper }}{% endif %}
-                            </div>
-                            <div class="fx-daytab__bottom">
-                              {% if mdate == tdate %}
-                                J{{ day.grouper }}
-                              {% else %}
-                                {{ first_match.scheduled_date|date:"d M" }}
-                              {% endif %}
-                            </div>
-                          {% endlanguage %}
-                        </button>
-                      {% endwith %}
+                      <button
+                        type="button"
+                        class="fx-daytab {% if not phase.today_matches and forloop.first %}is-active{% endif %}"
+                        data-target="phase{{ phase.id }}-day{{ day.grouper }}"
+                        role="tab"
+                        aria-selected="{% if not phase.today_matches and forloop.first %}true{% else %}false{% endif %}">
+                        {% language 'fr' %}
+                          <div class="fx-daytab__top">J{{ day.grouper }}</div>
+                          <div class="fx-daytab__bottom">{{ first_match.scheduled_date|date:"d M" }}</div>
+                        {% endlanguage %}
+                      </button>
                     {% endwith %}
                   {% endfor %}
+
                 </div>
               </div>
             {% endif %}
 
+            <!-- PANELS -->
             <div class="fx-panels" data-phase-panels="{{ phase.id }}">
+
+              {# ✅ Panel AUJOURD'HUI : regroupe tous les matchs du jour #}
+              {% if phase.today_matches %}
+                <div id="phase{{ phase.id }}-today" class="fx-panel is-active">
+                  <div class="fx-panel__title">
+                    {% language 'fr' %}
+                      <div class="fx-panel__pill fx-panel__pill--today">Aujourd’hui</div>
+                      <div class="fx-panel__date">
+                        <i class="far fa-calendar me-2"></i>{{ today|date:"l d F Y" }}
+                      </div>
+                    {% endlanguage %}
+                  </div>
+
+                  <div class="fx-list">
+                    {% for match in phase.today_matches %}
+                      {% include "core/partials/_fixture_item.html" with match=match show_matchday=1 %}
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endif %}
+
+              {# Panels J1..J8 #}
               {% for day in matchdays %}
                 {% with first_match=day.list.0 %}
-                  {% with mdate=first_match.scheduled_date|date:"Y-m-d" tdate=today|date:"Y-m-d" %}
-                    <div
-                      id="phase{{ phase.id }}-day{{ day.grouper }}"
-                      class="fx-panel {% if forloop.first %}is-active{% endif %}"
-                      data-is-today="{% if mdate == tdate %}1{% else %}0{% endif %}">
+                  <div
+                    id="phase{{ phase.id }}-day{{ day.grouper }}"
+                    class="fx-panel {% if not phase.today_matches and forloop.first %}is-active{% endif %}">
 
-                      <div class="fx-panel__title">
-                        {% language 'fr' %}
-                          {% if mdate == tdate %}
-                            <div class="fx-panel__pill fx-panel__pill--today">Aujourd’hui</div>
-                            <div class="fx-panel__date">
-                              <i class="far fa-calendar me-2"></i>J{{ day.grouper }} • {{ first_match.scheduled_date|date:"l d F Y" }}
-                            </div>
-                          {% else %}
-                            <div class="fx-panel__pill">J{{ day.grouper }}</div>
-                            <div class="fx-panel__date">
-                              <i class="far fa-calendar me-2"></i>{{ first_match.scheduled_date|date:"l d F Y" }}
-                            </div>
-                          {% endif %}
-                        {% endlanguage %}
-                      </div>
-
-                      <div class="fx-list">
-                        {% for match in day.list %}
-
-                          <div class="fx-item
-                            {% if match.is_late and not match.is_played and not match.is_forfeit %}is-late{% endif %}
-                            {% if match.is_forfeit %}is-forfeit{% endif %}
-                          ">
-
-                            <!-- LEFT TEAM (design inchangé + bouton WA sous le nom) -->
-                            <div class="fx-team fx-team--left">
-                              <div class="fx-team__logo">
-                                {{ match.home_team.team_name|slice:":1"|upper }}
-                              </div>
-
-                              <div class="fx-team__stack">
-                                <div class="fx-team__name" title="{{ match.home_team.team_name }}">
-                                  {{ match.home_team.team_name }}
-                                </div>
-
-                                {% if match.home_team.whatsapp %}
-                                  <a class="fx-wa"
-                                     href="https://wa.me/{{ match.home_team.whatsapp|cut:'+' }}"
-                                     target="_blank" rel="noopener">
-                                    <i class="fab fa-whatsapp"></i>
-                                    <span class="fx-wa__num">{{ match.home_team.whatsapp }}</span>
-                                  </a>
-                                {% endif %}
-                              </div>
-                            </div>
-
-                            <!-- CENTER (time/score/status) -->
-                            <div class="fx-mid">
-                              {% if match.is_played %}
-                                <div class="fx-mid__main fx-mid__score">
-                                  {{ match.home_score }} - {{ match.away_score }}
-                                </div>
-                                <div class="fx-mid__sub">
-                                  {% if match.is_forfeit %}
-                                    <span class="fx-tag fx-tag--danger">Forfait</span>
-                                  {% else %}
-                                    <span class="fx-tag fx-tag--success">Terminé</span>
-                                  {% endif %}
-                                </div>
-                              {% else %}
-                                {% with t=match.scheduled_date|time:"H:i" %}
-                                  <div class="fx-mid__main fx-mid__time">
-                                    {% if t == "00:00" or t == "00:01" %}
-                                      Toute la journée
-                                    {% else %}
-                                      {{ t }}
-                                    {% endif %}
-                                  </div>
-                                {% endwith %}
-
-                                <div class="fx-mid__sub">
-                                  {% if match.is_late %}
-                                    <span class="fx-tag fx-tag--warn">Retard</span>
-                                  {% else %}
-                                    <span class="fx-tag fx-tag--info">À jouer</span>
-                                  {% endif %}
-                                </div>
-                              {% endif %}
-                            </div>
-
-                            <!-- RIGHT TEAM (design inchangé + bouton WA sous le nom) -->
-                            <div class="fx-team fx-team--right">
-                              <div class="fx-team__stack text-end">
-                                <div class="fx-team__name" title="{{ match.away_team.team_name }}">
-                                  {{ match.away_team.team_name }}
-                                </div>
-
-                                {% if match.away_team.whatsapp %}
-                                  <a class="fx-wa fx-wa--right"
-                                     href="https://wa.me/{{ match.away_team.whatsapp|cut:'+' }}"
-                                     target="_blank" rel="noopener">
-                                    <i class="fab fa-whatsapp"></i>
-                                    <span class="fx-wa__num">{{ match.away_team.whatsapp }}</span>
-                                  </a>
-                                {% endif %}
-                              </div>
-
-                              <div class="fx-team__logo fx-team__logo--alt">
-                                {{ match.away_team.team_name|slice:":1"|upper }}
-                              </div>
-                            </div>
-
-                            <!-- ADMIN ACTIONS -->
-                            {% if user|has_role:"superadmin,organisateur,match" %}
-                              <div class="fx-admin">
-                                <a href="{% url 'encode_result' match.id %}" class="fx-admin__btn fx-admin__btn--gold">
-                                  {% if match.is_played %}Modifier{% else %}Encoder{% endif %}
-                                </a>
-                                {% if match.is_played %}
-                                  <a href="{% url 'cancel_result' match.id %}" class="fx-admin__btn fx-admin__btn--danger">
-                                    Annuler
-                                  </a>
-                                {% endif %}
-                              </div>
-                            {% endif %}
-
-                          </div>
-
-                        {% endfor %}
-                      </div>
+                    <div class="fx-panel__title">
+                      {% language 'fr' %}
+                        <div class="fx-panel__pill">J{{ day.grouper }}</div>
+                        <div class="fx-panel__date">
+                          <i class="far fa-calendar me-2"></i>{{ first_match.scheduled_date|date:"l d F Y" }}
+                        </div>
+                      {% endlanguage %}
                     </div>
-                  {% endwith %}
+
+                    <div class="fx-list">
+                      {% for match in day.list %}
+                        {% include "core/partials/_fixture_item.html" with match=match show_matchday=0 %}
+                      {% endfor %}
+                    </div>
+                  </div>
                 {% endwith %}
               {% endfor %}
+
             </div>
 
           {% else %}
             <div class="fx-empty">Aucun match programmé pour cette phase.</div>
           {% endif %}
-
         </div>
       {% endfor %}
     {% else %}
@@ -234,7 +156,6 @@
 </section>
 
 <style>
-/* --- Ton design existant (inchangé) --- */
 .fx-page{
   background: linear-gradient(135deg, #0a0e17 0%, #0f1a2d 100%);
   min-height: 100vh;
@@ -244,236 +165,50 @@
 .fx-subtitle{ color:#e6c200; font-weight:700; opacity:.95; }
 
 /* NOTE */
-.fx-note{
-  display:flex; gap: 12px;
-  padding: 12px 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(0,167,225,.10);
-}
-.fx-note__icon{
-  width: 36px; height: 36px; border-radius: 12px;
-  display:flex; align-items:center; justify-content:center;
-  background: linear-gradient(45deg, #e6c200, #ffed4e);
-  color: #0a0e17; flex: 0 0 auto;
-}
-.fx-note__title{ color:#e6c200; font-weight: 900; }
-.fx-note__text{ color: rgba(255,255,255,.86); line-height: 1.35; }
+.fx-note{ display:flex; gap:12px; padding:12px; border-radius:16px; border:1px solid rgba(255,255,255,.12); background: rgba(0,167,225,.10); }
+.fx-note__icon{ width:36px; height:36px; border-radius:12px; display:flex; align-items:center; justify-content:center; background: linear-gradient(45deg,#e6c200,#ffed4e); color:#0a0e17; }
+.fx-note__title{ color:#e6c200; font-weight:900; }
+.fx-note__text{ color: rgba(255,255,255,.86); line-height:1.35; }
 
-/* PDF BTN */
-.fx-btn{
-  display:inline-flex; align-items:center; justify-content:center; gap: 8px;
-  padding: 10px 14px; border-radius: 999px; font-weight: 900; text-decoration: none;
-  border: 1px solid rgba(255,255,255,.12);
-}
-.fx-btn--pdf{ background: linear-gradient(135deg, #dc3545, #c82333); color: #fff; }
-.fx-btn--pdf:hover{ opacity: .92; color:#fff; }
+.fx-btn{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:999px; font-weight:900; text-decoration:none; border:1px solid rgba(255,255,255,.12); }
+.fx-btn--pdf{ background: linear-gradient(135deg,#dc3545,#c82333); color:#fff; }
+.fx-btn--pdf:hover{ opacity:.92; color:#fff; }
 
 /* PHASE */
-.fx-phase{
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(17,28,47,.45);
-  border-radius: 18px;
-  padding: 14px;
-  backdrop-filter: blur(10px);
-}
-.fx-phase__badge{
-  display:inline-flex; align-items:center; gap: 8px;
-  padding: 8px 12px; border-radius: 999px; font-weight: 1000;
-  background: rgba(230,194,0,.12);
-  border: 1px solid rgba(230,194,0,.26);
-  color: #ffed4e;
-}
-.fx-phase__hint{ margin-top: 6px; color: rgba(255,255,255,.72); font-weight: 650; font-size: .95rem; }
+.fx-phase{ border:1px solid rgba(255,255,255,.10); background: rgba(17,28,47,.45); border-radius:18px; padding:14px; backdrop-filter: blur(10px); }
+.fx-phase__badge{ display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; font-weight:1000; background: rgba(230,194,0,.12); border:1px solid rgba(230,194,0,.26); color:#ffed4e; }
+.fx-phase__hint{ margin-top:6px; color: rgba(255,255,255,.72); font-weight:650; font-size:.95rem; }
 
-/* DAYS */
+/* DAYS NAV */
 .fx-days{ margin: 10px 0 12px; }
-.fx-days__track{
-  display:flex; gap: 10px; overflow:auto; padding-bottom: 6px; scrollbar-width: thin;
-}
+.fx-days__track{ display:flex; gap:10px; overflow:auto; padding-bottom:6px; scrollbar-width: thin; }
 .fx-daytab{
   min-width: 96px;
-  border: 1px solid rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.12);
   background: rgba(255,255,255,.04);
   color: rgba(255,255,255,.86);
-  border-radius: 14px;
-  padding: 10px 10px;
+  border-radius:14px;
+  padding:10px;
   text-align:left;
-  font-weight: 900;
+  font-weight:900;
 }
-.fx-daytab__top{ font-size: .95rem; color:#e6c200; }
-.fx-daytab__bottom{ font-size: .82rem; opacity:.85; margin-top: 2px; }
-.fx-daytab.is-active{
-  background: rgba(230,194,0,.14);
-  border-color: rgba(230,194,0,.35);
-}
-.fx-daytab.is-today{
-  border-color: rgba(0,167,225,.45);
-  box-shadow: inset 0 0 0 1px rgba(0,167,225,.30);
-}
+.fx-daytab__top{ font-size:.95rem; color:#e6c200; }
+.fx-daytab__bottom{ font-size:.82rem; opacity:.85; margin-top:2px; }
+.fx-daytab.is-active{ background: rgba(230,194,0,.14); border-color: rgba(230,194,0,.35); }
+.fx-daytab.is-today{ border-color: rgba(0,167,225,.45); box-shadow: inset 0 0 0 1px rgba(0,167,225,.30); }
 
 /* PANELS */
 .fx-panel{ display:none; }
 .fx-panel.is-active{ display:block; }
+.fx-panel__title{ display:flex; align-items:center; gap:10px; padding:8px 4px 12px; }
+.fx-panel__pill{ padding:6px 10px; border-radius:999px; font-weight:1000; background: rgba(0,167,225,.12); border:1px solid rgba(0,167,225,.25); color:#fff; }
+.fx-panel__pill--today{ background: rgba(230,194,0,.14); border-color: rgba(230,194,0,.35); color:#ffed4e; }
+.fx-panel__date{ color: rgba(255,255,255,.75); font-weight:800; }
 
-.fx-panel__title{
-  display:flex; align-items:center; gap: 10px;
-  padding: 8px 4px 12px;
-}
-.fx-panel__pill{
-  padding: 6px 10px; border-radius: 999px; font-weight: 1000;
-  background: rgba(0,167,225,.12);
-  border: 1px solid rgba(0,167,225,.25);
-  color: rgba(255,255,255,.92);
-}
-.fx-panel__pill--today{
-  background: rgba(230,194,0,.14);
-  border-color: rgba(230,194,0,.35);
-  color:#ffed4e;
-}
-.fx-panel__date{ color: rgba(255,255,255,.75); font-weight: 800; }
+/* LIST */
+.fx-list{ display:flex; flex-direction:column; gap:10px; }
 
-/* LIST ITEMS */
-.fx-list{ display:flex; flex-direction:column; gap: 10px; }
-
-.fx-item{
-  display:grid;
-  grid-template-columns: 1fr 120px 1fr;
-  gap: 10px;
-  align-items:center;
-  padding: 12px 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.04);
-}
-.fx-item.is-late{ box-shadow: inset 3px 0 0 rgba(220,53,69,.9); }
-.fx-item.is-forfeit{ box-shadow: inset 3px 0 0 rgba(220,53,69,.9); }
-
-/* TEAM (inchangé) */
-.fx-team{ display:flex; align-items:center; gap: 10px; min-width: 0; }
-.fx-team--right{ justify-content:flex-end; }
-
-.fx-team__logo{
-  width: 32px; height: 32px;
-  border-radius: 12px;
-  display:flex; align-items:center; justify-content:center;
-  font-weight: 1000;
-  background: linear-gradient(45deg, #e6c200, #ffed4e);
-  color: #0a0e17;
-  flex: 0 0 auto;
-}
-.fx-team__logo--alt{
-  background: linear-gradient(135deg, rgba(0,167,225,.95), rgba(0,61,130,.85));
-  color: #fff;
-}
-.fx-team__name{
-  font-weight: 950;
-  color: rgba(255,255,255,.92);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* ✅ AJOUT MINIMAL: stack + bouton WhatsApp sous le nom */
-.fx-team__stack{
-  min-width: 0;
-  display:flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.fx-wa{
-  display:inline-flex;
-  align-items:center;
-  gap: 6px;
-  padding: 3px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(37,211,102,.35);
-  background: rgba(37,211,102,.10);
-  color: rgba(255,255,255,.92);
-  font-weight: 900;
-  font-size: .78rem;
-  text-decoration:none;
-  width: fit-content;
-  max-width: 100%;
-}
-.fx-wa:hover{ background: rgba(37,211,102,.18); color:#fff; }
-.fx-wa__num{
-  max-width: 140px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.fx-wa--right{ margin-left: auto; }
-
-/* MID */
-.fx-mid{ text-align:center; }
-.fx-mid__main{ font-weight: 1000; color: #e6c200; line-height: 1.1; }
-.fx-mid__score{ font-size: 1.15rem; }
-.fx-mid__time{ font-size: .95rem; }
-.fx-mid__sub{ margin-top: 6px; }
-
-.fx-tag{
-  display:inline-flex;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-weight: 950;
-  font-size: .82rem;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.06);
-}
-.fx-tag--success{ border-color: rgba(40,167,69,.35); background: rgba(40,167,69,.12); }
-.fx-tag--danger{ border-color: rgba(220,53,69,.35); background: rgba(220,53,69,.12); }
-.fx-tag--warn{ border-color: rgba(255,193,7,.45); background: rgba(255,193,7,.14); color: #fff; }
-.fx-tag--info{ border-color: rgba(0,167,225,.35); background: rgba(0,167,225,.12); }
-
-/* ADMIN */
-.fx-admin{
-  grid-column: 1 / -1;
-  display:flex;
-  justify-content:flex-end;
-  gap: 8px;
-  margin-top: 8px;
-}
-.fx-admin__btn{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  padding: 8px 12px;
-  border-radius: 999px;
-  font-weight: 950;
-  text-decoration:none;
-  border: 1px solid rgba(255,255,255,.12);
-  color: rgba(255,255,255,.92);
-  background: rgba(255,255,255,.06);
-}
-.fx-admin__btn--gold{
-  border: none;
-  background: linear-gradient(45deg, #e6c200, #ffed4e);
-  color: #0a0e17;
-}
-.fx-admin__btn--danger{
-  border-color: rgba(220,53,69,.45);
-  background: rgba(220,53,69,.14);
-  color: rgba(255,255,255,.92);
-}
-
-.fx-empty{
-  padding: 18px;
-  border-radius: 16px;
-  background: rgba(255,255,255,.04);
-  border: 1px solid rgba(255,255,255,.10);
-  color: rgba(255,255,255,.78);
-  text-align:center;
-}
-
-@media (max-width: 576px){
-  .fx-item{ grid-template-columns: 1fr 96px 1fr; padding: 10px 10px; gap: 8px; }
-  .fx-team__logo{ width: 28px; height: 28px; border-radius: 10px; }
-  .fx-team__name{ font-size: .92rem; }
-  .fx-mid__score{ font-size: 1.05rem; }
-  .fx-mid__time{ font-size: .88rem; }
-  .fx-wa__num{ max-width: 110px; }
-}
+.fx-empty{ padding:18px; border-radius:16px; background: rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.10); color: rgba(255,255,255,.78); text-align:center; }
 </style>
 
 <script>
@@ -500,8 +235,10 @@ document.addEventListener("DOMContentLoaded", function () {
       if (activeTab) activeTab.scrollIntoView({behavior: "smooth", inline: "center", block: "nearest"});
     };
 
-    const todayTab = tabs.find(t => t.classList.contains("is-today"));
-    if (todayTab) setActive(todayTab.getAttribute("data-target"));
+    // ✅ si onglet Aujourd'hui existe, il est déjà actif en HTML.
+    // sinon, laisser le 1er matchday actif.
+    const active = daysNav.querySelector(".fx-daytab.is-active");
+    if (active) setActive(active.getAttribute("data-target"));
 
     tabs.forEach(tab => tab.addEventListener("click", () => setActive(tab.getAttribute("data-target"))));
   });

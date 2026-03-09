@@ -1,182 +1,244 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load i18n %}
 
 {% block title %}Résultats - Goma Champions League 2026{% endblock %}
 
 {% block content %}
-<section class="py-5">
-    <div class="container">
-        <h1 class="section-title text-center mb-5">
-            <i class="fas fa-list-alt me-2"></i>
-            RÉSULTATS DES MATCHS
-        </h1>
-        
-        {% if matches %}
-        <div class="results-list">
-            {% for match in matches %}
-            <div class="result-card mb-3">
-                <div class="result-header">
-                    <span class="phase-badge">{{ match.phase.get_name_display }}</span>
-                    <span class="date-badge">
-                        <i class="far fa-calendar me-1"></i>
-                        {{ match.played_date|date:"d/m/Y H:i" }}
-                    </span>
-                </div>
-                <div class="result-body">
-                    <div class="team-result home">
-                        <img src="{% if match.home_team.logo %}{{ match.home_team.logo.url }}{% else %}{% static 'images/default-logo.png' %}{% endif %}" alt="{{ match.home_team.team_name }}">
-                        <div class="team-info">
-                            <strong>{{ match.home_team.abbreviation }}</strong>
-                            <small>{{ match.home_team.team_name }}</small>
-                        </div>
-                    </div>
-                    <div class="score-result">
-                        {% if match.is_forfeit %}
-                        <div class="forfeit-badge">FORFAIT</div>
-                        {% endif %}
-                        <div class="final-score">
-                            <span class="{% if match.home_score > match.away_score %}winner{% endif %}">{{ match.home_score }}</span>
-                            <span class="separator">-</span>
-                            <span class="{% if match.away_score > match.home_score %}winner{% endif %}">{{ match.away_score }}</span>
-                        </div>
-                    </div>
-                    <div class="team-result away">
-                        <img src="{% if match.away_team.logo %}{{ match.away_team.logo.url }}{% else %}{% static 'images/default-logo.png' %}{% endif %}" alt="{{ match.away_team.team_name }}">
-                        <div class="team-info">
-                            <strong>{{ match.away_team.abbreviation }}</strong>
-                            <small>{{ match.away_team.team_name }}</small>
-                        </div>
-                    </div>
-                </div>
-                {% if match.notes %}
-                <div class="result-footer">
-                    <i class="fas fa-comment me-2"></i>
-                    {{ match.notes }}
-                </div>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <p class="text-center text-muted">
-            <i class="fas fa-info-circle me-2"></i>
-            Aucun résultat disponible pour le moment.
-        </p>
-        {% endif %}
+<section class="rs2-page py-4">
+  <div class="container">
+
+    <!-- HEADER -->
+    <div class="text-center mb-3">
+      <h1 class="rs2-title mb-1">
+        <i class="fas fa-list-check me-2"></i>Résultats
+      </h1>
+      <p class="rs2-subtitle mb-0">Matchs joués • Mise à jour automatique</p>
     </div>
+
+    {% if matches %}
+      <div class="rs2-wrap">
+
+        {% for match in matches %}
+          <div class="rs2-item">
+
+            <!-- META LINE -->
+            <div class="rs2-meta">
+              <div class="rs2-phase">
+                {{ match.phase.get_name_display }}
+                {% if match.match_leg != 'unique' %} • {{ match.get_match_leg_display }}{% endif %}
+              </div>
+
+              <div class="rs2-date">
+                {% language 'fr' %}
+                  {{ match.played_date|date:"d/m/Y" }} • {{ match.played_date|date:"H:i" }}
+                {% endlanguage %}
+              </div>
+            </div>
+
+            <!-- MAIN MATCH LINE -->
+            <div class="rs2-main">
+              <div class="rs2-team rs2-team--home" title="{{ match.home_team.team_name }}">
+                {{ match.home_team.team_name }}
+              </div>
+
+              <div class="rs2-scorebox">
+                <div class="rs2-score">
+                  <span class="{% if match.home_score > match.away_score %}is-win{% endif %}">{{ match.home_score }}</span>
+                  <span class="rs2-sep">-</span>
+                  <span class="{% if match.away_score > match.home_score %}is-win{% endif %}">{{ match.away_score }}</span>
+                </div>
+
+                <div class="rs2-status">
+                  {% if match.is_forfeit %}
+                    <span class="rs2-badge rs2-badge--danger">FORFAIT</span>
+                  {% else %}
+                    <span class="rs2-badge rs2-badge--success">FT</span>
+                  {% endif %}
+                </div>
+
+                {% if match.home_penalties is not None and match.away_penalties is not None %}
+                  <div class="rs2-subscore">
+                    TAB {{ match.home_penalties }}-{{ match.away_penalties }}
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="rs2-team rs2-team--away text-end" title="{{ match.away_team.team_name }}">
+                {{ match.away_team.team_name }}
+              </div>
+            </div>
+
+            {% if match.notes %}
+              <div class="rs2-notes">
+                <i class="fas fa-comment me-2"></i>{{ match.notes }}
+              </div>
+            {% endif %}
+
+          </div>
+        {% endfor %}
+
+      </div>
+
+    {% else %}
+      <div class="rs2-empty text-center py-5">
+        <i class="fas fa-info-circle me-2"></i>
+        Aucun résultat disponible pour le moment.
+      </div>
+    {% endif %}
+
+  </div>
 </section>
 
 <style>
-.result-card {
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    transition: transform 0.3s;
+/* PAGE BG */
+.rs2-page{
+  background: linear-gradient(135deg, #0a0e17 0%, #0f1a2d 100%);
+  min-height: 100vh;
+  color: rgba(255,255,255,.92);
 }
 
-.result-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+.rs2-title{
+  font-weight: 1000;
+  color: #fff;
+  letter-spacing: .4px;
+  margin: 0;
+}
+.rs2-subtitle{
+  color: #e6c200;
+  font-weight: 750;
+  opacity: .95;
 }
 
-.result-header {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    color: white;
-    padding: 0.5rem 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.85rem;
+/* WRAP (table-like list, not cards) */
+.rs2-wrap{
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(17,28,47,.45);
+  box-shadow: 0 18px 50px rgba(0,0,0,.22);
+  backdrop-filter: blur(10px);
 }
 
-.phase-badge {
-    font-weight: 600;
+.rs2-item{
+  padding: 12px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.rs2-item:last-child{ border-bottom: none; }
+
+/* META */
+.rs2-meta{
+  display:flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+.rs2-phase{
+  font-weight: 900;
+  color: rgba(255,255,255,.88);
+  font-size: .92rem;
+}
+.rs2-date{
+  font-weight: 850;
+  color: rgba(255,255,255,.70);
+  font-size: .86rem;
+  white-space: nowrap;
 }
 
-.result-body {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.5rem;
-    gap: 1rem;
+/* MAIN LINE */
+.rs2-main{
+  display:grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
 }
 
-.team-result {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
+/* TEAM NAMES: wrap allowed */
+.rs2-team{
+  font-weight: 950;
+  color: rgba(255,255,255,.92);
+  line-height: 1.15;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  word-break: break-word;
+  hyphens: auto;
 }
 
-.team-result.away {
-    flex-direction: row-reverse;
-    text-align: right;
+/* SCORE BOX */
+.rs2-scorebox{
+  text-align:center;
+  min-width: 86px;
+}
+.rs2-score{
+  font-weight: 1000;
+  color: #e6c200;
+  font-size: 1.35rem;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+.rs2-sep{ margin: 0 6px; opacity: .85; }
+.rs2-score .is-win{ color: #47d18c; }
+
+.rs2-status{ margin-top: 6px; }
+
+.rs2-badge{
+  display:inline-flex;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 1000;
+  font-size: .78rem;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+}
+.rs2-badge--success{ border-color: rgba(40,167,69,.35); background: rgba(40,167,69,.12); }
+.rs2-badge--danger{ border-color: rgba(220,53,69,.35); background: rgba(220,53,69,.12); }
+
+.rs2-subscore{
+  margin-top: 6px;
+  font-size: .78rem;
+  color: rgba(255,255,255,.75);
+  font-weight: 850;
 }
 
-.team-result img {
-    width: 50px;
-    height: 50px;
-    object-fit: contain;
+/* NOTES */
+.rs2-notes{
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+  color: rgba(255,255,255,.82);
+  font-weight: 700;
+  font-size: .92rem;
+  word-break: break-word;
 }
 
-.team-info {
-    display: flex;
-    flex-direction: column;
+/* EMPTY */
+.rs2-empty{
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+  color: rgba(255,255,255,.78);
 }
 
-.team-info strong {
-    font-size: 1.1rem;
-    color: var(--primary-color);
-}
+/* MOBILE tuning */
+@media (max-width: 576px){
+  .rs2-item{ padding: 12px 10px; }
+  .rs2-meta{ margin-bottom: 8px; }
+  .rs2-date{ font-size: .82rem; }
+  .rs2-phase{ font-size: .88rem; }
 
-.team-info small {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-}
+  .rs2-score{ font-size: 1.25rem; }
+  .rs2-scorebox{ min-width: 78px; }
 
-.score-result {
-    text-align: center;
-}
-
-.final-score {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--primary-color);
-}
-
-.final-score .winner {
-    color: #28a745;
-}
-
-.forfeit-badge {
-    background: #dc3545;
-    color: white;
-    padding: 0.2rem 0.5rem;
-    border-radius: 5px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-}
-
-.result-footer {
-    background: #f8f9fa;
-    padding: 0.5rem 1rem;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    border-top: 1px solid #dee2e6;
-}
-
-@media (max-width: 768px) {
-    .result-body {
-        flex-direction: column;
-        gap: 1.5rem;
-    }
-    
-    .team-result.away {
-        flex-direction: row;
-        text-align: left;
-    }
+  /* Important: allow more room to teams */
+  .rs2-main{
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 8px;
+  }
 }
 </style>
 {% endblock %}

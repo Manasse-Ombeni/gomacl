@@ -72,6 +72,9 @@ urlpatterns = [
     path('dashboard/recalc-table/', views.recalc_league_table_view, name='recalc_league_table_view'),
     path('dashboard/matches/<int:match_id>/cancel-result/', views.cancel_result, name='cancel_result'),
     path('forgot-password/', views.forgot_password, name='forgot_password'),
+    path('dashboard/knockout-tools/', views.knockout_tools, name='knockout_tools'),
+    path('dashboard/knockout-tools/generate-ucl-bracket/', views.generate_ucl_bracket_view, name='generate_ucl_bracket_view'),
+    path('dashboard/knockout-tools/sync/', views.sync_knockout_bracket_view, name='sync_knockout_bracket_view'),
     
 
 ]
