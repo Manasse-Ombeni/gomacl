@@ -1,6 +1,8 @@
 {% load i18n %}
+
 {% with m=t.match %}
 <div class="tie">
+
   <div class="tie__head">
     <span class="tie__label">{{ label }}</span>
 
@@ -15,10 +17,19 @@
 
   <div class="tie__teams">
     <div class="tie__teamrow {% if t.winner_id == t.team_a.id %}is-win{% endif %}">
-      {{ t.team_a.team_name|default:"À déterminer" }}
+      {% if t.team_a %}
+        <span class="tie__teamname">{{ t.team_a.team_name }}</span>
+      {% else %}
+        <span class="tie__teamname tie__teamname--tbd">À déterminer</span>
+      {% endif %}
     </div>
+
     <div class="tie__teamrow {% if t.winner_id == t.team_b.id %}is-win{% endif %}">
-      {{ t.team_b.team_name|default:"À déterminer" }}
+      {% if t.team_b %}
+        <span class="tie__teamname">{{ t.team_b.team_name }}</span>
+      {% else %}
+        <span class="tie__teamname tie__teamname--tbd">À déterminer</span>
+      {% endif %}
     </div>
   </div>
 
@@ -47,6 +58,8 @@
   </div>
 </div>
 {% endwith %}
+
+<style>
 /* --- Tie card --- */
 .tie{
   border-radius: 16px;
@@ -102,6 +115,9 @@
   background: rgba(230,194,0,.10);
   box-shadow: inset 3px 0 0 rgba(230,194,0,.9);
 }
+.tie__teamname--tbd{
+  opacity: .6;
+}
 
 .tie__meta{
   margin-top: 8px;
@@ -112,3 +128,4 @@
   font-size: .85rem;
 }
 .tie__meta div{ margin-top: 3px; }
+</style>
