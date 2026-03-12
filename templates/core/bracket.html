@@ -13,6 +13,11 @@
         <div class="bk-kicker">ROAD TO</div>
         <h1 class="bk-title">GOMA CL 2026</h1>
         <div class="bk-subtitle">BRACKET OFFICIEL — Barrages → Finale</div>
+
+        {# Debug (tu peux enlever après) #}
+        <div class="bk-debug mt-2">
+          playoff={{ playoff_ties|length }} • r16={{ r16_ties|length }} • qf={{ qf_ties|length }} • sf={{ sf_ties|length }}
+        </div>
       </div>
     </div>
 
@@ -22,124 +27,125 @@
       </div>
     {% else %}
 
-    <div class="bk-scrollhint d-md-none">
-      Astuce : fais glisser horizontalement pour voir tout le tableau.
-    </div>
-
-    <div class="bk-grid-wrap">
-      <div class="bk-grid">
-
-        <!-- COL 1 : PLAYOFF (BARRAGES) -->
-        <div class="bk-col">
-          <div class="bk-col__title">BARRAGES</div>
-
-          <div class="bk-col__sides">
-            <div class="bk-side">
-              {% for t in playoff_left %}
-                {% include "core/partials/_bracket_tie.html" with t=t label="KOPO" %}
-              {% empty %}
-                <div class="bk-muted">—</div>
-              {% endfor %}
-            </div>
-
-            <div class="bk-side">
-              {% for t in playoff_right %}
-                {% include "core/partials/_bracket_tie.html" with t=t label="KOPO" %}
-              {% empty %}
-                <div class="bk-muted">—</div>
-              {% endfor %}
-            </div>
-          </div>
-        </div>
-
-        <!-- COL 2 : R16 -->
-        <div class="bk-col">
-          <div class="bk-col__title">8e DE FINALE</div>
-
-          <div class="bk-col__sides">
-            <div class="bk-side">
-              {% for t in r16_left %}
-                {% include "core/partials/_bracket_tie.html" with t=t label="R16" %}
-              {% empty %}<div class="bk-muted">—</div>{% endfor %}
-            </div>
-
-            <div class="bk-side">
-              {% for t in r16_right %}
-                {% include "core/partials/_bracket_tie.html" with t=t label="R16" %}
-              {% empty %}<div class="bk-muted">—</div>{% endfor %}
-            </div>
-          </div>
-        </div>
-
-        <!-- COL 3 : QF -->
-        <div class="bk-col">
-          <div class="bk-col__title">QUARTS</div>
-
-          <div class="bk-col__sides">
-            <div class="bk-side">
-              {% for t in qf_left %}
-                {% include "core/partials/_bracket_tie.html" with t=t label="QF" %}
-              {% empty %}<div class="bk-muted">—</div>{% endfor %}
-            </div>
-
-            <div class="bk-side">
-              {% for t in qf_right %}
-                {% include "core/partials/_bracket_tie.html" with t=t label="QF" %}
-              {% empty %}<div class="bk-muted">—</div>{% endfor %}
-            </div>
-          </div>
-        </div>
-
-        <!-- COL 4 : SF -->
-        <div class="bk-col">
-          <div class="bk-col__title">DEMI-FINALES</div>
-
-          <div class="bk-col__sides">
-            <div class="bk-side">
-              {% for t in sf_left %}
-                {% include "core/partials/_bracket_tie.html" with t=t label="SF" %}
-              {% empty %}<div class="bk-muted">—</div>{% endfor %}
-            </div>
-
-            <div class="bk-side">
-              {% for t in sf_right %}
-                {% include "core/partials/_bracket_tie.html" with t=t label="SF" %}
-              {% empty %}<div class="bk-muted">—</div>{% endfor %}
-            </div>
-          </div>
-        </div>
-
-        <!-- COL 5 : FINAL -->
-        <div class="bk-col bk-col--final">
-          <div class="bk-col__title">FINALE</div>
-
-          {% if final_match %}
-            <div class="bk-final">
-              <div class="bk-final__teams">
-                <div class="bk-final__team">{{ final_match.home_team.team_name }}</div>
-                <div class="bk-final__score">
-                  {% if final_match.is_played %}
-                    {{ final_match.home_score }} - {{ final_match.away_score }}
-                  {% else %}
-                    VS
-                  {% endif %}
-                </div>
-                <div class="bk-final__team text-end">{{ final_match.away_team.team_name }}</div>
-              </div>
-
-              <div class="bk-final__meta">
-                {% language 'fr' %}
-                  {{ final_match.scheduled_date|date:"d/m/Y" }}
-                {% endlanguage %}
-              </div>
-            </div>
-          {% else %}
-            <div class="bk-muted">Finale non générée.</div>
-          {% endif %}
-        </div>
-
+      <div class="bk-scrollhint d-md-none">
+        Astuce : fais glisser horizontalement pour voir tout le tableau.
       </div>
-    </div>
+
+      <div class="bk-grid-wrap">
+        <div class="bk-grid">
+
+          <!-- COL 1 : PLAYOFF (BARRAGES) -->
+          <div class="bk-col">
+            <div class="bk-col__title">BARRAGES</div>
+
+            <div class="bk-col__sides">
+              <div class="bk-side">
+                {% for t in playoff_ties|slice:":4" %}
+                  {% include "core/partials/_bracket_tie.html" with t=t label="KOPO" %}
+                {% empty %}
+                  <div class="bk-muted">—</div>
+                {% endfor %}
+              </div>
+
+              <div class="bk-side">
+                {% for t in playoff_ties|slice:"4:" %}
+                  {% include "core/partials/_bracket_tie.html" with t=t label="KOPO" %}
+                {% empty %}
+                  <div class="bk-muted">—</div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <!-- COL 2 : R16 -->
+          <div class="bk-col">
+            <div class="bk-col__title">8e DE FINALE</div>
+
+            <div class="bk-col__sides">
+              <div class="bk-side">
+                {% for t in r16_ties|slice:":4" %}
+                  {% include "core/partials/_bracket_tie.html" with t=t label="R16" %}
+                {% empty %}<div class="bk-muted">—</div>{% endfor %}
+              </div>
+
+              <div class="bk-side">
+                {% for t in r16_ties|slice:"4:" %}
+                  {% include "core/partials/_bracket_tie.html" with t=t label="R16" %}
+                {% empty %}<div class="bk-muted">—</div>{% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <!-- COL 3 : QF -->
+          <div class="bk-col">
+            <div class="bk-col__title">QUARTS</div>
+
+            <div class="bk-col__sides">
+              <div class="bk-side">
+                {% for t in qf_ties|slice:":2" %}
+                  {% include "core/partials/_bracket_tie.html" with t=t label="QF" %}
+                {% empty %}<div class="bk-muted">—</div>{% endfor %}
+              </div>
+
+              <div class="bk-side">
+                {% for t in qf_ties|slice:"2:" %}
+                  {% include "core/partials/_bracket_tie.html" with t=t label="QF" %}
+                {% empty %}<div class="bk-muted">—</div>{% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <!-- COL 4 : SF -->
+          <div class="bk-col">
+            <div class="bk-col__title">DEMI-FINALES</div>
+
+            <div class="bk-col__sides">
+              <div class="bk-side">
+                {% for t in sf_ties|slice:":1" %}
+                  {% include "core/partials/_bracket_tie.html" with t=t label="SF" %}
+                {% empty %}<div class="bk-muted">—</div>{% endfor %}
+              </div>
+
+              <div class="bk-side">
+                {% for t in sf_ties|slice:"1:" %}
+                  {% include "core/partials/_bracket_tie.html" with t=t label="SF" %}
+                {% empty %}<div class="bk-muted">—</div>{% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <!-- COL 5 : FINAL -->
+          <div class="bk-col bk-col--final">
+            <div class="bk-col__title">FINALE</div>
+
+            {% if final_match %}
+              <div class="bk-final">
+                <div class="bk-final__teams">
+                  <div class="bk-final__team">{{ final_match.home_team.team_name }}</div>
+                  <div class="bk-final__score">
+                    {% if final_match.is_played %}
+                      {{ final_match.home_score }} - {{ final_match.away_score }}
+                    {% else %}
+                      VS
+                    {% endif %}
+                  </div>
+                  <div class="bk-final__team text-end">{{ final_match.away_team.team_name }}</div>
+                </div>
+
+                <div class="bk-final__meta">
+                  {% language 'fr' %}
+                    {{ final_match.scheduled_date|date:"d/m/Y" }}
+                  {% endlanguage %}
+                </div>
+              </div>
+            {% else %}
+              <div class="bk-muted">Finale non générée.</div>
+            {% endif %}
+          </div>
+
+        </div>
+      </div>
+
     {% endif %}
 
   </div>
@@ -192,6 +198,11 @@
   letter-spacing: 1px;
   font-size: .95rem;
 }
+.bk-debug{
+  color: rgba(255,255,255,.68);
+  font-weight: 800;
+  font-size: .85rem;
+}
 
 .bk-scrollhint{
   margin: 10px 0 12px;
@@ -238,17 +249,22 @@
   margin-bottom: 10px;
 }
 
-/* two sides */
+/* two sides (2 colonnes à l’intérieur) */
 .bk-col__sides{
   display:grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
+@media (max-width: 576px){
+  .bk-col__sides{ grid-template-columns: 1fr; }
+}
+
 .bk-side{
   display:flex;
   flex-direction: column;
   gap: 10px;
 }
+
 .bk-muted{
   text-align:center;
   padding: 14px;

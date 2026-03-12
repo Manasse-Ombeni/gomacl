@@ -1,0 +1,114 @@
+{% load i18n %}
+{% with m=t.match %}
+<div class="tie">
+  <div class="tie__head">
+    <span class="tie__label">{{ label }}</span>
+
+    {% if m.is_played %}
+      <span class="tie__status {% if t.is_forfeit %}is-danger{% else %}is-success{% endif %}">
+        {% if t.is_forfeit %}FORFAIT{% else %}FT{% endif %}
+      </span>
+    {% else %}
+      <span class="tie__status is-info">À jouer</span>
+    {% endif %}
+  </div>
+
+  <div class="tie__teams">
+    <div class="tie__teamrow {% if t.winner_id == t.team_a.id %}is-win{% endif %}">
+      {{ t.team_a.team_name|default:"À déterminer" }}
+    </div>
+    <div class="tie__teamrow {% if t.winner_id == t.team_b.id %}is-win{% endif %}">
+      {{ t.team_b.team_name|default:"À déterminer" }}
+    </div>
+  </div>
+
+  <div class="tie__meta">
+    <div>Aller :
+      {% if t.leg1_a is not None and t.leg1_b is not None %}
+        <strong>{{ t.leg1_a }}-{{ t.leg1_b }}</strong>
+      {% else %}—{% endif %}
+    </div>
+
+    <div>Retour :
+      {% if t.leg2_a is not None and t.leg2_b is not None %}
+        <strong>{{ t.leg2_a }}-{{ t.leg2_b }}</strong>
+      {% else %}—{% endif %}
+    </div>
+
+    <div>Total :
+      {% if t.agg_a is not None and t.agg_b is not None %}
+        <strong>{{ t.agg_a }}-{{ t.agg_b }}</strong>
+      {% else %}—{% endif %}
+    </div>
+
+    {% if t.pen_a is not None and t.pen_b is not None %}
+      <div>TAB : <strong>{{ t.pen_a }}-{{ t.pen_b }}</strong></div>
+    {% endif %}
+  </div>
+</div>
+{% endwith %}
+/* --- Tie card --- */
+.tie{
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+  padding: 10px;
+}
+
+.tie__head{
+  display:flex;
+  justify-content: space-between;
+  align-items:center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.tie__label{
+  font-weight: 1000;
+  color: #e6c200;
+  letter-spacing: 1px;
+  font-size: .82rem;
+}
+
+.tie__status{
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 950;
+  font-size: .78rem;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.92);
+  white-space: nowrap;
+}
+.tie__status.is-success{ border-color: rgba(40,167,69,.35); background: rgba(40,167,69,.12); }
+.tie__status.is-danger{ border-color: rgba(220,53,69,.35); background: rgba(220,53,69,.12); }
+.tie__status.is-info{ border-color: rgba(0,167,225,.35); background: rgba(0,167,225,.12); }
+
+.tie__teams{
+  display:flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tie__teamrow{
+  padding: 8px 8px;
+  border-radius: 12px;
+  color: rgba(255,255,255,.92);
+  font-weight: 900;
+  line-height: 1.15;
+  word-break: break-word;
+}
+.tie__teamrow.is-win{
+  background: rgba(230,194,0,.10);
+  box-shadow: inset 3px 0 0 rgba(230,194,0,.9);
+}
+
+.tie__meta{
+  margin-top: 8px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  padding-top: 8px;
+  color: rgba(255,255,255,.75);
+  font-weight: 750;
+  font-size: .85rem;
+}
+.tie__meta div{ margin-top: 3px; }

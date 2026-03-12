@@ -76,6 +76,7 @@ urlpatterns = [
     path('dashboard/knockout-tools/generate-ucl-bracket/', views.generate_ucl_bracket_view, name='generate_ucl_bracket_view'),
     path('dashboard/knockout-tools/sync/', views.sync_knockout_bracket_view, name='sync_knockout_bracket_view'),
     path('dashboard/matches/<int:match_id>/reschedule/', views.reschedule_match, name='reschedule_match'),
+    path('dashboard/knockout-tools/playoff-dates/', views.set_playoff_dates_view, name='set_playoff_dates_view'),
     
 
 ]

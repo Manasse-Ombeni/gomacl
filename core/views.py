@@ -38,11 +38,12 @@ from django.utils.crypto import get_random_string
 from .forms import SimplePasswordResetForm
 from django.db.models import Prefetch
 from .forms import MatchRescheduleForm
-
-
-
-
-
+from .models import AdminLog
+from datetime import datetime, time
+from django.utils import timezone
+from django.shortcuts import render, redirect
+from .decorators import role_required
+from .models import Competition, Match, AdminLog
 
 
 # ==========================================
@@ -232,30 +233,23 @@ def results(request):
 # ==========================================
 # TABLEAU ÉLIMINATOIRE (BRACKET)
 # ==========================================
+
 def _tie_payload(return_match: Match):
-    """
-    Construit un objet prêt à afficher pour un aller/retour à partir du match retour.
-    team_a = home du retour, team_b = away du retour.
-    """
     leg1 = return_match.first_leg
     team_a = return_match.home_team
     team_b = return_match.away_team
 
-    # Scores de l'aller dans l'ordre (team_a / team_b), même si home/away inversés
     leg1_a = leg1_b = None
     if leg1 and leg1.is_played:
         if leg1.home_team_id == team_a.id:
-            leg1_a = leg1.home_score
-            leg1_b = leg1.away_score
+            leg1_a, leg1_b = leg1.home_score, leg1.away_score
         else:
-            leg1_a = leg1.away_score
-            leg1_b = leg1.home_score
+            leg1_a, leg1_b = leg1.away_score, leg1.home_score
 
-    # Scores du retour (ordre team_a/team_b)
     leg2_a = return_match.home_score if return_match.is_played else None
     leg2_b = return_match.away_score if return_match.is_played else None
 
-    agg = return_match.aggregate_score  # {'home': total team_a, 'away': total team_b} ou None
+    agg = return_match.aggregate_score
     winner = return_match.winner
 
     return {
@@ -292,21 +286,10 @@ def bracket(request):
             "first_leg", "first_leg__home_team", "first_leg__away_team",
         ).order_by("id")
 
-    playoff_returns = get_returns("playoff")
-    r16_returns = get_returns("round_16")
-    qf_returns = get_returns("quarter")
-    sf_returns = get_returns("semi")
-
-    final_match = Match.objects.filter(
-        phase__competition=competition,
-        phase__name="final",
-        match_leg="unique",
-    ).select_related("phase", "home_team", "away_team").order_by("id").first()
-
-    playoff_ties = [_tie_payload(m) for m in playoff_returns]
-    r16_ties = [_tie_payload(m) for m in r16_returns]
-    qf_ties = [_tie_payload(m) for m in qf_returns]
-    sf_ties = [_tie_payload(m) for m in sf_returns]
+    playoff_ties = [_tie_payload(m) for m in get_returns("playoff")]
+    r16_ties = [_tie_payload(m) for m in get_returns("round_16")]
+    qf_ties = [_tie_payload(m) for m in get_returns("quarter")]
+    sf_ties = [_tie_payload(m) for m in get_returns("semi")]
 
     def split_lr(lst):
         mid = len(lst) // 2
@@ -317,25 +300,33 @@ def bracket(request):
     qf_left, qf_right = split_lr(qf_ties)
     sf_left, sf_right = split_lr(sf_ties)
 
-    context = {
+    final_match = Match.objects.filter(
+        phase__competition=competition,
+        phase__name="final",
+        match_leg="unique",
+    ).select_related("phase", "home_team", "away_team").order_by("id").first()
+
+    return render(request, "core/bracket.html", {
         "competition": competition,
 
+        # ✅ variables utilisées par ton template actuel
         "playoff_left": playoff_left,
         "playoff_right": playoff_right,
-
         "r16_left": r16_left,
         "r16_right": r16_right,
-
         "qf_left": qf_left,
         "qf_right": qf_right,
-
         "sf_left": sf_left,
         "sf_right": sf_right,
 
-        "final_match": final_match,
-    }
+        # ✅ en bonus (si tu veux changer plus tard)
+        "playoff_ties": playoff_ties,
+        "r16_ties": r16_ties,
+        "qf_ties": qf_ties,
+        "sf_ties": sf_ties,
 
-    return render(request, "core/bracket.html", context)
+        "final_match": final_match,
+    })
 
 # ==========================================
 # RÈGLEMENT
@@ -1753,3 +1744,75 @@ def reschedule_match(request, match_id):
         "form": form,
         "title": "Reporter un match",
     })
+
+
+
+
+
+
+@role_required(['superadmin', 'organisateur', 'match'])
+def set_playoff_dates_view(request):
+    competition = Competition.objects.filter(is_active=True).first()
+    if not competition:
+        messages.error(request, "Aucune compétition active.")
+        return redirect('dashboard')
+
+    if request.method != "POST":
+        return render(request, "core/admin/set_playoff_dates.html", {
+            "competition": competition,
+            "title": "Fixer les dates des barrages",
+        })
+
+    aller_date_str = (request.POST.get("aller_date") or "").strip()
+    retour_date_str = (request.POST.get("retour_date") or "").strip()
+    same_day = (request.POST.get("same_day") == "1")
+
+    if not aller_date_str:
+        messages.error(request, "Veuillez choisir la date des matchs ALLER.")
+        return redirect('set_playoff_dates_view')
+
+    try:
+        aller_date = datetime.strptime(aller_date_str, "%Y-%m-%d").date()
+        retour_date = datetime.strptime(retour_date_str, "%Y-%m-%d").date() if retour_date_str else None
+    except ValueError:
+        messages.error(request, "Format de date invalide.")
+        return redirect('set_playoff_dates_view')
+
+    tz = timezone.get_current_timezone()
+
+    aller_dt = timezone.make_aware(datetime.combine(aller_date, time(0, 0)), tz)
+
+    if same_day:
+        # même jour : retour à 00:01 (repère)
+        retour_dt = timezone.make_aware(datetime.combine(aller_date, time(0, 1)), tz)
+    else:
+        if not retour_date:
+            # si non fourni, par défaut lendemain
+            retour_date = aller_date + timezone.timedelta(days=1)
+        retour_dt = timezone.make_aware(datetime.combine(retour_date, time(0, 0)), tz)
+
+    with transaction.atomic():
+        # On ne touche pas les matchs déjà joués
+        aller_qs = Match.objects.filter(
+            phase__competition=competition,
+            phase__name="playoff",
+            match_leg="aller",
+            is_played=False,
+        )
+        retour_qs = Match.objects.filter(
+            phase__competition=competition,
+            phase__name="playoff",
+            match_leg="retour",
+            is_played=False,
+        )
+
+        aller_count = aller_qs.update(scheduled_date=aller_dt)
+        retour_count = retour_qs.update(scheduled_date=retour_dt)
+
+        AdminLog.objects.create(
+            user=request.user,
+            action=f"Fix dates barrages: aller={aller_dt} ({aller_count}), retour={retour_dt} ({retour_count})"
+        )
+
+    messages.success(request, f"OK: Barrages reprogrammés. Aller={aller_dt.strftime('%d/%m/%Y %H:%M')} • Retour={retour_dt.strftime('%d/%m/%Y %H:%M')}")
+    return redirect('knockout_tools')
