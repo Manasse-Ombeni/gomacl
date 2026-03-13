@@ -68,3 +68,22 @@ def match_post_save(sender, instance: Match, created, **kwargs):
 def match_post_delete(sender, instance: Match, **kwargs):
     if instance.phase_id and instance.phase.name == "league":
         _schedule_recalc()
+
+
+@receiver(post_save, sender=Match)
+def knockout_auto_sync(sender, instance: Match, **kwargs):
+    """
+    Déclenche la synchronisation du bracket dès qu'un match de phase finale est mis à jour.
+    """
+    # Liste des noms de phases finales
+    KNOCKOUT_PHASES = ["playoff", "round_16", "quarter", "semi", "final"]
+    
+    # On vérifie si le match appartient à une phase finale
+    if not instance.phase or instance.phase.name not in KNOCKOUT_PHASES:
+        return
+
+    # On lance la synchronisation si :
+    # 1. Le match est marqué comme joué (on envoie le vainqueur au tour suivant)
+    # 2. OU si le match est marqué comme non joué (on remet TBD au tour suivant en cas d'erreur)
+    # On attend que la transaction soit terminée pour être sûr que les données sont en base
+    transaction.on_commit(lambda: call_command("sync_knockout_bracket"))

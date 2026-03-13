@@ -44,40 +44,45 @@ from django.utils import timezone
 from django.shortcuts import render, redirect
 from .decorators import role_required
 from .models import Competition, Match, AdminLog
+from django.db.models import Max, Min
 
 
 # ==========================================
 # PAGE D'ACCUEIL
 # ==========================================
+
+
 def home(request):
-    """
-    Page d'accueil du site
-    """
-    # Récupérer la compétition active
     competition = Competition.objects.filter(is_active=True).first()
     
-    # Top 8 équipes (seulement celles validées)
-    top_teams = Team.objects.filter(payment_validated=True).annotate(
-        diff_buts=F('goals_for') - F('goals_against')
-    ).order_by('-points', '-diff_buts', '-goals_for')[:8]
+    # Équipes validées ayant joué au moins un match
+    active_teams = Team.objects.filter(payment_validated=True, played__gt=0)
     
-    # Prochains matchs (3 prochains)
-    upcoming_matches = Match.objects.filter(
-        is_played=False,
-        scheduled_date__gte=timezone.now()
-    ).order_by('scheduled_date')[:3]
+    # 1. Meilleure Attaque (Plus de buts marqués)
+    best_attack = active_teams.order_by('-goals_for').first()
     
-    # Dernières actualités
+    # 2. Meilleure Défense (Moins de buts encaissés)
+    best_defense = active_teams.order_by('goals_against').first()
+    
+    # 3. Le "Serial Winner" (Plus grand nombre de victoires)
+    top_winner = active_teams.order_by('-wins').first()
+
+    # Ton code existant pour le top 8 et les news...
+    top_teams = Team.objects.filter(payment_validated=True).order_by('-points', '-goals_for')[:8]
+    upcoming_matches = Match.objects.filter(is_played=False, scheduled_date__gte=timezone.now()).order_by('scheduled_date')[:3]
     latest_news = News.objects.filter(is_published=True).order_by('-created_at')[:3]
-    
+
     context = {
         'competition': competition,
         'top_teams': top_teams,
         'upcoming_matches': upcoming_matches,
         'latest_news': latest_news,
+        # Nouvelles stats
+        'best_attack': best_attack,
+        'best_defense': best_defense,
+        'top_winner': top_winner,
     }
     return render(request, 'core/home.html', context)
-
 
 # ==========================================
 # INSCRIPTION D'UN JOUEUR (AVEC PAIEMENT)
