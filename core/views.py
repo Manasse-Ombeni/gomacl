@@ -489,6 +489,12 @@ def encode_result(request, match_id):
             match.played_date = timezone.now()
             match.save()  # ✅ signals => recalcul auto si phase league
 
+            if match.phase.name == 'final':
+                return redirect('champion_page')
+            
+            messages.success(request, _("Résultat enregistré avec succès !"))
+            return redirect('fixtures')
+
             if match.phase and match.phase.name == "league":
                 messages.success(request, _("Résultat enregistré. Classement mis à jour automatiquement."))
             else:
@@ -502,6 +508,7 @@ def encode_result(request, match_id):
         'form': form,
         'match': match,
     })
+
 # ==========================================
 # FONCTION : METTRE À JOUR LES STATS
 # ==========================================
@@ -1821,3 +1828,19 @@ def set_playoff_dates_view(request):
 
     messages.success(request, f"OK: Barrages reprogrammés. Aller={aller_dt.strftime('%d/%m/%Y %H:%M')} • Retour={retour_dt.strftime('%d/%m/%Y %H:%M')}")
     return redirect('knockout_tools')
+
+
+
+def champion_page(request):
+    # On cherche le match de la phase 'final' qui a été joué
+    final_match = Match.objects.filter(phase__name='final', is_played=True).first()
+    
+    if not final_match or not final_match.winner:
+        # Si la finale n'est pas encore jouée, on redirige vers l'accueil
+        return redirect('home')
+        
+    context = {
+        'champion': final_match.winner,
+        'final_match': final_match,
+    }
+    return render(request, 'core/champion.html', context)
