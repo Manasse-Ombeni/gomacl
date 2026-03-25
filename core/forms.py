@@ -5,7 +5,6 @@ from .models import Team, Match, Competition
 import re
 
 
-
 # ==========================================
 # FORMULAIRE : INSCRIPTION / MODIFICATION ÉQUIPE
 # ==========================================
@@ -13,8 +12,8 @@ class TeamRegistrationForm(forms.ModelForm):
 
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
-        min_length=4,          # plus simple
-        required=False,        # obligatoire seulement à la création (voir clean)
+        min_length=4,
+        required=False,  # obligatoire seulement à la création (voir clean)
         label=_('Mot de passe')
     )
 
@@ -27,7 +26,7 @@ class TeamRegistrationForm(forms.ModelForm):
             'team_name': forms.TextInput(attrs={'class': 'form-control'}),
             'abbreviation': forms.TextInput(attrs={
                 'class': 'form-control',
-                'maxlength': '5',  # un peu plus souple
+                'maxlength': '5',
                 'style': 'text-transform: uppercase;',
             }),
             'whatsapp': forms.TextInput(attrs={
@@ -36,24 +35,34 @@ class TeamRegistrationForm(forms.ModelForm):
             }),
         }
 
+    def __init__(self, *args, **kwargs):
+        # ✅ CORRIGÉ: on reçoit la compétition active depuis la vue
+        self.competition = kwargs.pop('competition', None)
+        super().__init__(*args, **kwargs)
+
     def clean_abbreviation(self):
         abbr = (self.cleaned_data.get('abbreviation') or '').upper().strip()
 
         if not abbr:
             raise ValidationError(_("Abréviation obligatoire."))
 
-        # Plus simple: 2 à 5 caractères, lettres/chiffres
         if len(abbr) < 2 or len(abbr) > 5:
             raise ValidationError(_("Abréviation: 2 à 5 caractères."))
 
         if not abbr.isalnum():
             raise ValidationError(_("Abréviation: lettres et chiffres seulement (pas d'espaces)."))
 
+        # ✅ CORRIGÉ: vérifier uniquement dans la compétition active
+        # (même abréviation autorisée dans une autre saison)
         qs = Team.objects.filter(abbreviation=abbr)
+        if self.competition:
+            qs = qs.filter(competition=self.competition)
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
-            raise ValidationError(_("Cette abréviation est déjà utilisée."))
+            raise ValidationError(_(
+                "Cette abréviation est déjà utilisée dans cette compétition."
+            ))
 
         return abbr
 
@@ -63,15 +72,20 @@ class TeamRegistrationForm(forms.ModelForm):
         if not whatsapp:
             raise ValidationError(_("Numéro WhatsApp obligatoire."))
 
-        # Assoupli: + optionnel, 9 à 15 chiffres
         if not re.match(r'^\+?\d{9,15}$', whatsapp):
             raise ValidationError(_("WhatsApp invalide. Exemple: +243999999999"))
 
+        # ✅ CORRIGÉ: vérifier uniquement dans la compétition active
+        # (même numéro autorisé pour une nouvelle saison)
         qs = Team.objects.filter(whatsapp=whatsapp)
+        if self.competition:
+            qs = qs.filter(competition=self.competition)
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
-            raise ValidationError(_("Ce numéro WhatsApp est déjà enregistré."))
+            raise ValidationError(_(
+                "Ce numéro WhatsApp est déjà enregistré pour cette compétition."
+            ))
 
         return whatsapp
 
@@ -98,6 +112,7 @@ class TeamRegistrationForm(forms.ModelForm):
             team.save()
 
         return team
+
 
 # ==========================================
 # FORMULAIRE : RÉSULTAT D'UN MATCH
@@ -128,7 +143,6 @@ class MatchResultForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-
         is_forfeit = cleaned_data.get('is_forfeit')
         home_score = cleaned_data.get('home_score')
         away_score = cleaned_data.get('away_score')
@@ -164,8 +178,6 @@ class CompetitionForm(forms.ModelForm):
             'start_date',
             'end_date'
         ]
-    
-
 
 
 class SimplePasswordResetForm(forms.Form):
@@ -194,7 +206,10 @@ class MatchRescheduleForm(forms.ModelForm):
         fields = ["scheduled_date", "rescheduled_reason"]
         widgets = {
             "scheduled_date": forms.DateTimeInput(attrs={"type": "datetime-local", "class": "form-control"}),
-            "rescheduled_reason": forms.TextInput(attrs={"class": "form-control", "placeholder": "Ex: problème réseau / coupure courant / accord des 2 joueurs..."}),
+            "rescheduled_reason": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Ex: problème réseau / coupure courant / accord des 2 joueurs..."
+            }),
         }
 
     def clean_scheduled_date(self):

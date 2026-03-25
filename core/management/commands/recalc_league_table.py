@@ -1,12 +1,22 @@
 from django.core.management.base import BaseCommand
-from core.models import Team, Match
+from core.models import Team, Match, Competition
+
 
 class Command(BaseCommand):
-    help = "Recalculer les stats (phase league) à partir des matchs joués"
+    help = "Recalculer les stats (phase league) à partir des matchs joués — compétition active uniquement"
 
     def handle(self, *args, **options):
-        # Charger toutes les équipes UNE SEULE FOIS (1 objet par team)
-        teams = Team.objects.in_bulk()  # {id: Team}
+
+        # ✅ CORRIGÉ: prendre la compétition active
+        competition = Competition.objects.filter(is_active=True).first()
+        if not competition:
+            self.stdout.write(self.style.ERROR("Aucune compétition active trouvée."))
+            return
+
+        self.stdout.write(f"Recalcul pour : {competition.name}")
+
+        # ✅ CORRIGÉ: charger uniquement les équipes de cette compétition
+        teams = Team.objects.filter(competition=competition).in_bulk()  # {id: Team}
 
         # Reset stats (en mémoire)
         for t in teams.values():
@@ -18,9 +28,11 @@ class Command(BaseCommand):
             t.goals_against = 0
             t.points = 0
 
+        # ✅ CORRIGÉ: uniquement les matchs de la phase league de cette compétition
         matches = Match.objects.filter(
             is_played=True,
-            phase__name='league'
+            phase__name='league',
+            phase__competition=competition   # ← filtre par compétition
         ).values(
             'home_team_id', 'away_team_id',
             'is_forfeit', 'forfeit_team_id',
@@ -83,10 +95,12 @@ class Command(BaseCommand):
                     home.points += 1
                     away.points += 1
 
-        # Sauvegarde en une fois (très important)
+        # Sauvegarde en une fois (bulk_update = très performant)
         Team.objects.bulk_update(
             teams.values(),
             ['played', 'wins', 'draws', 'losses', 'goals_for', 'goals_against', 'points']
         )
 
-        self.stdout.write(self.style.SUCCESS("OK: Classement recalculé (phase league)."))
+        self.stdout.write(self.style.SUCCESS(
+            f"OK: Classement recalculé pour '{competition.name}'. {len(teams)} équipes mises à jour."
+        ))

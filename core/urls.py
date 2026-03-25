@@ -78,6 +78,9 @@ urlpatterns = [
     path('dashboard/matches/<int:match_id>/reschedule/', views.reschedule_match, name='reschedule_match'),
     path('dashboard/knockout-tools/playoff-dates/', views.set_playoff_dates_view, name='set_playoff_dates_view'),
     path('celebration/champion/', views.champion_page, name='champion_page'),
+    # Historique des saisons
+    path('saisons/', views.season_history, name='season_history'),
+    path('saisons/<int:pk>/', views.season_detail, name='season_detail'),
     
 
 ]

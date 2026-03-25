@@ -54,22 +54,29 @@ from django.db.models import Max, Min
 
 def home(request):
     competition = Competition.objects.filter(is_active=True).first()
-    
-    # Équipes validées ayant joué au moins un match
-    active_teams = Team.objects.filter(payment_validated=True, played__gt=0)
-    
-    # 1. Meilleure Attaque (Plus de buts marqués)
+
+    # ✅ CORRIGÉ: filtrer par compétition active
+    active_teams = Team.objects.filter(
+        payment_validated=True,
+        played__gt=0,
+        competition=competition
+    ) if competition else Team.objects.none()
+
     best_attack = active_teams.order_by('-goals_for').first()
-    
-    # 2. Meilleure Défense (Moins de buts encaissés)
     best_defense = active_teams.order_by('goals_against').first()
-    
-    # 3. Le "Serial Winner" (Plus grand nombre de victoires)
     top_winner = active_teams.order_by('-wins').first()
 
-    # Ton code existant pour le top 8 et les news...
-    top_teams = Team.objects.filter(payment_validated=True).order_by('-points', '-goals_for')[:8]
-    upcoming_matches = Match.objects.filter(is_played=False, scheduled_date__gte=timezone.now()).order_by('scheduled_date')[:3]
+    # ✅ CORRIGÉ: top 8 filtré par compétition active
+    top_teams = Team.objects.filter(
+        payment_validated=True,
+        competition=competition
+    ).order_by('-points', '-goals_for')[:8] if competition else []
+
+    upcoming_matches = Match.objects.filter(
+        is_played=False,
+        scheduled_date__gte=timezone.now()
+    ).order_by('scheduled_date')[:3]
+
     latest_news = News.objects.filter(is_published=True).order_by('-created_at')[:3]
 
     context = {
@@ -77,7 +84,6 @@ def home(request):
         'top_teams': top_teams,
         'upcoming_matches': upcoming_matches,
         'latest_news': latest_news,
-        # Nouvelles stats
         'best_attack': best_attack,
         'best_defense': best_defense,
         'top_winner': top_winner,
@@ -88,9 +94,6 @@ def home(request):
 # INSCRIPTION D'UN JOUEUR (AVEC PAIEMENT)
 # ==========================================
 def register_team(request):
-    """
-    Page d'inscription pour un nouveau joueur/équipe avec paiement
-    """
     competition = Competition.objects.filter(is_active=True, registration_open=True).first()
 
     if not competition:
@@ -102,52 +105,84 @@ def register_team(request):
         return redirect('home')
 
     if request.method == 'POST':
-        form = TeamRegistrationForm(request.POST, request.FILES)
+        # ✅ CORRIGÉ: passer la compétition au formulaire
+        form = TeamRegistrationForm(request.POST, request.FILES, competition=competition)
+
         if form.is_valid():
             team = form.save(commit=False)
-
-            # Créer un utilisateur pour ce joueur
             username = form.cleaned_data['abbreviation'].lower()
-            password = form.cleaned_data['password']
+            password = form.cleaned_data.get('password')
 
-            # Vérifier si le username existe déjà
-            if User.objects.filter(username=username).exists():
-                messages.error(request, _(f"L'abréviation {username} est déjà utilisée comme nom d'utilisateur."))
-                return render(request, 'core/register_team.html', {
-                    'form': form,
-                    'competition': competition,
-                    'remaining_slots': competition.max_teams - competition.registered_teams_count,
-                })
+            # ✅ CAS 1 : joueur de la saison précédente (compte User existe déjà)
+            existing_user = User.objects.filter(username=username).first()
 
-            # Créer l'utilisateur
-            user = User.objects.create_user(
-                username=username,
-                password=password,
-                first_name=form.cleaned_data['player_name'],
-                email=f"{username}@gomacl.local"
-            )
+            if existing_user:
+                # Vérifier qu'il n'est pas déjà inscrit dans CETTE compétition
+                already_registered = Team.objects.filter(
+                    user=existing_user,
+                    competition=competition
+                ).exists()
 
-            # ✅ IMPORTANT : forcer le rôle "player" (joueur)
-            # (ton signal crée UserProfile à la création du user)
-            if hasattr(user, "userprofile"):
-                user.userprofile.role = "player"
-                user.userprofile.save()
+                if already_registered:
+                    messages.error(request, _("Vous êtes déjà inscrit dans cette compétition."))
+                    return render(request, 'core/register_team.html', {
+                        'form': form,
+                        'competition': competition,
+                        'remaining_slots': competition.max_teams - competition.registered_teams_count,
+                    })
 
+                # Réutiliser le compte existant
+                user = existing_user
+
+                # Mettre à jour le mot de passe si fourni
+                if password:
+                    user.set_password(password)
+                    user.first_name = form.cleaned_data['player_name']
+                    user.save()
+
+                messages.info(request, _(
+                    "Compte existant détecté. Votre nouvelle équipe a été créée pour cette saison."
+                ))
+
+            else:
+                # ✅ CAS 2 : nouveau joueur → créer le compte
+                if not password:
+                    messages.error(request, _("Le mot de passe est obligatoire."))
+                    return render(request, 'core/register_team.html', {
+                        'form': form,
+                        'competition': competition,
+                        'remaining_slots': competition.max_teams - competition.registered_teams_count,
+                    })
+
+                user = User.objects.create_user(
+                    username=username,
+                    password=password,
+                    first_name=form.cleaned_data['player_name'],
+                    email=f"{username}@gomacl.local"
+                )
+
+                if hasattr(user, "userprofile"):
+                    user.userprofile.role = "player"
+                    user.userprofile.save()
+
+            # ✅ Créer la Team pour CETTE compétition
             team.user = user
             team.competition = competition
-            team.payment_validated = False  # En attente de validation
+            team.payment_validated = False
             team.save()
 
             messages.success(
                 request,
                 "✅ Inscription réussie ! Rejoignez le groupe WhatsApp et envoyez la preuve de paiement pour validation."
             )
-
             return redirect('home')
+
         else:
             messages.error(request, _("Inscription refusée : corrige les champs en rouge puis réessaie."))
+
     else:
-        form = TeamRegistrationForm()
+        # ✅ CORRIGÉ: passer la compétition au formulaire vide aussi
+        form = TeamRegistrationForm(competition=competition)
 
     context = {
         'form': form,
@@ -155,18 +190,21 @@ def register_team(request):
         'remaining_slots': competition.max_teams - competition.registered_teams_count if competition else 0,
     }
     return render(request, 'core/register_team.html', context)
-
 # ==========================================
 # LISTE DES ÉQUIPES
 # ==========================================
 def teams_list(request):
-    """
-    Afficher toutes les équipes inscrites et validées
-    """
-    teams = Team.objects.filter(payment_validated=True)
-    
+    competition = Competition.objects.filter(is_active=True).first()
+
+    # ✅ CORRIGÉ: filtrer par compétition active
+    teams = Team.objects.filter(
+        payment_validated=True,
+        competition=competition
+    ) if competition else Team.objects.none()
+
     context = {
         'teams': teams,
+        'competition': competition,
     }
     return render(request, 'core/teams_list.html', context)
 
@@ -175,18 +213,21 @@ def teams_list(request):
 # CLASSEMENT GÉNÉRAL
 # ==========================================
 def standings(request):
-    """
-    Classement général (phase de ligue)
-    """
-    teams = Team.objects.filter(payment_validated=True).annotate(
+    competition = Competition.objects.filter(is_active=True).first()
+
+    # ✅ CORRIGÉ: filtrer par compétition active
+    teams = Team.objects.filter(
+        payment_validated=True,
+        competition=competition
+    ).annotate(
         diff_buts=F('goals_for') - F('goals_against')
-    ).order_by('-points', '-diff_buts', '-goals_for')
-    
+    ).order_by('-points', '-diff_buts', '-goals_for') if competition else Team.objects.none()
+
     context = {
         'teams': teams,
+        'competition': competition,
     }
     return render(request, 'core/standings.html', context)
-
 
 # ==========================================
 # CALENDRIER DES MATCHS
@@ -438,24 +479,36 @@ def user_logout(request):
 @login_required
 def dashboard(request):
 
-    # ✅ Vérifier rôle autorisé
     if not hasattr(request.user, 'userprofile'):
         return redirect('home')
 
     if request.user.userprofile.role not in [
-        'superadmin',
-        'organisateur',
-        'paiement',
-        'match'
+        'superadmin', 'organisateur', 'paiement', 'match'
     ]:
         messages.error(request, "Accès refusé.")
         return redirect('home')
 
-    # ✅ Statistiques
-    total_teams = Team.objects.filter(payment_validated=True).count()
-    pending_teams = Team.objects.filter(payment_validated=False).count()
-    total_matches = Match.objects.count()
-    played_matches = Match.objects.filter(is_played=True).count()
+    # ✅ CORRIGÉ: filtrer par compétition active
+    competition = Competition.objects.filter(is_active=True).first()
+
+    total_teams = Team.objects.filter(
+        payment_validated=True,
+        competition=competition
+    ).count()
+
+    pending_teams = Team.objects.filter(
+        payment_validated=False,
+        competition=competition
+    ).count()
+
+    total_matches = Match.objects.filter(
+        phase__competition=competition
+    ).count()
+
+    played_matches = Match.objects.filter(
+        is_played=True,
+        phase__competition=competition
+    ).count()
 
     return render(request, 'core/dashboard.html', {
         'total_teams': total_teams,
@@ -463,7 +516,6 @@ def dashboard(request):
         'total_matches': total_matches,
         'played_matches': played_matches,
     })
-
 
 # ==========================================
 # ENCODER UN RÉSULTAT (ADMIN)
@@ -920,11 +972,17 @@ def competition_list(request):
 
 
 @role_required(['superadmin', 'organisateur'])
+@role_required(['superadmin', 'organisateur'])
 def competition_create(request):
     form = CompetitionForm(request.POST or None)
     if form.is_valid():
+        # ✅ CORRIGÉ: désactiver toutes les compétitions actives avant d'en créer une nouvelle
+        Competition.objects.filter(is_active=True).update(
+            is_active=False,
+            registration_open=False
+        )
         form.save()
-        messages.success(request, "Compétition créée avec succès !")
+        messages.success(request, "Compétition créée avec succès ! L'ancienne saison a été archivée.")
         return redirect('competition_list')
     return render(request, 'core/admin/competition_form.html', {
         'form': form,
@@ -1844,3 +1902,90 @@ def champion_page(request):
         'final_match': final_match,
     }
     return render(request, 'core/champion.html', context)
+
+# ==========================================
+# HISTORIQUE DES SAISONS (PUBLIC)
+# ==========================================
+def season_history(request):
+    """
+    Liste toutes les saisons passées (is_active=False)
+    """
+    past_seasons = Competition.objects.filter(
+        is_active=False
+    ).order_by('-created_at')
+
+    # Pour chaque saison, on récupère le champion (vainqueur de la finale)
+    seasons_data = []
+    for season in past_seasons:
+        final_match = Match.objects.filter(
+            phase__competition=season,
+            phase__name='final',
+            is_played=True
+        ).first()
+
+        champion = final_match.winner if final_match else None
+
+        seasons_data.append({
+            'season': season,
+            'champion': champion,
+            'total_teams': season.teams.filter(payment_validated=True).count(),
+            'total_matches': Match.objects.filter(
+                phase__competition=season,
+                is_played=True
+            ).count(),
+        })
+
+    return render(request, 'core/season_history.html', {
+        'seasons_data': seasons_data,
+    })
+
+
+def season_detail(request, pk):
+    """
+    Détail d'une saison passée :
+    classement final + résultats + champion
+    """
+    season = get_object_or_404(Competition, pk=pk)
+
+    # Classement final de cette saison
+    standings = Team.objects.filter(
+        payment_validated=True,
+        competition=season
+    ).annotate(
+        diff_buts=F('goals_for') - F('goals_against')
+    ).order_by('-points', '-diff_buts', '-goals_for')
+
+    # Tous les matchs joués de cette saison
+    matches_played = Match.objects.filter(
+        phase__competition=season,
+        is_played=True
+    ).select_related(
+        'home_team', 'away_team', 'phase'
+    ).order_by('phase__order', '-played_date')
+
+    # Champion (vainqueur finale)
+    final_match = Match.objects.filter(
+        phase__competition=season,
+        phase__name='final',
+        is_played=True
+    ).first()
+    champion = final_match.winner if final_match else None
+
+    # Stats fun
+    # Meilleure attaque
+    best_attack = standings.order_by('-goals_for').first()
+    # Meilleure défense
+    best_defense = standings.order_by('goals_against').first()
+    # Serial winner
+    top_winner = standings.order_by('-wins').first()
+
+    return render(request, 'core/season_detail.html', {
+        'season': season,
+        'standings': standings,
+        'matches_played': matches_played,
+        'champion': champion,
+        'final_match': final_match,
+        'best_attack': best_attack,
+        'best_defense': best_defense,
+        'top_winner': top_winner,
+    })
