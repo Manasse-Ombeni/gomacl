@@ -1,239 +1,568 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Règlement Officiel – Goma Champions League 2026{% endblock %}
+{% block title %}Règlement - Goma Champions League 2026{% endblock %}
 
 {% block content %}
-<section class="rules-section py-5">
-    <div class="container">
+<section class="rules-page py-5">
+  <div class="container" style="max-width: 860px;">
 
-        <!-- HEADER -->
-        <div class="text-center mb-5">
-            <h1 class="rules-title fw-bold">
-                RÈGLEMENT OFFICIEL
-            </h1>
-            <p class="rules-subtitle">
-                Goma Champions League • Première édition 2026
-            </p>
-            <div class="badge-total mt-3">
-                💰 72 000 FC en jeu
-            </div>
-        </div>
-
-        <!-- BOUTONS -->
-        <div class="text-center mb-5">
-            <a href="{% url 'download_rules_pdf' %}" class="btn btn-danger btn-sm me-3">
-                <i class="fas fa-file-pdf me-2"></i>Télécharger PDF
-            </a>
-            <a href="https://chat.whatsapp.com/ENuuVnYkm2pAwsniuGXoto" target="_blank" class="btn btn-success btn-sm">
-                <i class="fab fa-whatsapp me-2"></i>Rejoindre le groupe WhatsApp
-            </a>
-        </div>
-
-        <div class="rules-content">
-
-            <!-- 1. PRÉSENTATION -->
-            <div class="rule-block">
-                <h3 class="rule-number">1</h3>
-                <h4 class="rule-heading">Présentation</h4>
-                <p>
-                    La <strong>Goma Champions League 2026</strong> est une compétition officielle eFootball 2026 sur mobile,
-                    organisée à Goma (RDC).
-                </p>
-                <ul class="rule-list">
-                    <li>Nombre maximum d’équipes : <strong>36</strong></li>
-                    <li>Frais d’inscription : <strong>2 000 FC</strong></li>
-                    <li>Total des inscriptions : <strong>72 000 FC</strong></li>
-                    <li>Jeu : <strong>eFootball 2026 Mobile</strong></li>
-                </ul>
-            </div>
-
-            <!-- 2. INSCRIPTION -->
-            <div class="rule-block highlight">
-                <h3 class="rule-number">2</h3>
-                <h4 class="rule-heading">Inscription</h4>
-                <ol class="numbered-list">
-                    <li>Remplir le formulaire en ligne</li>
-                    <li>Payer <strong>2 000 FC</strong> via Airtel Money</li>
-                    <li>Envoyer la preuve dans le groupe WhatsApp officiel</li>
-                    <li>Attendre la validation (max 24h)</li>
-                </ol>
-                <div class="alert-pro success">
-                    Inscription valide uniquement après confirmation du paiement.
-                </div>
-            </div>
-
-            <!-- 3. FORMAT -->
-            <div class="rule-block">
-                <h3 class="rule-number">3</h3>
-                <h4 class="rule-heading">Format de la compétition</h4>
-                <p><strong>Phase de ligue :</strong> 8 matchs par équipe (3 pts victoire, 1 pt nul)</p>
-                <ul class="rule-list">
-                    <li>1er → 8e : qualifiés directs</li>
-                    <li>9e → 24e : barrages</li>
-                    <li>25e → 36e : éliminés</li>
-                </ul>
-                <p class="mt-3">
-                    <strong>Phases finales :</strong> Aller/Retour (sauf finale) • Prolongations • TAB si égalité • Finale 15 minutes
-                </p>
-                <p class="mt-3 text-gold">
-                    Les récompenses commencent à partir des quarts de finale (Top 8).
-                </p>
-            </div>
-
-            <!-- 4. RÉCOMPENSES -->
-            <div class="rule-block reward">
-                <h3 class="rule-number">4</h3>
-                <h4 class="rule-heading">Répartition Officielle des Récompenses</h4>
-
-                <div class="finance-box mb-4">
-                    <div>Total inscriptions : <strong>72 000 FC</strong></div>
-                    <div>Organisation : <strong>12 000 FC</strong></div>
-                    <div>Redistribué aux joueurs : <strong>60 000 FC</strong></div>
-                </div>
-
-                <div class="rewards">
-                    <div class="reward-line champion">
-                        🥇 Champion → <strong>23 000 FC</strong>
-                    </div>
-                    <div class="reward-line">
-                        🥈 Finaliste → <strong>11 500 FC</strong>
-                    </div>
-                    <div class="reward-line">
-                        🥉 Demi-finalistes → <strong>6 000 FC chacun</strong>
-                    </div>
-                    <div class="reward-line">
-                        🎖 Quart de finalistes → <strong>3 375 FC chacun</strong>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 5. DISCIPLINE -->
-            <div class="rule-block">
-                <h3 class="rule-number">5</h3>
-                <h4 class="rule-heading">Discipline</h4>
-                <p>
-                    Respect et fair-play obligatoires.
-                    Toute triche, insulte ou abandon entraîne une exclusion immédiate sans remboursement.
-                </p>
-            </div>
-
-        </div>
-
-        <div class="text-center mt-5 pt-4">
-            <p class="text-gold fw-bold">
-                Manassé Ombeni<br>
-                <small class="text-light">Organisateur principal</small>
-            </p>
-        </div>
-
+    <!-- HEADER -->
+    <div class="rules-hero text-center mb-5">
+      <img src="{% static 'images/logo.png' %}" alt="GCL" style="height:80px; margin-bottom:16px; filter: drop-shadow(0 0 14px rgba(230,194,0,.4));">
+      <h1 class="rules-main-title">GOMA CHAMPIONS LEAGUE</h1>
+      <div class="rules-subtitle">SAISON 2026 — RÈGLEMENT OFFICIEL</div>
+      <p class="rules-lead">
+        Compétition officielle eFootball Mobile organisée à Goma, RDC.<br>
+        Format de l'UEFA Champions League.
+      </p>
     </div>
+
+    <!-- ARTICLE 1 -->
+    <div class="rules-card mb-4">
+      <div class="rules-card__num">1</div>
+      <div class="rules-card__body">
+        <h3 class="rules-card__title">Dispositions générales</h3>
+        <p>
+          La <strong>Goma Champions League 2026</strong> est une compétition officielle de eFootball Mobile
+          organisée à Goma, République Démocratique du Congo. Tous les participants s'engagent à respecter
+          l'intégralité du présent règlement dès leur inscription.
+        </p>
+        <div class="rules-alert rules-alert--warn">
+          <i class="fas fa-triangle-exclamation me-2"></i>
+          Le non-respect du règlement peut entraîner la disqualification définitive sans remboursement.
+        </div>
+      </div>
+    </div>
+
+    <!-- ARTICLE 2 -->
+    <div class="rules-card mb-4">
+      <div class="rules-card__num">2</div>
+      <div class="rules-card__body">
+        <h3 class="rules-card__title">Format de la compétition</h3>
+        <p>La compétition se déroule en deux grandes phases :</p>
+        <ul class="rules-list">
+          <li><strong>Phase de Ligue :</strong> 36 équipes s'affrontent selon un système de points. Chaque équipe joue 8 matchs contre 8 adversaires différents tirés au sort.</li>
+          <li><strong>Phase Finale (Bracket UCL) :</strong> Les meilleures équipes s'affrontent en matchs aller-retour (Barrages → 8es → Quarts → Demis → Finale).</li>
+        </ul>
+        <div class="rules-alert rules-alert--info">
+          <i class="fas fa-gamepad me-2"></i>
+          <strong>Création de salle :</strong> L'équipe désignée à domicile crée la salle de match sur eFootball et envoie l'invitation à son adversaire via WhatsApp.
+        </div>
+      </div>
+    </div>
+
+    <!-- ARTICLE 3 : PARAMÈTRES -->
+    <div class="rules-card mb-4">
+      <div class="rules-card__num">3</div>
+      <div class="rules-card__body">
+        <h3 class="rules-card__title">Paramètres officiels des matchs</h3>
+
+        <div class="row g-3 mt-1">
+          <!-- Phase de ligue -->
+          <div class="col-md-6">
+            <div class="params-box">
+              <div class="params-box__title">
+                <i class="fas fa-layer-group me-2"></i>Phase de Ligue
+              </div>
+              <table class="params-table">
+                <tr><td><i class="fas fa-clock me-2"></i>Durée</td><td><strong>10 minutes</strong></td></tr>
+                <tr><td><i class="fas fa-dumbbell me-2"></i>Forme domicile</td><td><strong>Excellente</strong></td></tr>
+                <tr><td><i class="fas fa-dumbbell me-2"></i>Forme extérieur</td><td><strong>Excellente</strong></td></tr>
+                <tr><td><i class="fas fa-arrows-rotate me-2"></i>Remplacements</td><td><strong>5 max</strong></td></tr>
+                <tr><td><i class="fas fa-cloud-sun me-2"></i>Météo</td><td><strong>Par défaut</strong></td></tr>
+                <tr><td><i class="fas fa-stopwatch me-2"></i>Prolongations</td><td><strong class="text-danger">Désactivées</strong></td></tr>
+              </table>
+            </div>
+          </div>
+
+          <!-- Phase finale -->
+          <div class="col-md-6">
+            <div class="params-box params-box--gold">
+              <div class="params-box__title">
+                <i class="fas fa-trophy me-2"></i>Phase Finale
+              </div>
+              <table class="params-table">
+                <tr><td><i class="fas fa-clock me-2"></i>Durée</td><td><strong>10 min (Finale : 15 min)</strong></td></tr>
+                <tr><td><i class="fas fa-dumbbell me-2"></i>Forme domicile</td><td><strong>Excellente</strong></td></tr>
+                <tr><td><i class="fas fa-dumbbell me-2"></i>Forme extérieur</td><td><strong>Excellente</strong></td></tr>
+                <tr><td><i class="fas fa-arrows-rotate me-2"></i>Remplacements</td><td><strong>5 max</strong></td></tr>
+                <tr><td><i class="fas fa-stopwatch me-2"></i>Prolongations</td><td><strong class="text-success">Activées</strong></td></tr>
+                <tr><td><i class="fas fa-futbol me-2"></i>Tirs au but</td><td><strong class="text-success">Activés</strong></td></tr>
+                <tr><td><i class="fas fa-ban me-2"></i>Match nul</td><td><strong class="text-danger">Impossible</strong></td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARTICLE 4 : CAGNOTTE -->
+    <div class="rules-card mb-4">
+      <div class="rules-card__num">4</div>
+      <div class="rules-card__body">
+        <h3 class="rules-card__title">Cagnotte & Répartition des prix</h3>
+
+        <div class="prize-total">
+          <i class="fas fa-coins me-2"></i>
+          Cagnotte totale : <strong>90 000 FC</strong>
+        </div>
+
+        <div class="row g-3 mt-2">
+          <div class="col-6 col-md-3">
+            <div class="prize-card prize-card--gold">
+              <i class="fas fa-trophy prize-icon"></i>
+              <div class="prize-pos">🥇 Champion</div>
+              <div class="prize-amount">35 000 FC</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="prize-card prize-card--silver">
+              <i class="fas fa-medal prize-icon"></i>
+              <div class="prize-pos">🥈 Finaliste</div>
+              <div class="prize-amount">18 000 FC</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="prize-card prize-card--bronze">
+              <i class="fas fa-award prize-icon"></i>
+              <div class="prize-pos">🥉 Demi-finalistes</div>
+              <div class="prize-amount">7 000 FC <small>× 2</small></div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="prize-card">
+              <i class="fas fa-star prize-icon"></i>
+              <div class="prize-pos">Quart-finalistes</div>
+              <div class="prize-amount">3 000 FC <small>× 4</small></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="prize-org mt-3">
+          <i class="fas fa-shield-halved me-2"></i>
+          <strong>Organisation :</strong> 11 000 FC
+          <span style="opacity:.7; font-size:.88rem; margin-left:8px;">(salle, connexion, arbitrage, trophée)</span>
+        </div>
+
+        <div class="rules-alert rules-alert--info mt-3">
+          <i class="fas fa-info-circle me-2"></i>
+          Le paiement des prix s'effectue le jour de la finale. L'inscription vaut acceptation de la répartition.
+        </div>
+      </div>
+    </div>
+
+    <!-- ARTICLE 5 : DÉLAIS -->
+    <div class="rules-card mb-4">
+      <div class="rules-card__num">5</div>
+      <div class="rules-card__body">
+        <h3 class="rules-card__title">Délais & Calendrier</h3>
+        <p>
+          Chaque match doit être joué dans les <strong>24 heures</strong> suivant sa publication dans le calendrier.
+          Limite absolue : <strong>23h59</strong>.
+        </p>
+        <p>
+          Chaque joueur doit vérifier le calendrier régulièrement et contacter son adversaire via WhatsApp
+          pour fixer l'heure du match. Tout manquement sans justification valable entraîne un <strong>forfait 3-0</strong>.
+        </p>
+        <div class="rules-alert rules-alert--warn">
+          <i class="fas fa-hourglass-half me-2"></i>
+          Après <strong>48 heures</strong> sans résultat, l'organisateur peut décider d'office d'un forfait contre le joueur absent.
+        </div>
+      </div>
+    </div>
+
+    <!-- ARTICLE 6 : DÉCONNEXIONS -->
+    <div class="rules-card mb-4">
+      <div class="rules-card__num">6</div>
+      <div class="rules-card__body">
+        <h3 class="rules-card__title">Déconnexions & Problèmes réseau</h3>
+
+        <div class="rules-alert rules-alert--warn mb-3">
+          <i class="fas fa-wifi me-2"></i>
+          <strong>Important :</strong> Chaque joueur est personnellement responsable de tester sa connexion 4G/WiFi avant son match. La connexion instable en RDC est une réalité connue — ce règlement existe pour protéger le fair-play et éviter les abus.
+        </div>
+
+        <!-- CAS 1 -->
+        <div class="deco-case mb-3">
+          <div class="deco-case__num">Cas 1</div>
+          <div class="deco-case__title">Score nul 0-0 au moment de la déconnexion</div>
+          <p class="mb-0">
+            Si la déconnexion survient alors que le score est de <strong>0-0</strong>, le match est intégralement
+            rejoué à 0-0, quel que soit le joueur déconnecté. Aucun but n'est conservé.
+          </p>
+        </div>
+
+        <!-- CAS 2 -->
+        <div class="deco-case mb-3">
+          <div class="deco-case__num">Cas 2</div>
+          <div class="deco-case__title">Un joueur mène au score</div>
+
+          <div class="sub-case sub-case--danger mb-2">
+            <strong>CAS A — Le joueur qui PERD se déconnecte</strong><br>
+            Victoire par forfait <strong>3-0</strong> accordée automatiquement au joueur qui menait au score.<br>
+            <small class="text-light" style="opacity:.75;">Ex : Score 2-1 pour A, B lag → Résultat final : A gagne 3-0</small>
+          </div>
+
+          <div class="sub-case sub-case--info mb-2">
+            <strong>CAS B — Le joueur qui MÈNE se déconnecte</strong>
+            <table class="deco-table mt-2">
+              <tr>
+                <td><span class="time-badge">Avant 70'</span></td>
+                <td>Match à rejouer intégralement à 0-0. Le meneur perd son avantage.</td>
+              </tr>
+              <tr>
+                <td><span class="time-badge time-badge--green">≥ 70' — écart ≥ 3 buts</span></td>
+                <td>Le score au moment de la coupure est validé définitivement.<br>
+                <small style="opacity:.75;">Ex : 5-0 à la 85', le meneur lag → 5-0 validé</small></td>
+              </tr>
+              <tr>
+                <td><span class="time-badge time-badge--warn">≥ 70' — écart &lt; 3 buts</span></td>
+                <td>Match à rejouer à 0-0.<br>
+                <small style="opacity:.75;">Ex : 2-0 à la 88', le meneur lag → on rejoue à 0-0</small></td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <!-- CAS 3 : PREUVE -->
+        <div class="deco-case mb-3">
+          <div class="deco-case__num">Cas 3</div>
+          <div class="deco-case__title">Preuve & Procédure de réclamation</div>
+          <p>Toute réclamation doit être accompagnée d'une <strong>capture d'écran ou vidéo</strong> montrant clairement :</p>
+          <ul class="rules-list">
+            <li>Le score exact au moment de la déconnexion</li>
+            <li>Le message de déconnexion affiché par le jeu</li>
+          </ul>
+          <p>
+            La preuve doit être envoyée sur le <strong>groupe WhatsApp officiel</strong> dans les
+            <strong>5 minutes</strong> suivant l'incident.
+          </p>
+          <div class="rules-alert rules-alert--danger">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            Sans preuve valide, l'organisateur accordera automatiquement la victoire au joueur resté connecté.
+          </div>
+        </div>
+
+        <!-- LIMITE ANTI-ABUS -->
+        <div class="deco-case mb-3">
+          <div class="deco-case__num">Limite</div>
+          <div class="deco-case__title">Anti-abus — Maximum 2 déconnexions par match</div>
+          <p class="mb-0">
+            À la <strong>3ème déconnexion</strong>, c'est un forfait automatique <strong>3-0</strong> contre
+            le joueur déconnecté — même s'il menait au score.
+          </p>
+        </div>
+
+        <!-- FORCE MAJEURE -->
+        <div class="deco-case">
+          <div class="deco-case__num">Force majeure</div>
+          <div class="deco-case__title">Situations exceptionnelles</div>
+          <p>Les situations suivantes sont considérées comme cas de force majeure :</p>
+          <ul class="rules-list">
+            <li><i class="fas fa-bolt me-2" style="color:#e6c200;"></i>Coupure générale d'électricité affectant les deux joueurs</li>
+            <li><i class="fas fa-server me-2" style="color:#e6c200;"></i>Maintenance ou panne des serveurs Konami (eFootball)</li>
+            <li><i class="fas fa-mobile-screen me-2" style="color:#e6c200;"></i>Bug serveur généralisé confirmé par Konami</li>
+          </ul>
+          <p class="mb-0">Dans ces cas, le match est reporté par décision de l'organisation. La décision est souveraine et sans appel.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARTICLE 7 : FAIR-PLAY -->
+    <div class="rules-card mb-4">
+      <div class="rules-card__num">7</div>
+      <div class="rules-card__body">
+        <h3 class="rules-card__title">Tricherie et Fraude</h3>
+        <ul class="rules-list">
+          <li>Toute falsification de résultat, utilisation de faux comptes ou tentative de manipulation=</li>
+
+          <li>occasionne <strong>l'exclusion immédiate et définitive de la competition</strong>.</li>
+        </ul>
+        <div class="rules-alert rules-alert--info">
+          <i class="fas fa-scale-balanced me-2"></i>
+          <strong>Cas non prévus :</strong> L'organisation se réserve le droit de trancher tout litige non prévu dans ce règlement, dans un esprit d'équité et de fair-play.
+        </div>
+      </div>
+    </div>
+
+        <!-- ARTICLE 8 : FAIR-PLAY -->
+    <div class="rules-card mb-4">
+      <div class="rules-card__num">8</div>
+      <div class="rules-card__body">
+        <h3 class="rules-card__title">Fair-play & Conduite</h3>
+        <ul class="rules-list">
+          <li>Tout comportement irrespectueux envers un adversaire ou un organisateur est sanctionné.</li>
+          <li>La manipulation de scores ou la triche entraîne une disqualification immédiate et définitive.</li>
+          <li>Les litiges doivent être signalés via la plateforme ou le groupe WhatsApp officiel dans un délai de <strong>15 minutes</strong> après le match.</li>
+          <li>Toute décision de l'organisation est <strong>finale et souveraine</strong>.</li>
+        </ul>
+        <div class="rules-alert rules-alert--info">
+          <i class="fas fa-scale-balanced me-2"></i>
+          <strong>Cas non prévus :</strong> L'organisation se réserve le droit de trancher tout litige non prévu dans ce règlement, dans un esprit d'équité et de fair-play.
+        </div>
+      </div>
+    </div>
+
+    <!-- BOUTON PDF -->
+    <div class="text-center mt-4">
+      <a href="{% url 'download_rules_pdf' %}" class="btn-rules-pdf">
+        <i class="fas fa-file-pdf me-2"></i>Télécharger le règlement en PDF
+      </a>
+    </div>
+
+  </div>
 </section>
 
 <style>
-.rules-section {
-    background: linear-gradient(135deg, #0b1423 0%, #00142d 100%);
-    color: #e0e0e0;
-    min-height: 100vh;
+.rules-page {
+  background: linear-gradient(135deg, #070b14 0%, #0b1423 50%, #0f1a2d 100%);
+  min-height: 100vh;
+  color: rgba(255,255,255,.92);
 }
 
-.rules-title {
-    font-size: 2.6rem;
-    color: #e6c200;
-    letter-spacing: 2px;
+/* HERO */
+.rules-hero { padding: 20px 0 10px; }
+.rules-main-title {
+  font-weight: 1000;
+  letter-spacing: 2px;
+  color: #fff;
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  margin: 0;
 }
-
 .rules-subtitle {
-    font-size: 1.2rem;
-    color: #aaa;
-    letter-spacing: 2px;
+  color: #e6c200;
+  font-weight: 900;
+  letter-spacing: 3px;
+  font-size: .9rem;
+  margin: 8px 0;
+}
+.rules-lead {
+  color: rgba(255,255,255,.72);
+  margin: 10px auto 0;
+  max-width: 600px;
+  line-height: 1.6;
 }
 
-.badge-total {
-    display: inline-block;
-    padding: 8px 18px;
-    border-radius: 30px;
-    background: rgba(230,194,0,0.15);
-    border: 1px solid #e6c200;
-    color: #e6c200;
-    font-weight: 600;
+/* CARD */
+.rules-card {
+  background: rgba(17,28,47,.65);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 18px;
+  padding: 0;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  display: flex;
+  gap: 0;
+}
+.rules-card__num {
+  background: linear-gradient(135deg, #003d82, #00a7e1);
+  color: #fff;
+  font-weight: 1000;
+  font-size: 1.4rem;
+  min-width: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.rules-card__body {
+  padding: 22px;
+  flex: 1;
+}
+.rules-card__title {
+  color: #e6c200;
+  font-weight: 900;
+  margin-bottom: 14px;
+  font-size: 1.1rem;
+  letter-spacing: .4px;
 }
 
-.rule-block {
-    background: #111c2f;
-    padding: 28px;
-    border-radius: 16px;
-    margin-bottom: 30px;
-    border-left: 4px solid #243552;
-    position: relative;
-    transition: 0.3s ease;
+/* ALERTS */
+.rules-alert {
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-weight: 700;
+  margin-top: 10px;
+}
+.rules-alert--warn {
+  background: rgba(255,193,7,.10);
+  border: 1px solid rgba(255,193,7,.35);
+  color: rgba(255,255,255,.90);
+}
+.rules-alert--info {
+  background: rgba(0,167,225,.10);
+  border: 1px solid rgba(0,167,225,.30);
+  color: rgba(255,255,255,.90);
+}
+.rules-alert--danger {
+  background: rgba(220,53,69,.10);
+  border: 1px solid rgba(220,53,69,.35);
+  color: rgba(255,255,255,.90);
 }
 
-.rule-block:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+/* LISTE */
+.rules-list {
+  padding-left: 20px;
+  line-height: 2;
+  color: rgba(255,255,255,.88);
 }
 
-.rule-block.highlight { border-left-color: #28a745; }
-.rule-block.reward { border-left-color: #e6c200; }
+/* PARAMS */
+.params-box {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 14px;
+  padding: 16px;
+  height: 100%;
+}
+.params-box--gold {
+  border-color: rgba(230,194,0,.30);
+  background: rgba(230,194,0,.04);
+}
+.params-box__title {
+  color: #e6c200;
+  font-weight: 900;
+  margin-bottom: 12px;
+  font-size: .95rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.params-table { width: 100%; border-collapse: collapse; }
+.params-table td {
+  padding: 5px 0;
+  font-size: .90rem;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  color: rgba(255,255,255,.85);
+}
+.params-table td:last-child { text-align: right; }
 
-.rule-number {
-    position: absolute;
-    top: -15px;
-    left: 20px;
-    background: #0b1423;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.6rem;
-    font-weight: 900;
-    color: #e6c200;
-    border: 3px solid #e6c200;
+/* PRIZE */
+.prize-total {
+  background: linear-gradient(45deg, rgba(230,194,0,.15), rgba(230,194,0,.05));
+  border: 1px solid rgba(230,194,0,.35);
+  border-radius: 14px;
+  padding: 14px 18px;
+  font-size: 1.1rem;
+  color: #fff;
+  font-weight: 700;
+}
+.prize-card {
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 14px;
+  padding: 16px 12px;
+  text-align: center;
+  height: 100%;
+}
+.prize-card--gold { border-color: rgba(230,194,0,.45); background: rgba(230,194,0,.08); }
+.prize-card--silver { border-color: rgba(192,192,192,.45); background: rgba(192,192,192,.06); }
+.prize-card--bronze { border-color: rgba(205,127,50,.45); background: rgba(205,127,50,.06); }
+.prize-icon { font-size: 1.6rem; color: #e6c200; display: block; margin-bottom: 8px; }
+.prize-pos { font-size: .82rem; color: rgba(255,255,255,.72); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.prize-amount { font-size: 1.15rem; font-weight: 900; color: #fff; margin-top: 6px; }
+.prize-org {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: rgba(255,255,255,.88);
 }
 
-.rule-heading {
-    margin-left: 70px;
-    margin-bottom: 18px;
-    font-size: 1.35rem;
-    color: white;
+/* DÉCO CASES */
+.deco-case {
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  padding: 14px;
+}
+.deco-case__num {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(0,61,130,.55);
+  border: 1px solid rgba(0,167,225,.30);
+  color: #fff;
+  font-weight: 900;
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+.deco-case__title {
+  font-weight: 900;
+  color: #e6c200;
+  margin-bottom: 10px;
+  font-size: 1rem;
+}
+.sub-case {
+  border-radius: 12px;
+  padding: 12px;
+  font-size: .92rem;
+}
+.sub-case--danger {
+  background: rgba(220,53,69,.10);
+  border: 1px solid rgba(220,53,69,.25);
+}
+.sub-case--info {
+  background: rgba(0,167,225,.08);
+  border: 1px solid rgba(0,167,225,.20);
 }
 
-.rule-list, .numbered-list {
-    padding-left: 20px;
-    line-height: 1.9;
+.deco-table { width: 100%; border-collapse: collapse; }
+.deco-table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  font-size: .88rem;
+  color: rgba(255,255,255,.88);
+  vertical-align: top;
+}
+.time-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: .78rem;
+  background: rgba(220,53,69,.20);
+  border: 1px solid rgba(220,53,69,.35);
+  color: #fff;
+  white-space: nowrap;
+}
+.time-badge--green {
+  background: rgba(40,167,69,.20);
+  border-color: rgba(40,167,69,.35);
+}
+.time-badge--warn {
+  background: rgba(255,193,7,.14);
+  border-color: rgba(255,193,7,.35);
 }
 
-.finance-box {
-    background: rgba(255,255,255,0.05);
-    padding: 15px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,0.1);
-    font-size: 0.95rem;
+/* PDF BUTTON */
+.btn-rules-pdf {
+  display: inline-flex;
+  align-items: center;
+  padding: 14px 28px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  color: #fff;
+  font-weight: 900;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: opacity .2s ease;
 }
+.btn-rules-pdf:hover { opacity: .88; color: #fff; }
 
-.rewards {
-    background: rgba(230,194,0,0.08);
-    padding: 20px;
-    border-radius: 12px;
-    border: 1px solid rgba(230,194,0,0.3);
-}
-
-.reward-line {
-    padding: 12px 0;
-    font-size: 1.05rem;
-    display: flex;
-    justify-content: space-between;
-}
-
-.reward-line.champion {
-    background: rgba(230,194,0,0.2);
-    padding: 15px;
-    border-radius: 10px;
-    font-weight: bold;
+/* MOBILE */
+@media (max-width: 576px) {
+  .rules-card { flex-direction: column; }
+  .rules-card__num {
+    min-width: unset;
+    padding: 12px;
+    font-size: 1.1rem;
+    flex-direction: row;
+    gap: 8px;
+  }
+  .rules-card__num::before { content: "Article "; font-size: .75rem; opacity: .8; }
 }
 </style>
-
 {% endblock %}
