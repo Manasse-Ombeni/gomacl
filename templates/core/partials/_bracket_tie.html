@@ -1,173 +1,178 @@
 {% load i18n %}
 
-{% with m=t.match %}
-<div class="tie">
+<div class="bk-tie" data-match-date="{{ t.match.scheduled_date|date:'Y-m-d' }}"
+     data-match-id="{{ t.match.id }}"
+     data-is-played="{{ t.match.is_played|yesno:'true,false' }}">
 
-  <!-- HEADER : Label (R16) + Statut -->
-  <div class="tie__head">
-    <span class="tie__label">{{ label }}</span>
+  <!-- COUNTDOWN -->
+  {% if not t.match.is_played %}
+    <div class="bk-tie__cd" id="cd-bk-{{ t.match.id }}">
+      <span><i class="fas fa-circle-notch fa-spin" style="font-size:.7rem;"></i></span>
+    </div>
+  {% endif %}
 
-    {% if m.is_played %}
-      <span class="tie__status {% if t.is_forfeit %}is-danger{% else %}is-success{% endif %}">
-        {% if t.is_forfeit %}FORF.{% else %}FT{% endif %}
-      </span>
-    {% else %}
-      <span class="tie__date">
-        {{ m.scheduled_date|date:"d/m" }}
-      </span>
-    {% endif %}
-  </div>
-
-  <!-- EQUIPES (Abréviations) -->
-  <div class="tie__teams">
-    <!-- Equipe A -->
-    <div class="tie__row {% if t.winner_id == t.team_a.id %}is-win{% endif %}">
-      {% if t.team_a %}
-        <span class="tie__name" title="{{ t.team_a.team_name }}">
-          {{ t.team_a.abbreviation|default:t.team_a.team_name|upper }}
-        </span>
+  <!-- ÉQUIPE A -->
+  <div class="bk-tie__row {% if t.winner_id == t.team_a.id %}bk-tie__row--win{% endif %}">
+    <div class="bk-tie__name">
+      {% if t.team_a.abbreviation == 'TBD' %}
+        <span style="opacity:.5;">À déterminer</span>
       {% else %}
-        <span class="tie__name tie__name--tbd">TBD</span>
+        {{ t.team_a.team_name }}
       {% endif %}
-      
+    </div>
+    <div class="bk-tie__scores">
+      {% if t.leg1_a is not None %}
+        <span class="bk-score bk-score--leg1">{{ t.leg1_a }}</span>
+      {% else %}
+        <span class="bk-score bk-score--empty">-</span>
+      {% endif %}
+      {% if t.leg2_a is not None %}
+        <span class="bk-score bk-score--leg2">{{ t.leg2_a }}</span>
+      {% else %}
+        <span class="bk-score bk-score--empty">-</span>
+      {% endif %}
       {% if t.agg_a is not None %}
-        <span class="tie__score">{{ t.agg_a }}</span>
+        <span class="bk-score bk-score--agg">{{ t.agg_a }}</span>
+      {% endif %}
+      {% if t.pen_a is not None %}
+        <span class="bk-score bk-score--pen">({{ t.pen_a }})</span>
       {% endif %}
     </div>
+  </div>
 
-    <!-- Equipe B -->
-    <div class="tie__row {% if t.winner_id == t.team_b.id %}is-win{% endif %}">
-      {% if t.team_b %}
-        <span class="tie__name" title="{{ t.team_b.team_name }}">
-          {{ t.team_b.abbreviation|default:t.team_b.team_name|upper }}
-        </span>
+  <!-- ÉQUIPE B -->
+  <div class="bk-tie__row {% if t.winner_id == t.team_b.id %}bk-tie__row--win{% endif %}">
+    <div class="bk-tie__name">
+      {% if t.team_b.abbreviation == 'TBD' %}
+        <span style="opacity:.5;">À déterminer</span>
       {% else %}
-        <span class="tie__name tie__name--tbd">TBD</span>
+        {{ t.team_b.team_name }}
       {% endif %}
-
+    </div>
+    <div class="bk-tie__scores">
+      {% if t.leg1_b is not None %}
+        <span class="bk-score bk-score--leg1">{{ t.leg1_b }}</span>
+      {% else %}
+        <span class="bk-score bk-score--empty">-</span>
+      {% endif %}
+      {% if t.leg2_b is not None %}
+        <span class="bk-score bk-score--leg2">{{ t.leg2_b }}</span>
+      {% else %}
+        <span class="bk-score bk-score--empty">-</span>
+      {% endif %}
       {% if t.agg_b is not None %}
-        <span class="tie__score">{{ t.agg_b }}</span>
+        <span class="bk-score bk-score--agg">{{ t.agg_b }}</span>
+      {% endif %}
+      {% if t.pen_b is not None %}
+        <span class="bk-score bk-score--pen">({{ t.pen_b }})</span>
       {% endif %}
     </div>
   </div>
 
-  <!-- DETAILS SCORES (Petit) -->
-  <div class="tie__meta">
-    {% if t.leg1_a is not None %}
-      <div class="tie__detail">
-        <span>Aller:</span> <span>{{ t.leg1_a }}-{{ t.leg1_b }}</span>
-      </div>
-    {% endif %}
-    
-    {% if t.leg2_a is not None %}
-      <div class="tie__detail">
-        <span>Retour:</span> <span>{{ t.leg2_a }}-{{ t.leg2_b }}</span>
-      </div>
-    {% endif %}
-
-    {% if t.pen_a is not None %}
-      <div class="tie__detail tie__detail--tab">
-        <span>TAB:</span> <span>{{ t.pen_a }}-{{ t.pen_b }}</span>
-      </div>
+  <!-- META -->
+  <div class="bk-tie__meta">
+    {% language 'fr' %}
+      <i class="far fa-calendar me-1"></i>{{ t.match.scheduled_date|date:"d/m/Y" }}
+    {% endlanguage %}
+    {% if t.is_forfeit %}
+      <span class="bk-badge bk-badge--danger">Forfait</span>
+    {% elif t.match.is_played %}
+      <span class="bk-badge bk-badge--success">Terminé</span>
+    {% else %}
+      <span class="bk-badge">Retour</span>
     {% endif %}
   </div>
-
 </div>
-{% endwith %}
 
 <style>
-/* --- CARTE COMPACTE --- */
-.tie{
-  border-radius: 12px;
+.bk-tie{
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 14px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.bk-tie__cd{
+  text-align: center;
+  margin-bottom: 4px;
+  font-size: .72rem;
+  font-weight: 900;
+  padding: 4px 8px;
+  border-radius: 999px;
   border: 1px solid rgba(255,255,255,.10);
   background: rgba(255,255,255,.04);
-  padding: 8px;
-  font-size: 0.9rem;
+  color: rgba(255,255,255,.80);
 }
-
-/* Header */
-.tie__head{
-  display:flex;
-  justify-content: space-between;
-  align-items:center;
-  margin-bottom: 6px;
-  border-bottom: 1px solid rgba(255,255,255,.05);
-  padding-bottom: 4px;
+.bk-tie__cd.is-live{
+  border-color: rgba(40,167,69,.45);
+  background: rgba(40,167,69,.12);
+  color: #47d18c;
 }
-.tie__label{
-  font-weight: 900;
-  color: #e6c200;
-  font-size: .7rem;
-  letter-spacing: 1px;
+.bk-tie__cd.is-soon{
+  border-color: rgba(255,193,7,.35);
+  background: rgba(255,193,7,.08);
+  color: #ffd700;
 }
-.tie__date{
-  font-size: .7rem;
-  color: rgba(255,255,255,.6);
-  font-weight: 700;
-}
-.tie__status{
-  font-size: .65rem;
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-weight: 800;
-}
-.is-success{ background: rgba(40,167,69,.2); color: #4cd964; }
-.is-danger{ background: rgba(220,53,69,.2); color: #ff6b6b; }
-
-/* Teams */
-.tie__teams{
-  display:flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.tie__row{
-  display:flex;
-  justify-content: space-between;
-  align-items:center;
-  padding: 4px 6px;
-  border-radius: 6px;
-}
-.tie__row.is-win{
-  background: rgba(230,194,0,.15);
-  box-shadow: inset 2px 0 0 #e6c200;
-}
-
-.tie__name{
-  font-weight: 800;
-  color: rgba(255,255,255,.9);
-  letter-spacing: .5px;
-}
-.tie__name--tbd{
-  color: rgba(255,255,255,.4);
-  font-style: italic;
-  font-weight: 500;
-}
-.tie__score{
-  font-weight: 900;
-  color: #fff;
-}
-
-/* Meta details */
-.tie__meta{
-  margin-top: 6px;
-  padding-top: 4px;
-  border-top: 1px solid rgba(255,255,255,.05);
+.bk-tie__row{
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 6px;
+  border-radius: 8px;
+}
+.bk-tie__row--win{
+  background: rgba(230,194,0,.12);
+  border: 1px solid rgba(230,194,0,.25);
+}
+.bk-tie__name{
+  font-weight: 900;
+  font-size: .85rem;
+  color: rgba(255,255,255,.90);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bk-tie__row--win .bk-tie__name{ color: #e6c200; }
+.bk-tie__scores{ display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
+.bk-score{
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  font-weight: 900;
+  font-size: .78rem;
 }
-.tie__detail{
-  font-size: 0.68rem;
-  color: rgba(255,255,255,.6);
+.bk-score--leg1{ background: rgba(0,167,225,.15); color: #fff; }
+.bk-score--leg2{ background: rgba(0,167,225,.25); color: #fff; }
+.bk-score--agg{ background: rgba(230,194,0,.20); color: #e6c200; font-size: .88rem; min-width: 24px; height: 22px; }
+.bk-score--pen{ color: rgba(255,255,255,.60); font-size: .75rem; }
+.bk-score--empty{ color: rgba(255,255,255,.30); }
+.bk-tie__meta{
+  margin-top: 4px;
+  font-size: .72rem;
+  color: rgba(255,255,255,.55);
+  font-weight: 750;
   display: flex;
-  gap: 3px;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
-.tie__detail span:last-child{
-  color: rgba(255,255,255,.9);
-  font-weight: 700;
+.bk-badge{
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: .68rem;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.12);
+  color: rgba(255,255,255,.80);
 }
-.tie__detail--tab{
-  color: #e6c200;
-}
+.bk-badge--success{ background: rgba(40,167,69,.15); border-color: rgba(40,167,69,.30); color: #47d18c; }
+.bk-badge--danger{ background: rgba(220,53,69,.15); border-color: rgba(220,53,69,.30); color: #ff6b6b; }
 </style>

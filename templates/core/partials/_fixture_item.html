@@ -1,102 +1,159 @@
+{% load static %}
 {% load roles %}
+{% load i18n %}
 
-<div class="fx-item {% if match.is_late and not match.is_played and not match.is_forfeit %}is-late{% endif %}">
+{% with scheduled=match.scheduled_date %}
+<div class="fx-item {% if match.is_late and not match.is_played and not match.is_forfeit %}is-late{% endif %}"
+     data-match-id="{{ match.id }}"
+     data-match-date="{{ scheduled|date:'Y-m-d' }}"
+     data-is-played="{{ match.is_played|yesno:'true,false' }}">
 
-  <!-- HOME -->
-  <div class="fx-team fx-team--left">
-    <div class="fx-team__stack">
-      <div class="fx-team__name" title="{{ match.home_team.team_name }}">
-        {{ match.home_team.team_name }}
+  <!-- COUNTDOWN BADGE -->
+  {% if not match.is_played %}
+    <div class="fx-countdown-wrap" style="grid-column: 1 / -1;">
+      <div class="fx-countdown" id="cd-{{ match.id }}">
+        <span class="cd-spinner"><i class="fas fa-circle-notch fa-spin"></i></span>
       </div>
+    </div>
+  {% endif %}
 
+  <!-- ÉQUIPE DOMICILE -->
+  <div class="fx-team">
+    <div class="fx-team__stack">
+      <div class="fx-team__name">{{ match.home_team.team_name }}</div>
       {% if match.home_team.whatsapp %}
         <a class="fx-wa"
            href="https://wa.me/{{ match.home_team.whatsapp|cut:'+' }}"
            target="_blank" rel="noopener"
-           title="WhatsApp : {{ match.home_team.whatsapp }}">
+           title="{{ match.home_team.whatsapp }}">
           <i class="fab fa-whatsapp"></i>
         </a>
       {% endif %}
     </div>
   </div>
 
-  <!-- MID -->
+  <!-- CENTRE : score ou heure -->
   <div class="fx-mid">
-    {% if show_matchday %}
-      <div class="fx-tag fx-tag--info" style="margin-bottom:5px;">J{{ match.matchday }}</div>
-    {% endif %}
-
     {% if match.is_played %}
-      <div class="fx-mid__main fx-mid__score">{{ match.home_score }} - {{ match.away_score }}</div>
-      <div class="fx-mid__sub">
+      <div class="fx-mid__main fx-mid__score">
         {% if match.is_forfeit %}
           <span class="fx-tag fx-tag--danger">Forfait</span>
         {% else %}
-          <span class="fx-tag fx-tag--success">FT</span>
+          {{ match.home_score }} - {{ match.away_score }}
+          {% if match.home_extra_time is not None %}
+            <div style="font-size:.75rem; opacity:.7;">(ap)</div>
+          {% endif %}
+          {% if match.home_penalties is not None %}
+            <div style="font-size:.75rem; opacity:.7;">tab {{ match.home_penalties }}-{{ match.away_penalties }}</div>
+          {% endif %}
         {% endif %}
       </div>
+      <div class="fx-mid__sub">
+        <span class="fx-tag fx-tag--success">Terminé</span>
+      </div>
     {% else %}
-      {% with t=match.scheduled_date|time:"H:i" %}
-        <div class="fx-mid__main fx-mid__time">
-          {% if t == "00:00" or t == "00:01" %}Toute la journée{% else %}{{ t }}{% endif %}
-        </div>
-      {% endwith %}
+      <div class="fx-mid__main fx-mid__time">
+        {% language 'fr' %}
+          {{ scheduled|date:"d/m" }}
+        {% endlanguage %}
+      </div>
       <div class="fx-mid__sub">
         {% if match.is_late %}
-          <span class="fx-tag fx-tag--warn">Retard</span>
+          <span class="fx-tag fx-tag--danger">Retard</span>
+        {% elif match.reported %}
+          <span class="fx-tag fx-tag--warn">Signalé</span>
         {% else %}
           <span class="fx-tag fx-tag--info">À jouer</span>
         {% endif %}
       </div>
-    {% endif %}
-
-    {% if match.rescheduled_from %}
-      <div class="fx-rescheduled">
-        <span class="fx-tag fx-tag--rescheduled">Reporté</span>
-        {% if match.rescheduled_reason %}
-          <div class="fx-rescheduled__reason" title="{{ match.rescheduled_reason }}">
-            {{ match.rescheduled_reason }}
-          </div>
-        {% endif %}
-      </div>
+      {% if match.rescheduled_from %}
+        <div class="fx-rescheduled">
+          <span class="fx-tag fx-tag--rescheduled">Reporté</span>
+          {% if match.rescheduled_reason %}
+            <div class="fx-rescheduled__reason">{{ match.rescheduled_reason }}</div>
+          {% endif %}
+        </div>
+      {% endif %}
     {% endif %}
   </div>
 
-  <!-- AWAY -->
+  <!-- ÉQUIPE EXTÉRIEUR -->
   <div class="fx-team fx-team--right">
-    <div class="fx-team__stack text-end">
-      <div class="fx-team__name" title="{{ match.away_team.team_name }}">
-        {{ match.away_team.team_name }}
-      </div>
-
+    <div class="fx-team__stack" style="align-items:flex-end;">
+      <div class="fx-team__name" style="text-align:right;">{{ match.away_team.team_name }}</div>
       {% if match.away_team.whatsapp %}
         <a class="fx-wa fx-wa--right"
            href="https://wa.me/{{ match.away_team.whatsapp|cut:'+' }}"
            target="_blank" rel="noopener"
-           title="WhatsApp : {{ match.away_team.whatsapp }}">
+           title="{{ match.away_team.whatsapp }}">
           <i class="fab fa-whatsapp"></i>
         </a>
       {% endif %}
     </div>
   </div>
 
-  <!-- ADMIN ACTIONS -->
+  <!-- ADMIN BUTTONS -->
   {% if user|has_role:"superadmin,organisateur,match" %}
     <div class="fx-admin">
       <a href="{% url 'encode_result' match.id %}" class="fx-admin__btn fx-admin__btn--gold">
         {% if match.is_played %}Modifier{% else %}Encoder{% endif %}
       </a>
-
       {% if match.is_played %}
-        <a href="{% url 'cancel_result' match.id %}" class="fx-admin__btn fx-admin__btn--danger">
-          Annuler
-        </a>
-      {% else %}
-        <a href="{% url 'reschedule_match' match.id %}" class="fx-admin__btn fx-admin__btn--light">
-          Reporter
-        </a>
+        <a href="{% url 'cancel_result' match.id %}" class="fx-admin__btn fx-admin__btn--danger">Annuler</a>
+      {% endif %}
+      {% if not match.is_played %}
+        <a href="{% url 'reschedule_match' match.id %}" class="fx-admin__btn fx-admin__btn--light">Reporter</a>
       {% endif %}
     </div>
   {% endif %}
 
 </div>
+{% endwith %}
+
+<style>
+/* COUNTDOWN */
+.fx-countdown-wrap{
+  padding: 0 0 6px 0;
+}
+.fx-countdown{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: .78rem;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+  color: rgba(255,255,255,.85);
+}
+.fx-countdown.is-live{
+  border-color: rgba(40,167,69,.45);
+  background: rgba(40,167,69,.12);
+  color: #47d18c;
+  animation: pulse-green 2s ease-in-out infinite;
+}
+.fx-countdown.is-soon{
+  border-color: rgba(255,193,7,.45);
+  background: rgba(255,193,7,.10);
+  color: #ffd700;
+}
+.fx-countdown.is-far{
+  border-color: rgba(0,167,225,.30);
+  background: rgba(0,167,225,.08);
+  color: rgba(255,255,255,.80);
+}
+@keyframes pulse-green{
+  0%,100%{ box-shadow: 0 0 0 0 rgba(40,167,69,.4); }
+  50%{ box-shadow: 0 0 0 6px rgba(40,167,69,0); }
+}
+.cd-block{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 28px;
+}
+.cd-num{ font-size: .95rem; font-weight: 1000; line-height: 1; }
+.cd-label{ font-size: .62rem; opacity: .75; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+.cd-sep{ font-weight: 1000; opacity: .6; margin-top: -6px; }
+</style>
